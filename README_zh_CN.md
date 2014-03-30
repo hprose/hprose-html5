@@ -1,0 +1,86 @@
+# Hprose for HTML5
+
+>---
+- **[简介](#简介)**
+    - **[浏览器支持](#浏览器支持)**
+- **[使用](#使用)**
+    - **[异常处理](#异常处理)**
+
+>---
+
+## 简介
+
+*Hprose* 是高性能远程对象服务引擎（High Performance Remote Object Service Engine）的缩写。
+
+它是一个先进的轻量级的跨语言跨平台面向对象的高性能远程动态通讯中间件。它不仅简单易用，而且功能强大。你只需要稍许的时间去学习，就能用它轻松构建跨语言跨平台的分布式应用系统了。
+
+*Hprose* 支持众多编程语言，例如：
+
+* AAuto Quicker
+* ActionScript
+* ASP
+* C++
+* Dart
+* Delphi/Free Pascal
+* dotNET(C#, Visual Basic...)
+* Golang
+* Java
+* JavaScript
+* Node.js
+* Objective-C
+* Perl
+* PHP
+* Python
+* Ruby
+* ...
+
+通过 *Hprose*，你就可以在这些语言之间方便高效的实现互通了。
+
+本项目是 Hprose 的 HTML5 版本实现。
+
+### 浏览器支持
+
+#### 桌面浏览器
+
+* Google Chrome 10+
+* Apple Safari 6+
+* Mozilla Firefox 9+
+* Opera 12+
+* Microsoft Internet Explorer 10.0+
+* ...
+
+#### 移动浏览器
+
+* Apple Safari on iOS 6+
+* Google Chrome on Android
+* Default Browser on Android 4+
+* Firefox Mobile
+* Internet Explorer on Windows Phone
+* ...
+
+## 使用
+
+你不需要使用 javascript 的源文件，你只需要在你的 html 中包含 `hprose-html5.js` 就够了。
+
+### 异常处理
+
+如果服务器端发生错误，或者你的服务函数或方法抛出了异常，它将被发送到客户端。你可以在成功回调函数后面传入错误回调函数来接收它。如果你忽略该回调函数，客户端将忽略该异常，就像从来没发生过一样。
+
+例如：
+
+```html
+<html>
+<head>
+<script type="text/javascript" src="hprose-html5.js"></script>
+</head>
+<body>
+<script type="text/javascript">
+    var client = new hprose.HttpClient("http://www.hprose.com/example/", ["hello"]);
+    client.hello("World!", function(result) {
+        alert(result);
+    }, function(name, err) {
+        alert(err);
+    });
+</script>
+</body>
+```
