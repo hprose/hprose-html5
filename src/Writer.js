@@ -14,7 +14,7 @@
  *                                                        *
  * hprose Writer for HTML5.                               *
  *                                                        *
- * LastModified: Mar 29, 2014                             *
+ * LastModified: Jun 4, 2014                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -22,6 +22,7 @@
 (function (global) {
     'use strict';
 
+    var Map = global.Map;
     var BytesIO = global.hprose.BytesIO;
     var Tags = global.hprose.Tags;
     var ClassManager = global.hprose.ClassManager;
