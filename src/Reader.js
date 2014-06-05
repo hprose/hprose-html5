@@ -14,7 +14,7 @@
  *                                                        *
  * hprose Reader for HTML5.                               *
  *                                                        *
- * LastModified: Jun 4, 2014                              *
+ * LastModified: Jun 5, 2014                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -171,16 +171,9 @@
         }
         Object.defineProperties(this, {
             stream: {
-                get : function() { return stream; },
-                configurable: false,
-                enumerable: false
+                get : function() { return stream; }
             },
-            readRaw: {
-                value: readRaw,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            }
+            readRaw: { value: readRaw }
         });
     };
 
@@ -655,162 +648,32 @@
             refer.reset();
         }
         Object.defineProperties(this, {
-            checkTag: {
-                value: checkTag,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            checkTags: {
-                value: checkTags,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            unserialize: {
-                value: unserialize,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            readInteger: {
-                value: readInteger,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            readLong: {
-                value: readLong,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            readDouble: {
-                value: readDouble,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            readBoolean: {
-                value: readBoolean,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            readDateWithoutTag: {
-                value: readDateWithoutTag,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            readDate: {
-                value: readDate,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            readTimeWithoutTag: {
-                value: readTimeWithoutTag,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            readTime: {
-                value: readTime,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            readBytesWithoutTag: {
-                value: readBytesWithoutTag,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            readBytes: {
-                value: readBytes,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            readStringWithoutTag: {
-                value: readStringWithoutTag,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            readString: {
-                value: readString,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            readGuidWithoutTag: {
-                value: readGuidWithoutTag,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            readGuid: {
-                value: readGuid,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            readListWithoutTag: {
-                value: readListWithoutTag,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            readList: {
-                value: readList,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            readMapWithoutTag: {
-                value: readMapWithoutTag,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            readMap: {
-                value: readMap,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            readHarmonyMapWithoutTag: {
-                value: readHarmonyMapWithoutTag,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            readHarmonyMap: {
-                value: readHarmonyMap,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            readObjectWithoutTag: {
-                value: readObjectWithoutTag,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            readObject: {
-                value: readObject,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            reset: {
-                value: reset,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            }
+            checkTag: { value: checkTag },
+            checkTags: { value: checkTags },
+            unserialize: { value: unserialize },
+            readInteger: { value: readInteger },
+            readLong: { value: readLong },
+            readDouble: { value: readDouble },
+            readBoolean: { value: readBoolean },
+            readDateWithoutTag: { value: readDateWithoutTag },
+            readDate: { value: readDate },
+            readTimeWithoutTag: { value: readTimeWithoutTag },
+            readTime: { value: readTime },
+            readBytesWithoutTag: { value: readBytesWithoutTag },
+            readBytes: { value: readBytes },
+            readStringWithoutTag: { value: readStringWithoutTag },
+            readString: { value: readString },
+            readGuidWithoutTag: { value: readGuidWithoutTag },
+            readGuid: { value: readGuid },
+            readListWithoutTag: { value: readListWithoutTag },
+            readList: { value: readList },
+            readMapWithoutTag: { value: readMapWithoutTag },
+            readMap: { value: readMap },
+            readHarmonyMapWithoutTag: { value: readHarmonyMapWithoutTag },
+            readHarmonyMap: { value: readHarmonyMap },
+            readObjectWithoutTag: { value: readObjectWithoutTag },
+            readObject: { value: readObject },
+            reset: { value: reset }
         });
     };
 

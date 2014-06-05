@@ -14,7 +14,7 @@
  *                                                        *
  * hprose Writer for HTML5.                               *
  *                                                        *
- * LastModified: Jun 4, 2014                              *
+ * LastModified: Jun 5, 2014                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -440,148 +440,31 @@
         }
         Object.defineProperties(this, {
             stream: {
-                get : function() { return stream; },
-                configurable: false,
-                enumerable: false
+                get : function() { return stream; }
             },
-            serialize: {
-                value: serialize,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            writeInteger: {
-                value: writeInteger,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            writeDouble: {
-                value: writeDouble,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            writeBoolean: {
-                value: writeBoolean,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            writeUTCDate: {
-                value: writeUTCDate,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            writeUTCDateWithRef: {
-                value: writeUTCDateWithRef,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            writeDate: {
-                value: writeDate,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            writeDateWithRef: {
-                value: writeDateWithRef,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            writeTime: {
-                value: writeTime,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            writeTimeWithRef: {
-                value: writeTimeWithRef,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            writeBytes: {
-                value: writeBytes,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            writeBytesWithRef: {
-                value: writeBytesWithRef,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            writeString: {
-                value: writeString,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            writeStringWithRef: {
-                value: writeStringWithRef,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            writeList: {
-                value: writeList,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            writeListWithRef: {
-                value: writeListWithRef,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            writeMap: {
-                value: writeMap,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            writeMapWithRef: {
-                value: writeMapWithRef,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            writeHarmonyMap: {
-                value: writeHarmonyMap,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            writeHarmonyMapWithRef: {
-                value: writeHarmonyMapWithRef,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            writeObject: {
-                value: writeObject,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            writeObjectWithRef: {
-                value: writeObjectWithRef,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            reset: {
-                value: reset,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            }
+            serialize: { value: serialize },
+            writeInteger: { value: writeInteger },
+            writeDouble: { value: writeDouble },
+            writeBoolean: { value: writeBoolean },
+            writeUTCDate: { value: writeUTCDate },
+            writeUTCDateWithRef: { value: writeUTCDateWithRef },
+            writeDate: { value: writeDate },
+            writeDateWithRef: { value: writeDateWithRef },
+            writeTime: { value: writeTime },
+            writeTimeWithRef: { value: writeTimeWithRef },
+            writeBytes: { value: writeBytes },
+            writeBytesWithRef: { value: writeBytesWithRef },
+            writeString: { value: writeString },
+            writeStringWithRef: { value: writeStringWithRef },
+            writeList: { value: writeList },
+            writeListWithRef: { value: writeListWithRef },
+            writeMap: { value: writeMap },
+            writeMapWithRef: { value: writeMapWithRef },
+            writeHarmonyMap: { value: writeHarmonyMap },
+            writeHarmonyMapWithRef: { value: writeHarmonyMapWithRef },
+            writeObject: { value: writeObject },
+            writeObjectWithRef: { value: writeObjectWithRef },
+            reset: { value: reset }
         });
     };
 })(this);

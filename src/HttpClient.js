@@ -13,7 +13,7 @@
  *                                                        *
  * hprose http client for HTML5.                          *
  *                                                        *
- * LastModified: Mar 30, 2014                             *
+ * LastModified: Jun 5, 2014                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -123,36 +123,11 @@
             }
         }
         Object.defineProperties(this, {
-            timeout: {
-                get: getTimeout,
-                set: setTimeout,
-                configurable: false,
-                enumerable: false
-            },
-            onProgress: {
-                get: getOnProgress,
-                set: setOnProgress,
-                configurable: false,
-                enumerable: false
-            },
-            onprogress: {
-                get: getOnProgress,
-                set: setOnProgress,
-                configurable: false,
-                enumerable: false
-            },
-            setHeader: {
-                value: setHeader,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            __send__: {
-                value: send,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            }
+            timeout: { get: getTimeout, set: setTimeout },
+            onProgress: { get: getOnProgress, set: setOnProgress },
+            onprogress: { get: getOnProgress, set: setOnProgress },
+            setHeader: { value: setHeader },
+            __send__: { value: send }
         });
     };
 
@@ -166,10 +141,5 @@
         throw new Exception('This client desn\'t support ' + parser.protocol + ' scheme.');
     }
 
-    Object.defineProperty(global.hprose.HttpClient, 'create', {
-        value: create,
-        writable: false,
-        configurable: false,
-        enumerable: false
-    });
+    Object.defineProperty(global.hprose.HttpClient, 'create', { value: create });
 })(this);

@@ -14,7 +14,7 @@
  *                                                        *
  * hprose ClassManager for HTML5.                         *
  *                                                        *
- * LastModified: Jun 4, 2014                              *
+ * LastModified: Jun 5, 2014                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -42,24 +42,9 @@
     }
 
     global.hprose.ClassManager = Object.create(null, {
-        register: {
-            value: register,
-            writable: false,
-            configurable: false,
-            enumerable: false
-        },
-        getClassAlias: {
-            value: getClassAlias,
-            writable: false,
-            configurable: false,
-            enumerable: false
-        },
-        getClass: {
-            value: getClass,
-            writable: false,
-            configurable: false,
-            enumerable: false
-        }
+        register: { value: register },
+        getClassAlias: { value: getClassAlias },
+        getClass: { value: getClass }
     });
 
 })(this);

@@ -13,7 +13,7 @@
  *                                                        *
  * hprose client for HTML5.                               *
  *                                                        *
- * LastModified: Mar 29, 2014                             *
+ * LastModified: Jun 5, 2014                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -596,100 +596,22 @@
             }
         }
         Object.defineProperties(this, {
-            onError: {
-                get: getOnError,
-                set: setOnError,
-                configurable: false,
-                enumerable: false
-            },
-            onerror: {
-                get: getOnError,
-                set: setOnError,
-                configurable: false,
-                enumerable: false
-            },
-            onReady: {
-                get: getOnReady,
-                set: setOnReady,
-                configurable: false,
-                enumerable: false
-            },
-            onready: {
-                get: getOnReady,
-                set: setOnReady,
-                configurable: false,
-                enumerable: false
-            },
-            ready: {
-                get : getReady,
-                configurable: false,
-                enumerable: false
-            },
-            uri: {
-                get : getUri,
-                configurable: false,
-                enumerable: false
-            },
-            byref: {
-                get : getByRef,
-                set : setByRef,
-                configurable: false,
-                enumerable: false
-            },
-            simple: {
-                get : getSimpleMode,
-                set : setSimpleMode,
-                configurable: false,
-                enumerable: false
-            },
-            useHarmonyMap: {
-                get : getUseHarmonyMap,
-                set : setUseHarmonyMap,
-                configurable: false,
-                enumerable: false
-            },
-            filter: {
-                get : getFilter,
-                set : setFilter,
-                configurable: false,
-                enumerable: false
-            },
-            addFilter: {
-                value: addFilter,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            removeFilter: {
-                value: removeFilter,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            useService: {
-                value: useService,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            invoke: {
-                value: invoke,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            beginBatch: {
-                value: beginBatch,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            endBatch: {
-                value: endBatch,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            }
+            onError: { get: getOnError, set: setOnError },
+            onerror: { get: getOnError, set: setOnError },
+            onReady: { get: getOnReady, set: setOnReady },
+            onready: { get: getOnReady, set: setOnReady },
+            ready: { get: getReady },
+            uri: { get: getUri },
+            byref: { get: getByRef, set: setByRef },
+            simple: { get: getSimpleMode, set: setSimpleMode },
+            useHarmonyMap: { get: getUseHarmonyMap, set: setUseHarmonyMap },
+            filter: { get: getFilter, set: setFilter },
+            addFilter: { value: addFilter },
+            removeFilter: { value: removeFilter },
+            useService: { value: useService },
+            invoke: { value: invoke },
+            beginBatch: { value: beginBatch },
+            endBatch: { value: endBatch }
         });
     };
 
@@ -703,10 +625,5 @@
         throw new Exception('The ' + parser.protocol + ' client isn\'t implemented.');
     }
 
-    Object.defineProperty(global.hprose.Client, 'create', {
-        value: create,
-        writable: false,
-        configurable: false,
-        enumerable: false
-    });
+    Object.defineProperty(global.hprose.Client, 'create', { value: create });
 })(this);

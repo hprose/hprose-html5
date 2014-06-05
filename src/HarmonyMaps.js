@@ -14,7 +14,7 @@
  *                                                        *
  * Harmony Maps for HTML5.                                *
  *                                                        *
- * LastModified: Mar 27, 2014                             *
+ * LastModified: Jun 5, 2014                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -69,38 +69,31 @@
             };
             var m = Object.create(WeakMap.prototype, {
                 get: {
-                    value: function (key) { return map(key).value; },
-                    writable: false,
-                    configurable: false,
-                    enumerable: false
+                    value: function (key) {
+                        return map(key).value;
+                    }
                 },
                 set: {
-                    value: function (key, value) { map(key).value = value; },
-                    writable: false,
-                    configurable: false,
-                    enumerable: false
+                    value: function (key, value) {
+                        map(key).value = value;
+                    }
                 },
                 has: {
-                    value: function (key) { return 'value' in map(key); },
-                    writable: false,
-                    configurable: false,
-                    enumerable: false
+                    value: function (key) {
+                        return 'value' in map(key);
+                    }
                 },
                 'delete': {
-                    value: function (key) { return delete map(key).value; },
-                    writable: false,
-                    configurable: true,
-                    enumerable: false
+                    value: function (key) {
+                        return delete map(key).value;
+                    }
                 },
                 clear: {
                     value: function () {
                         delete namespaces[n];
                         n = count++;
                         namespaces[n] = namespace;
-                    },
-                    writable: false,
-                    configurable: false,
-                    enumerable: false
+                    }
                 }
             });
             if (arguments.length > 0 && Array.isArray(arguments[0])) {
@@ -194,17 +187,12 @@
             var keys = [];
             var m = Object.create(Map.prototype, {
                 size: {
-                    get : function () { return size; },
-                    configurable: false,
-                    enumerable: false
+                    get : function () { return size; }
                 },
                 get: {
                     value: function (key) {
                         return map[typeof(key)].get(key);
-                    },
-                    writable: false,
-                    configurable: false,
-                    enumerable: false
+                    }
                 },
                 set: {
                     value: function (key, value) {
@@ -213,18 +201,12 @@
                             size++;
                         }
                         map[typeof(key)].set(key, value);
-                    },
-                    writable: false,
-                    configurable: false,
-                    enumerable: false
+                    }
                 },
                 has: {
                     value: function (key) {
                         return map[typeof(key)].has(key);
-                    },
-                    writable: false,
-                    configurable: false,
-                    enumerable: false
+                    }
                 },
                 'delete': {
                     value: function (key) {
@@ -234,30 +216,21 @@
                             return map[typeof(key)]['delete'](key);
                         }
                         return false;
-                    },
-                    writable: false,
-                    configurable: false,
-                    enumerable: false
+                    }
                 },
                 clear: {
                     value: function () {
                         keys.length = 0;
                         for (var key in map) map[key].clear();
                         size = 0;
-                    },
-                    writable: false,
-                    configurable: false,
-                    enumerable: false
+                    }
                 },
                 forEach: {
                     value: function (callback, thisArg) {
                         for (var i = 0, n = keys.length; i < n; i++) {
                             callback.call(thisArg, this.get(keys[i]), keys[i], this);
                         }
-                    },
-                    writable: false,
-                    configurable: false,
-                    enumerable: false
+                    }
                 }
             });
             if (arguments.length > 0 && Array.isArray(arguments[0])) {
@@ -278,17 +251,12 @@
             var keys = [];
             var m = Object.create(Map.prototype, {
                 size: {
-                    get : function () { return size; },
-                    configurable: false,
-                    enumerable: false
+                    get : function () { return size; }
                 },
                 get: {
                     value: function (key) {
                         return map.get(key);
-                    },
-                    writable: false,
-                    configurable: false,
-                    enumerable: false
+                    }
                 },
                 set: {
                     value: function (key, value) {
@@ -297,18 +265,12 @@
                             size++;
                         }
                         map.set(key, value);
-                    },
-                    writable: false,
-                    configurable: false,
-                    enumerable: false
+                    }
                 },
                 has: {
                     value: function (key) {
                         return map.has(key);
-                    },
-                    writable: false,
-                    configurable: false,
-                    enumerable: false
+                    }
                 },
                 'delete': {
                     value: function (key) {
@@ -318,10 +280,7 @@
                             return map['delete'](key);
                         }
                         return false;
-                    },
-                    writable: false,
-                    configurable: false,
-                    enumerable: false
+                    }
                 },
                 clear: {
                     value: function () {
@@ -335,20 +294,14 @@
                         }
                         keys.length = 0;
                         size = 0;
-                    },
-                    writable: false,
-                    configurable: false,
-                    enumerable: false
+                    }
                 },
                 forEach: {
                     value: function (callback, thisArg) {
                         for (var i = 0, n = keys.length; i < n; i++) {
                             callback.call(thisArg, this.get(keys[i]), keys[i], this);
                         }
-                    },
-                    writable: false,
-                    configurable: false,
-                    enumerable: false
+                    }
                 }
             });
             if (arguments.length > 0 && Array.isArray(arguments[0])) {

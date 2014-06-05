@@ -14,7 +14,7 @@
  *                                                        *
  * hprose BytesIO for HTML5.                              *
  *                                                        *
- * LastModified: Mar 29, 2014                             *
+ * LastModified: Jun 5, 2014                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -339,128 +339,27 @@
         }
 
         return Object.create(BytesIO.prototype, {
-            length: {
-                get : length,
-                configurable: false,
-                enumerable: false
-            },
-            capacity: {
-                get : capacity,
-                configurable: false,
-                enumerable: false
-            },
-            position: {
-                get : position,
-                configurable: false,
-                enumerable: false
-            },
-            bytes: {
-                get : bytes,
-                configurable: false,
-                enumerable: false
-            },
-            mark: {
-                value: mark,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            reset: {
-                value: reset,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            clear: {
-                value: clear,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            writeByte: {
-                value: writeByte,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            write: {
-                value: write,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            writeString: {
-                value: writeString,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            readByte: {
-                value: readByte,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            read: {
-                value: read,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            skip: {
-                value: skip,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            readBytes: {
-                value: readBytes,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            readUntil: {
-                value: readUntil,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            readAsciiString: {
-                value: readAsciiString,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            readString: {
-                value: readString,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            takeBytes: {
-                value: takeBytes,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            toBytes: {
-                value: toBytes,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            toString: {
-                value: toString,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            },
-            clone: {
-                value: clone,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            }
+            length: { get : length },
+            capacity: { get : capacity },
+            position: { get : position },
+            bytes: { get : bytes },
+            mark: { value: mark },
+            reset: { value: reset },
+            clear: { value: clear },
+            writeByte: { value: writeByte },
+            write: { value: write },
+            writeString: { value: writeString },
+            readByte: { value: readByte },
+            read: { value: read },
+            skip: { value: skip },
+            readBytes: { value: readBytes },
+            readUntil: { value: readUntil },
+            readAsciiString: { value: readAsciiString },
+            readString: { value: readString },
+            takeBytes: { value: takeBytes },
+            toBytes: { value: toBytes },
+            toString: { value: toString },
+            clone: { value: clone }
         });
     };
 
@@ -478,10 +377,5 @@
         return String.fromCharCode.apply(String, array);
     }
 
-    Object.defineProperty(global.hprose.BytesIO, 'toString', {
-        value: toString,
-        writable: false,
-        configurable: false,
-        enumerable: false
-    });
+    Object.defineProperty(global.hprose.BytesIO, 'toString', { value: toString });
 })(this);
