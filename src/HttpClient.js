@@ -32,7 +32,8 @@
         Client.call(this, uri, functions);
         var _header = Object.create(null);
         var _timeout = 30000;
-        var _onprogress = noop;
+        var _onreqprogress = noop;
+        var _onresprogress = noop;
 
         var self = this;
         function send(request, callback) {
@@ -88,7 +89,8 @@
                 xhr.timeout = _timeout;
                 xhr.ontimeout = ontimeout;
             }
-            xhr.upload.onprogress = _onprogress;
+            xhr.upload.onprogress = _onreqprogress;
+            xhr.onprogress = _onresprogress;
             if (ArrayBuffer.isView) {
                 xhr.send(request);
             }
@@ -110,13 +112,21 @@
         function getTimeout() {
             return _timeout;
         }
-        function setOnProgress(value) {
+        function setOnRequestProgress(value) {
             if (typeof(value) === 'function') {
-                _onprogress = value;
+                _onreqprogress = value;
             }
         }
-        function getOnProgress() {
-            return _onprogress;
+        function getOnRequestProgress() {
+            return _onreqprogress;
+        }
+        function setOnResponseProgress(value) {
+            if (typeof(value) === 'function') {
+                _onresprogress = value;
+            }
+        }
+        function getOnResponseProgress() {
+            return _onresprogress;
         }
         function setHeader(name, value) {
             if (name.toLowerCase() !== 'content-type' &&
@@ -131,8 +141,10 @@
         }
         Object.defineProperties(this, {
             timeout: { get: getTimeout, set: setTimeout },
-            onProgress: { get: getOnProgress, set: setOnProgress },
-            onprogress: { get: getOnProgress, set: setOnProgress },
+            onProgress: { get: getOnRequestProgress, set: setOnRequestProgress },
+            onprogress: { get: getOnRequestProgress, set: setOnRequestProgress },
+            onRequestProgress: { get: getOnRequestProgress, set: setOnRequestProgress },
+            onResponseProgress: { get: getOnResponseProgress, set: setOnResponseProgress },
             setHeader: { value: setHeader },
             __send__: { value: send }
         });
