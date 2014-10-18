@@ -12,7 +12,7 @@
  *                                                        *
  * hprose http client for HTML5.                          *
  *                                                        *
- * LastModified: Sep 11, 2014                             *
+ * LastModified: Oct 18, 2014                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -91,7 +91,7 @@
             }
             xhr.upload.onprogress = _onreqprogress;
             xhr.onprogress = _onresprogress;
-            if (ArrayBuffer.isView) {
+            if (request.constructor === String || ArrayBuffer.isView) {
                 xhr.send(request);
             }
             else if (request.buffer.slice) {

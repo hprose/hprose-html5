@@ -13,7 +13,7 @@
  *                                                        *
  * hprose BytesIO for HTML5.                              *
  *                                                        *
- * LastModified: Jun 5, 2014                              *
+ * LastModified: Oct 18, 2014                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -162,19 +162,21 @@
             var n = bytes.byteLength || bytes.length;
             if (n === 0) return;
             _grow(n);
-            if (bytes instanceof ArrayBuffer) {
+            switch (bytes.constructor) {
+            case ArrayBuffer:
                 _bytes.set(new Uint8Array(bytes), _length);
-            }
-            else if (bytes instanceof Uint8Array) {
+                break;
+            case Uint8Array:
                 _bytes.set(bytes, _length);
-            }
-            else if (bytes instanceof BytesIO) {
+                break;
+            case BytesIO:
                 _bytes.set(bytes.toBytes(), _length);
-            }
-            else {
+                break;
+            default:
                 for (var i = 0; i < n; i++) {
                     _bytes[_length + i] = bytes[i];
                 }
+                break;
             }
             _length += n;
         }
@@ -318,23 +320,17 @@
             var a = arguments;
             switch (a.length) {
             case 1:
-                if (a[0] instanceof Uint8Array) {
-                    _bytes = a[0];
-                }
-                else if (a[0] instanceof BytesIO) {
-                    _bytes = a[0].toBytes();
-                }
-                else {
-                    _bytes = new Uint8Array(a[0]);
+                switch (a[0].constructor) {
+                case Uint8Array: _bytes = a[0]; _length = a[0].length; break;
+                case BytesIO: _bytes = a[0].toBytes(); _length = a[0].length; break;
+                case String: writeString(a[0]); break;
+                default: _bytes = new Uint8Array(a[0]); _length = _bytes.length; break;
                 }
                 break;
-            case 2: _bytes = new Uint8Array(a[0], a[1]); break;
-            case 3: _bytes = new Uint8Array(a[0], a[1], a[2]); break;
+            case 2: _bytes = new Uint8Array(a[0], a[1]); _length = a[1]; break;
+            case 3: _bytes = new Uint8Array(a[0], a[1], a[2]); _length = a[2]; break;
             }
-            if (_bytes) {
-                _length = _bytes.length;
-                mark();
-            }
+            mark();
         }
 
         return Object.create(BytesIO.prototype, {
@@ -364,13 +360,13 @@
 
     function toString(array) {
         if (array.length === 0) return '';
-        if (array instanceof global.hprose.BytesIO) {
+        if (array.constructor === global.hprose.BytesIO) {
             array = array.bytes;
         }
-        if (array instanceof ArrayBuffer) {
+        if (array.constructor === ArrayBuffer) {
             array = new Uint8Array(array);
         }
-        if (array instanceof Uint8Array) {
+        if (array.constructor === Uint8Array) {
             return getUTF8String(array, array.length)[0];
         }
         return String.fromCharCode.apply(String, array);

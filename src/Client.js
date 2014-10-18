@@ -12,7 +12,7 @@
  *                                                        *
  * hprose client for HTML5.                               *
  *                                                        *
- * LastModified: Jun 5, 2014                              *
+ * LastModified: Oct 17, 2014                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -61,13 +61,14 @@
 
         // private methods
         function sendAndReceive(request, callback) {
+            var context = {client: self, userdata: {}}
             for (var i = 0, n = _filters.length; i < n; i++) {
-                request = _filters[i].outputFilter(request, self);
+                request = _filters[i].outputFilter(request, context);
             }
             self.__send__(request, function(response, needToFilter) {
                 if (needToFilter) {
                     for (var i = _filters.length - 1; i >= 0; i--) {
-                        response = _filters[i].inputFilter(response, self);
+                        response = _filters[i].inputFilter(response, context);
                     }
                 }
                 callback(response);
