@@ -13,7 +13,7 @@
  *                                                        *
  * hprose BytesIO for HTML5.                              *
  *                                                        *
- * LastModified: Oct 18, 2014                             *
+ * LastModified: Mar 4, 2015                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -27,6 +27,8 @@
     var _INIT_SIZE = 1024;
 
     function getUTF8String(array, n) {
+        if (n === undefined) n = array.length;
+        if (n === 0) return ['', 0];
         var charCodes = new Uint16Array(n);
         var i = 0, off = 0;
         for (var len = array.length; i < n && off < len; i++) {
@@ -113,14 +115,9 @@
             if (_bytes) {
                 size *= 2;
                 if (size > _bytes.length) {
-                    if (size > _bytes.buffer.byteLength) {
-                        var buf = new Uint8Array(size);
-                        buf.set(_bytes);
-                        _bytes = buf;
-                    }
-                    else {
-                        _bytes = new Uint8Array(_bytes.buffer);
-                    }
+                    var buf = new Uint8Array(size);
+                    buf.set(_bytes);
+                    _bytes = buf;
                 }
             }
             else {
@@ -158,23 +155,23 @@
             _bytes[_length++] = b;
         }
 
-        function write(bytes) {
-            var n = bytes.byteLength || bytes.length;
+        function write(data) {
+            var n = data.byteLength || data.length;
             if (n === 0) return;
             _grow(n);
-            switch (bytes.constructor) {
+            switch (data.constructor) {
             case ArrayBuffer:
-                _bytes.set(new Uint8Array(bytes), _length);
+                _bytes.set(new Uint8Array(data), _length);
                 break;
             case Uint8Array:
-                _bytes.set(bytes, _length);
+                _bytes.set(data, _length);
                 break;
             case BytesIO:
-                _bytes.set(bytes.toBytes(), _length);
+                _bytes.set(data.toBytes(), _length);
                 break;
             default:
                 for (var i = 0; i < n; i++) {
-                    _bytes[_length + i] = bytes[i];
+                    _bytes[_length + i] = data[i];
                 }
                 break;
             }
@@ -202,7 +199,7 @@
                     _bytes[_length++] = 0x80 | (codeUnit & 0x3F);
                 }
                 else {
-                    if (i + 1 < length) {
+                    if (i + 1 < n) {
                         var nextCodeUnit = str.codeUnitAt(i + 1);
                         if (codeUnit < 0xDC00 && 0xDC00 <= nextCodeUnit && nextCodeUnit <= 0xDFFF) {
                             var rune = (((codeUnit & 0xDC00) << 10) | (nextCodeUnit & 0x03FF)) + 0x010000;
@@ -247,14 +244,15 @@
 
         // the result is an Uint8Array, and includes tag.
         function readBytes(tag) {
-            var buf = _bytes.subarray(_off, _length);
-            var pos = Array.prototype.indexOf.call(buf, tag);
+            var pos = Array.prototype.indexOf.call(_bytes, tag, _off);
+            var buf;
             if (pos == -1) {
+                buf = _bytes.subarray(_off, _length);
                 _off = _length;
             }
             else {
-                buf = buf.subarray(0, pos + 1);
-                _off += pos + 1;
+                buf = _bytes.subarray(_off, pos + 1);
+                _off = pos + 1;
             }
             return buf;
         }
@@ -262,18 +260,20 @@
         // the result is a String, and doesn't include tag.
         // but the position is the same as readBytes
         function readUntil(tag) {
-            var buf = _bytes.subarray(_off, _length);
-            var pos = Array.prototype.indexOf.call(buf, tag);
-            switch (pos) {
-            case 0:
+            var pos = Array.prototype.indexOf.call(_bytes, tag, _off);
+            var str = '';
+            if (pos == _off) {
                 _off++;
-                return '';
-            case -1:
-                _off = _length;
-                return getUTF8String(buf, buf.length)[0];
             }
-            _off += pos + 1;
-            return getUTF8String(buf.subarray(0, pos), pos)[0];
+            else if (pos == -1) {
+                str = getUTF8String(_bytes.subarray(_off, _length))[0];
+                _off = _length;
+            }
+            else {
+                str = getUTF8String(_bytes.subarray(_off, pos))[0];
+                _off = pos + 1;
+            }
+            return str;
         }
 
         function readAsciiString(n) {
