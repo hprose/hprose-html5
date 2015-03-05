@@ -12,7 +12,7 @@
  *                                                        *
  * hprose client for HTML5.                               *
  *                                                        *
- * LastModified: Oct 17, 2014                             *
+ * LastModified: Mar 5, 2015                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -26,6 +26,7 @@
     var BytesIO = global.hprose.BytesIO;
     var Writer = global.hprose.Writer;
     var Reader = global.hprose.Reader;
+    var Completer = global.hprose.Completer;
 
     var GETFUNCTIONS = new Uint8Array(1);
     GETFUNCTIONS[0] = Tags.TagEnd;
@@ -60,23 +61,30 @@
         var self = this;
 
         // private methods
-        function sendAndReceive(request, callback) {
-            var context = {client: self, userdata: {}}
+
+        function sendAndReceive(request) {
+            var completer = new Completer();
+            var context = {client: self, userdata: {}};
             for (var i = 0, n = _filters.length; i < n; i++) {
                 request = _filters[i].outputFilter(request, context);
             }
-            self.__send__(request, function(response, needToFilter) {
-                if (needToFilter) {
-                    for (var i = _filters.length - 1; i >= 0; i--) {
-                        response = _filters[i].inputFilter(response, context);
-                    }
+            self.__send__(request)
+            .then(function(response) {
+                for (var i = _filters.length - 1; i >= 0; i--) {
+                    response = _filters[i].inputFilter(response, context);
                 }
-                callback(response);
+                completer.complete(response);
+            })
+            .catchError(function(error) {
+                completer.completeError(error);
             });
+            return completer.future;
         }
 
         function initService(stub) {
-            sendAndReceive(GETFUNCTIONS, function (data) {
+            var completer = new Completer();
+            sendAndReceive(GETFUNCTIONS)
+            .then(function (data) {
                 var error = null;
                 try {
                     var stream = new BytesIO(data);
@@ -100,9 +108,18 @@
                     error = e;
                 }
                 if (error !== null) {
-                    _onerror('useService', error);
+                    completer.completeError(error);
+                }
+                else {
+                    completer.complete(stub);
+                }
+            })
+            .catchError(function(error) {
+                if (error !== null) {
+                    completer.completeError(error);
                 }
             });
+            return completer.future;
         }
 
         function setFunction(stub, func) {
@@ -150,7 +167,12 @@
             _onready();
         }
 
+        function copyargs(src, dest) {
+            var n = Math.min(src.length, dest.length);
+            for (var i = 0; i < n; ++i) dest[i] = src[i];
+        }
         function _invoke(stub, func, args) {
+            var completer = new Completer();
             var resultMode = ResultMode.Normal, stream;
             if (!_batch && !_batches.length || _batch) {
                 var byref = _byref;
@@ -368,7 +390,8 @@
                                    func: func,
                                    data: stream.bytes,
                                    callback: callback,
-                                   errorHandler: errorHandler});
+                                   errorHandler: errorHandler,
+                                   completer: completer});
                 }
                 else {
                     stream.writeByte(Tags.TagEnd);
@@ -393,7 +416,8 @@
                 var batches = _batches.slice(0);
                 _batches.length = 0;
 
-                sendAndReceive(request.bytes, function (response) {
+                sendAndReceive(request.bytes)
+                .then(function (response) {
                     var result = null;
                     var error = null;
                     var i;
@@ -426,9 +450,12 @@
                                     break;
                                 case Tags.TagArgument:
                                     reader.reset();
-                                    args = reader.readList();
+                                    var _args = reader.readList();
                                     if (batch) {
-                                        batches[i].args = args;
+                                        copyargs(_args, batches[i].args);
+                                    }
+                                    else {
+                                        copyargs(_args, args);
                                     }
                                     break;
                                 case Tags.TagError:
@@ -462,11 +489,13 @@
                                     callback: callback,
                                     errorHandler: errorHandler,
                                     result: result,
-                                    error: error}];
+                                    error: error,
+                                    completer: completer}];
                     }
                     for (i = 0; i < batchSize; ++i) {
                         var item = batches[i];
                         if (item.error) {
+                            item.completer.completeError(item.error);
                             if (item.errorHandler) {
                                 item.errorHandler(item.func, item.error);
                             }
@@ -474,12 +503,27 @@
                                 _onerror(item.func, item.error);
                             }
                         }
-                        else if (item.callback) {
-                            item.callback(item.result, item.args);
+                        else {
+                            item.completer.complete(item.result);
+                            if (item.callback) {
+                                item.callback(item.result, item.args);
+                            }
+                        }
+                    }
+                })
+                .catchError(function(error) {
+                    if (error !== null) {
+                        completer.completeError(error);
+                        if (errorHandler) {
+                            errorHandler(func, error);
+                        }
+                        else {
+                            _onerror(func, error);
                         }
                     }
                 });
             }
+            return completer.future;
         }
 
         // public methods
@@ -570,13 +614,40 @@
                 setFunctions(stub, functions);
             }
             else {
-                initService(stub);
+                var completer = new Completer();
+                global.setTimeout(function () {
+                    initService(stub)
+                    .then(function(stub) {
+                        completer.complete(stub);
+                    })
+                    .catchError(function(error) {
+                        completer.completeError(error);
+                    });
+                }, 0);
+                return completer.future;
             }
             return stub;
         }
         function invoke() {
             var args = arguments;
             var func = Array.prototype.shift.apply(args);
+            var hasCallback = false;
+            var i;
+            for (i in args) {
+                if (typeof(args[i]) === s_function) {
+                    hasCallback = true;
+                    break;
+                }
+            }
+            if (!hasCallback && (args.length > 0) && Array.isArray(args[0])) {
+                var _args = args[0];
+                _args.push(function(result, args) {});
+                var n = args.length;
+                for (i = 1; i < n; i++) {
+                    _args.push(args[i]);
+                }
+                args = _args;
+            }
             return _invoke(self, func, args);
         }
         function beginBatch() {
@@ -589,6 +660,15 @@
             if (_batches.length) {
                 _invoke();
             }
+        }
+        function then(handler) {
+            if (_ready) {
+                handler(self);
+            }
+            else {
+                _onready = function() { handler(self); };
+            }
+            return self;
         }
         /* function constructor */ {
             if (typeof(uri) === s_string) {
@@ -611,7 +691,8 @@
             useService: { value: useService },
             invoke: { value: invoke },
             beginBatch: { value: beginBatch },
-            endBatch: { value: endBatch }
+            endBatch: { value: endBatch },
+            then: { value: then }
         });
     };
 

@@ -12,7 +12,7 @@
  *                                                        *
  * hprose http client for HTML5.                          *
  *                                                        *
- * LastModified: Oct 18, 2014                             *
+ * LastModified: Mar 5, 2015                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -25,6 +25,7 @@
     var Client = global.hprose.Client;
     var BytesIO = global.hprose.BytesIO;
     var serialize = global.hprose.serialize;
+    var Completer = global.hprose.Completer;
 
     function noop(){}
 
@@ -36,7 +37,8 @@
         var _onresprogress = noop;
 
         var self = this;
-        function send(request, callback) {
+        function send(request) {
+            var completer = new Completer();
             var xhr = new XMLHttpRequest();
             xhr.open('POST', self.uri, true);
             if (location.protocol !== 'file:') {
@@ -53,30 +55,17 @@
                     global.clearTimeout(timeoutId);
                 }
                 if (xhr.status === 200) {
-                    callback(new Uint8Array(xhr.response), true);
+                    completer.complete(new Uint8Array(xhr.response));
                 }
                 else if (xhr.status !== 0) {
-                    var error = xhr.status + ':' + xhr.statusText;
-                    var buffer = new BytesIO();
-                    buffer.writeByte(Tags.TagError);
-                    buffer.write(serialize(error, true));
-                    buffer.writeByte(Tags.TagEnd);
-                    callback(buffer.bytes);
+                    completer.completeError(new Exception(xhr.status + ':' + xhr.statusText));
                 }
             };
             xhr.onerror = function() {
-                var buffer = new BytesIO();
-                buffer.writeByte(Tags.TagError);
-                buffer.write(serialize('error', true));
-                buffer.writeByte(Tags.TagEnd);
-                callback(buffer.bytes);
+                completer.completeError(new Exception('error'));
             };
             function ontimeout() {
-                var buffer = new BytesIO();
-                buffer.writeByte(Tags.TagError);
-                buffer.write(serialize('timeout', true));
-                buffer.writeByte(Tags.TagEnd);
-                callback(buffer.bytes);
+                completer.completeError(new Exception('timeout'));
             }
             if (xhr.timeout === undefined) {
                 timeoutId = global.setTimeout(function () {
@@ -100,6 +89,7 @@
             else {
                 xhr.send(request.buffer);
             }
+            return completer.future;
         }
         function setTimeout(value) {
             if (typeof(value) === 'number') {
