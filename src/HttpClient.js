@@ -49,27 +49,8 @@
                 xhr.setRequestHeader(name, _header[name]);
             }
             var timeoutId;
-            xhr.onreadystatechange = function() {
-                if (xhr.readyState === 4) {
-                    xhr.onload = function() {};
-                    xhr.onreadystatechange = function() {};
-                    if (xhr.status) {
-                        if (timeoutId !== undefined) {
-                            global.clearTimeout(timeoutId);
-                            timeoutId = undefined;
-                        }
-                        if (xhr.status === 200) {
-                            completer.complete(new Uint8Array(xhr.response));
-                        }
-                        else {
-                            completer.completeError(new Exception(xhr.status + ':' + xhr.statusText));
-                        }
-                    }
-                }
-            };
             xhr.onload = function () {
                 xhr.onload = function() {};
-                xhr.onreadystatechange = function() {};
                 if (xhr.status) {
                     if (timeoutId !== undefined) {
                         global.clearTimeout(timeoutId);
@@ -92,7 +73,6 @@
             };
             timeoutId = global.setTimeout(function () {
                 xhr.onload = function() {};
-                xhr.onreadystatechange = function() {};
                 xhr.onerror = function() {};
                 xhr.abort();
                 completer.completeError(new Exception('timeout'));
