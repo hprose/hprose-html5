@@ -13,7 +13,7 @@
  *                                                        *
  * hprose Writer test for HTML5.                          *
  *                                                        *
- * LastModified: Mar 28, 2014                             *
+ * LastModified: Mar 15, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -25,13 +25,13 @@
     'use strict';
     //var methodList = ['hello', 'sum', 'swapKeyAndValue', 'getUserList'];
     //var client = new hprose.Client.create('http://hprose.com/example/', methodList);
-    var client = new hprose.Client.create('http://hprose.com/example/')
-    .then(function(client) {
-        client.hello('World')
+    var client = new hprose.Client.create('http://hprose.com/example/');
+    client.then(function(stub) {
+        stub.hello('World')
         .then(function(result) {
             console.info(result);
         });
-        client.sum(1,2,3,4,5)
+        stub.sum(1,2,3,4,5)
         .then(function(result) {
             console.info(result);
         });
@@ -54,21 +54,21 @@
         .catchError(function(e) {
             console.error(e);
         });
-        client.getUserList()
+        stub.getUserList()
         .then(function(result) {
             console.info(result);
         });
         client.beginBatch();
-        client.hello('World')
+        stub.hello('World')
         .then(function(result) {
             console.info(result);
         });
-        client.sum(1,2,3,4,5)
+        stub.sum(1,2,3,4,5)
         .then(function(result) {
             console.info(result);
         });
         var args2 = [weeks];
-        client.swapKeyAndValue(weeks, function(result, args) {
+        stub.swapKeyAndValue(weeks, function(result, args) {
             console.info(weeks);
             console.info(result);
             console.info(args[0]);
@@ -78,11 +78,11 @@
             console.info(result);
         });
         client.endBatch();
-    });
-    client.onError = function(name, err) {
-        console.error(name + ':' + err);
-    };
-    client.onprogress = function(e) {
+    })
+    .catchError(function(e) {
+        console.error(e);
+    })
+    .onprogress = function(e) {
         if (e.lengthComputable) {
           console.log((e.loaded / e.total) * 100);
         }

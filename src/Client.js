@@ -12,7 +12,7 @@
  *                                                        *
  * hprose client for HTML5.                               *
  *                                                        *
- * LastModified: Mar 5, 2015                              *
+ * LastModified: Mar 15, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -48,15 +48,17 @@
     global.hprose.Client = function Client(uri, functions) {
         // private members
         var _uri;
-        var _ready         = false;
-        var _byref         = false;
-        var _simple        = false;
-        var _useHarmonyMap = false;
-        var _onerror       = noop;
-        var _onready       = noop;
-        var _filters       = [];
-        var _batch         = false;
-        var _batches       = [];
+        var _ready              = false;
+        var _byref              = false;
+        var _simple             = false;
+        var _useHarmonyMap      = false;
+        var _onerror            = noop;
+        var _onready            = noop;
+        var _filters            = [];
+        var _batch              = false;
+        var _batches            = [];
+        var _thenHandler        = noop;
+        var _catchErrorHandler  = noop;
 
         var self = this;
 
@@ -115,9 +117,7 @@
                 }
             })
             .catchError(function(error) {
-                if (error !== null) {
-                    completer.completeError(error);
-                }
+                completer.completeError(error);
             });
             return completer.future;
         }
@@ -512,14 +512,12 @@
                     }
                 })
                 .catchError(function(error) {
-                    if (error !== null) {
-                        completer.completeError(error);
-                        if (errorHandler) {
-                            errorHandler(func, error);
-                        }
-                        else {
-                            _onerror(func, error);
-                        }
+                    completer.completeError(error);
+                    if (errorHandler) {
+                        errorHandler(func, error);
+                    }
+                    else {
+                        _onerror(func, error);
                     }
                 });
             }
@@ -662,17 +660,23 @@
             }
         }
         function then(handler) {
-            if (_ready) {
-                handler(self);
-            }
-            else {
-                _onready = function() { handler(self); };
-            }
+            _thenHandler = handler;
+            return self;
+        }
+        function catchError(handler) {
+            _catchErrorHandler = handler;
             return self;
         }
         /* function constructor */ {
             if (typeof(uri) === s_string) {
-                useService(uri, functions);
+                var f = useService(uri, functions);
+                if (f.then && f.catchError) {
+                    f.then(function(stub) {
+                        _thenHandler(stub);
+                    }).catchError(function(e) {
+                        _catchErrorHandler(e);
+                    });
+                }
             }
         }
         Object.defineProperties(this, {
@@ -692,7 +696,8 @@
             invoke: { value: invoke },
             beginBatch: { value: beginBatch },
             endBatch: { value: endBatch },
-            then: { value: then }
+            then: { value: then },
+            catchError: { value: catchError }
         });
     };
 

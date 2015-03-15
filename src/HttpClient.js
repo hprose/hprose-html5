@@ -12,7 +12,7 @@
  *                                                        *
  * hprose http client for HTML5.                          *
  *                                                        *
- * LastModified: Mar 5, 2015                              *
+ * LastModified: Mar 15, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -41,7 +41,7 @@
             var completer = new Completer();
             var xhr = new XMLHttpRequest();
             xhr.open('POST', self.uri, true);
-            if (location.protocol !== 'file:') {
+            if (global.location !== undefined && global.location.protocol !== 'file:') {
                 xhr.withCredentials = 'true';
             }
             xhr.responseType = 'arraybuffer';
@@ -49,36 +49,57 @@
                 xhr.setRequestHeader(name, _header[name]);
             }
             var timeoutId;
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    xhr.onload = function() {};
+                    xhr.onreadystatechange = function() {};
+                    if (xhr.status) {
+                        if (timeoutId !== undefined) {
+                            global.clearTimeout(timeoutId);
+                            timeoutId = undefined;
+                        }
+                        if (xhr.status === 200) {
+                            completer.complete(new Uint8Array(xhr.response));
+                        }
+                        else {
+                            completer.completeError(new Exception(xhr.status + ':' + xhr.statusText));
+                        }
+                    }
+                }
+            };
             xhr.onload = function () {
                 xhr.onload = function() {};
-                if (timeoutId !== undefined) {
-                    global.clearTimeout(timeoutId);
-                }
-                if (xhr.status === 200) {
-                    completer.complete(new Uint8Array(xhr.response));
-                }
-                else if (xhr.status !== 0) {
-                    completer.completeError(new Exception(xhr.status + ':' + xhr.statusText));
+                xhr.onreadystatechange = function() {};
+                if (xhr.status) {
+                    if (timeoutId !== undefined) {
+                        global.clearTimeout(timeoutId);
+                        timeoutId = undefined;
+                    }
+                    if (xhr.status === 200) {
+                        completer.complete(new Uint8Array(xhr.response));
+                    }
+                    else {
+                        completer.completeError(new Exception(xhr.status + ':' + xhr.statusText));
+                    }
                 }
             };
             xhr.onerror = function() {
+                if (timeoutId !== undefined) {
+                    global.clearTimeout(timeoutId);
+                    timeoutId = undefined;
+                }
                 completer.completeError(new Exception('error'));
             };
-            function ontimeout() {
+            timeoutId = global.setTimeout(function () {
+                xhr.onload = function() {};
+                xhr.onreadystatechange = function() {};
+                xhr.onerror = function() {};
+                xhr.abort();
                 completer.completeError(new Exception('timeout'));
+            }, _timeout);
+            if (xhr.upload !== undefined) {
+                xhr.upload.onprogress = _onreqprogress;
             }
-            if (xhr.timeout === undefined) {
-                timeoutId = global.setTimeout(function () {
-                    xhr.onload = function() {};
-                    xhr.abort();
-                    ontimeout();
-                }, _timeout);
-            }
-            else {
-                xhr.timeout = _timeout;
-                xhr.ontimeout = ontimeout;
-            }
-            xhr.upload.onprogress = _onreqprogress;
             xhr.onprogress = _onresprogress;
             if (request.constructor === String || ArrayBuffer.isView) {
                 xhr.send(request);

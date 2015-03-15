@@ -13,7 +13,7 @@
  *                                                        *
  * hprose Future for HTML5.                               *
  *                                                        *
- * LastModified: Mar 5, 2015                              *
+ * LastModified: Mar 15, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -23,14 +23,12 @@
 
     global.hprose = global.hprose || Object.create(null);
 
-    function Future() {}
-
     global.hprose.Completer = function Completer() {
         var callback = null;
         var errorCallback = null;
         var results = [];
         var errors = [];
-        var future = Object.create(Future.prototype);
+        var future = Object.create(null);
 
         function complete(result) {
             if (callback) {
