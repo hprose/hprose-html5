@@ -9,11 +9,11 @@
 
 /**********************************************************\
  *                                                        *
- * Writer.Test.js                                         *
+ * Reader.Test.js                                         *
  *                                                        *
- * hprose Writer test for HTML5.                          *
+ * hprose Reader test for HTML5.                          *
  *                                                        *
- * LastModified: Mar 28, 2014                             *
+ * LastModified: Apr 17, 2014                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/

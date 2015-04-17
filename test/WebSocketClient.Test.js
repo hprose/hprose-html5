@@ -9,9 +9,9 @@
 
 /**********************************************************\
  *                                                        *
- * Client.Test.js                                         *
+ * WebSocketClient.Test.js                                *
  *                                                        *
- * hprose Client test for HTML5.                          *
+ * hprose websocket client test for HTML5.                *
  *                                                        *
  * LastModified: Apr 17, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
@@ -23,57 +23,22 @@
 
 (function() {
     'use strict';
-    //var methodList = ['hello', 'sum', 'swapKeyAndValue', 'getUserList'];
-    //var client = new hprose.Client.create('http://hprose.com/example/', methodList);
-    var client = new hprose.Client.create('http://hprose.com/example/');
+    var client = new hprose.Client.create('ws://127.0.0.1:8080');
     client.then(function(stub) {
         stub.hello('World')
         .then(function(result) {
             console.info(result);
         });
-        stub.sum(1,2,3,4,5)
-        .then(function(result) {
-            console.info(result);
-        });
-        var weeks = {
-            'Monday': 'Mon',
-            'Tuesday': 'Tue',
-            'Wednesday': 'Wed',
-            'Thursday': 'Thu',
-            'Friday': 'Fri',
-            'Saturday': 'Sat',
-            'Sunday': 'Sun',
-        };
-        var args = [weeks];
-        client.invoke('swapKeyAndValue', args, true)
-        .then(function(result) {
-            console.info(weeks);
-            console.info(result);
-            console.info(args[0]);
-        })
-        .catchError(function(e) {
-            console.error(e);
-        });
-        stub.getUserList()
-        .then(function(result) {
-            console.info(result);
-        });
         client.beginBatch();
-        stub.hello('World')
+        stub.hello('World 1')
         .then(function(result) {
             console.info(result);
         });
-        stub.sum(1,2,3,4,5)
+        stub.hello('World 2')
         .then(function(result) {
             console.info(result);
         });
-        var args2 = [weeks];
-        stub.swapKeyAndValue(weeks, function(result, args) {
-            console.info(weeks);
-            console.info(result);
-            console.info(args[0]);
-        }, true);
-        client.getUserList()
+        stub.hello('World 3')
         .then(function(result) {
             console.info(result);
         });
@@ -81,11 +46,6 @@
     })
     .catchError(function(e) {
         console.error(e);
-    })
-    .onprogress = function(e) {
-        if (e.lengthComputable) {
-          console.log((e.loaded / e.total) * 100);
-        }
-    };
+    });
 
 })();

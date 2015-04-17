@@ -12,7 +12,7 @@
  *                                                        *
  * hprose http client for HTML5.                          *
  *                                                        *
- * LastModified: Mar 15, 2015                             *
+ * LastModified: Apr 17, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -20,11 +20,8 @@
 (function (global) {
     'use strict';
 
-    var Tags = global.hprose.Tags;
     var Exception = global.hprose.Exception;
     var Client = global.hprose.Client;
-    var BytesIO = global.hprose.BytesIO;
-    var serialize = global.hprose.serialize;
     var Completer = global.hprose.Completer;
 
     function noop(){}
@@ -48,7 +45,7 @@
             for (var name in _header) {
                 xhr.setRequestHeader(name, _header[name]);
             }
-            var timeoutId;
+            var timeoutId = undefined;
             xhr.onload = function () {
                 xhr.onload = function() {};
                 if (xhr.status) {
@@ -71,12 +68,14 @@
                 }
                 completer.completeError(new Exception('error'));
             };
-            timeoutId = global.setTimeout(function () {
-                xhr.onload = function() {};
-                xhr.onerror = function() {};
-                xhr.abort();
-                completer.completeError(new Exception('timeout'));
-            }, _timeout);
+            if (_timeout > 0) {
+                timeoutId = global.setTimeout(function () {
+                    xhr.onload = function() {};
+                    xhr.onerror = function() {};
+                    xhr.abort();
+                    completer.completeError(new Exception('timeout'));
+                }, _timeout);
+            }
             if (xhr.upload !== undefined) {
                 xhr.upload.onprogress = _onreqprogress;
             }

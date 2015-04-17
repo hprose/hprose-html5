@@ -12,7 +12,7 @@
  *                                                        *
  * hprose client for HTML5.                               *
  *                                                        *
- * LastModified: Mar 15, 2015                             *
+ * LastModified: Apr 17, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -707,6 +707,10 @@
         if (parser.protocol === 'http:' ||
             parser.protocol === 'https:') {
             return new global.hprose.HttpClient(uri, functions);
+        }
+        if (parser.protocol === 'ws:' ||
+            parser.protocol === 'wss:') {
+            return new global.hprose.WebSocketClient(uri, functions);
         }
         throw new Exception('The ' + parser.protocol + ' client isn\'t implemented.');
     }
