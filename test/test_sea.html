@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+    <head>
+        <title>seajs hprose</title>
+        <meta charset="utf-8">
+        <script src="sea.js"></script>
+        <script>
+        seajs.config({
+            alias: {
+                hprose: '../dist/hprose-html5.js'
+            }
+        });
+        seajs.use('hprose', function(hprose) {
+            var client = new hprose.HttpClient("http://www.hprose.com/example/", ["hello"]);
+            client.hello("World!", function(result) {
+                alert(result);
+            }, function(name, err) {
+                alert(err);
+            });
+        });
+        </script>
+    </head>
+    <body>
+    </body>
+</html>
