@@ -13,7 +13,7 @@
  *                                                        *
  * hprose Future for HTML5.                               *
  *                                                        *
- * LastModified: Mar 15, 2015                             *
+ * LastModified: May 4, 2015                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -51,10 +51,16 @@
         function then(handler) {
             callback = handler;
             if (results.length > 0) {
-                for (var result in results) {
-                    callback(result);
+                var result;
+                for (var i in results) {
+                    try {
+                        result = callback(results[i]);
+                    }
+                    catch (e) {
+                        completeError(e);
+                    }
                 }
-                results = [];
+                results = [result];
             }
             return future;
         }
@@ -62,8 +68,8 @@
         function catchError(errorHandler) {
             errorCallback = errorHandler;
             if (errors.length > 0) {
-                for (var error in errors) {
-                    errorCallback(error);
+                for (var i in errors) {
+                    errorCallback(errors[i]);
                 }
                 errors = [];
             }
