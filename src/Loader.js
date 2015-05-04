@@ -9,11 +9,11 @@
 
 /**********************************************************\
  *                                                        *
- * AsyncLoader.js                                         *
+ * Loader.js                                              *
  *                                                        *
- * hprose asynchronous loader for HTML5.                  *
+ * hprose CommonJS/AMD/CMD loader for HTML5.              *
  *                                                        *
- * LastModified: Apr 19, 2015                             *
+ * LastModified: May 4, 2015                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -28,5 +28,8 @@
         else if (define.amd) {
             define("hprose", [], function() { return global.hprose; });
         }
+    }
+    if (typeof module === "object" && typeof module.exports === "object") {
+        module.exports = global.hprose;
     }
 })(this);
