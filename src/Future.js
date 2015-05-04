@@ -26,11 +26,20 @@
     global.hprose.Completer = function Completer() {
         var m_results = [];
         var m_callbacks = [];
-        var m_error = null;
+        var m_errors = [];
         var m_onerror = null;
         var m_future = Object.create(null);
 
-        // Calling complete or completeError must not be done more than once.
+        function completeError(e) {
+            if (m_onerror !== null) {
+                m_onerror(e);
+            }
+            else {
+                m_errors.push(e);
+            }
+        }
+
+        // Calling complete must not be done more than once.
         function complete(result) {
             m_results[0] = result;
             if (m_callbacks.length > 0) {
@@ -40,25 +49,20 @@
                         m_results[0] = callback(m_results[0]);
                     }
                     catch (e) {
-                        if (m_onerror !== null) {
-                            m_onerror(e);
-                        }
-                        else {
-                            m_error = e;
-                        }
+                        completeError(e);
                     }
                 }
                 m_callbacks.length = 0;
             }
         }
 
-        function completeError(e) {
-            if (m_onerror !== null) {
-                m_onerror(e);
+        function catchError(onerror) {
+            m_onerror = onerror;
+            for (var i in m_errors) {
+                onerror(m_errors[i]);
             }
-            else {
-                m_error = e;
-            }
+            m_errors.length = 0;
+            return m_future;
         }
 
         function then(callback) {
@@ -67,26 +71,11 @@
                     m_results[0] = callback(m_results[0]);
                 }
                 catch (e) {
-                    if (m_onerror !== null) {
-                        m_onerror(e);
-                    }
-                    else {
-                        m_error = e;
-                    }
+                    completeError(e);
                 }
             }
             else {
                 m_callbacks.push(callback);
-            }
-            return m_future;
-        }
-
-        function catchError(onerror) {
-            if (m_error !== null) {
-                onerror(m_error);
-            }
-            else {
-                m_onerror = onerror;
             }
             return m_future;
         }
