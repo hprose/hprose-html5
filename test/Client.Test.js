@@ -33,6 +33,9 @@
         });
         stub.sum(1,2,3,4,5)
         .then(function(result) {
+            return result + 6;
+        })
+        .then(function(result) {
             console.info(result);
         });
         var weeks = {

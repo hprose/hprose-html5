@@ -24,18 +24,29 @@
     global.hprose = global.hprose || Object.create(null);
 
     global.hprose.Completer = function Completer() {
-        var callback = null;
+        var callbacks = [];
         var errorCallback = null;
         var results = [];
         var errors = [];
         var future = Object.create(null);
 
         function complete(result) {
-            if (callback) {
-                callback(result);
-            }
-            else {
-                results.push(result);
+            results.push(result);
+            if (callbacks.length > 0) {
+                for (var i in callbacks) {
+                    var handler = callbacks[i];
+                    var result;
+                    for (var j in results) {
+                        try {
+                            result = handler(results[j]);
+                        }
+                        catch (e) {
+                            completeError(e);
+                        }
+                    }
+                    results = [result];
+                }
+                callbacks = [];
             }
         }
 
@@ -49,18 +60,20 @@
         }
 
         function then(handler) {
-            callback = handler;
             if (results.length > 0) {
                 var result;
                 for (var i in results) {
                     try {
-                        result = callback(results[i]);
+                        result = handler(results[i]);
                     }
                     catch (e) {
                         completeError(e);
                     }
                 }
                 results = [result];
+            }
+            else {
+                callbacks.push(handler);
             }
             return future;
         }
