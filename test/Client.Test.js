@@ -33,7 +33,13 @@
         });
         stub.sum(1,2,3,4,5)
         .then(function(result) {
-            return result + 6;
+            return stub.sum(result, 6, 7, 8);
+        })
+        .then(function(result) {
+            return result + 9;
+        })
+        .then(function(result) {
+            return stub.sum(result, 10, 11, 12);
         })
         .then(function(result) {
             console.info(result);

@@ -13,7 +13,7 @@
  *                                                        *
  * hprose ClassManager for HTML5.                         *
  *                                                        *
- * LastModified: Jun 5, 2014                              *
+ * LastModified: May 5, 2015                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -21,7 +21,6 @@
 (function (global) {
     'use strict';
 
-    global.hprose = global.hprose || Object.create(null);
     var WeakMap = global.WeakMap;
 
     var classCache = Object.create(null);
@@ -45,5 +44,7 @@
         getClassAlias: { value: getClassAlias },
         getClass: { value: getClass }
     });
+
+    global.hprose.register = register;
 
 })(this);

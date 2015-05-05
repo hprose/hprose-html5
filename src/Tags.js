@@ -12,15 +12,13 @@
  *                                                        *
  * hprose tags enum for HTML5.                            *
  *                                                        *
- * LastModified: Mar 29, 2014                             *
+ * LastModified: May 5, 2015                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
 
 (function (global) {
     'use strict';
-
-    global.hprose = global.hprose || Object.create(null);
 
     global.hprose.Tags = {
         /* Serialize Tags */
