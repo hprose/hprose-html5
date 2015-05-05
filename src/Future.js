@@ -13,7 +13,7 @@
  *                                                        *
  * hprose Future for HTML5.                               *
  *                                                        *
- * LastModified: May 4, 2015                              *
+ * LastModified: May 5, 2015                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -21,14 +21,14 @@
 (function (global) {
     'use strict';
 
-    global.hprose = global.hprose || Object.create(null);
+    function Future() {}
 
     global.hprose.Completer = function Completer() {
         var m_results = [];
         var m_callbacks = [];
         var m_errors = [];
         var m_onerror = null;
-        var m_future = Object.create(null);
+        var m_future = new Future();
 
         function completeError(e) {
             if (m_onerror !== null) {
@@ -46,7 +46,12 @@
                 for (var i in m_callbacks) {
                     try {
                         var callback = m_callbacks[i];
-                        m_results[0] = callback(m_results[0]);
+                        if (m_results[0].constructor === Future) {
+                            m_results[0] = m_results[0].then(callback);
+                        }
+                        else {
+                            m_results[0] = callback(m_results[0]);
+                        }
                     }
                     catch (e) {
                         completeError(e);
@@ -68,7 +73,12 @@
         function then(callback) {
             if (m_results.length > 0) {
                 try {
-                    m_results[0] = callback(m_results[0]);
+                    if (m_results[0].constructor === Future) {
+                        m_results[0] = m_results[0].then(callback);
+                    }
+                    else {
+                        m_results[0] = callback(m_results[0]);
+                    }
                 }
                 catch (e) {
                     completeError(e);
