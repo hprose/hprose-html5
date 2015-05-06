@@ -25,7 +25,7 @@
     'use strict';
     //var methodList = ['hello', 'sum', 'swapKeyAndValue', 'getUserList'];
     //var client = new hprose.Client.create('http://hprose.com/example/', methodList);
-    var client = new hprose.Client.create('http://hprose.com/example/');
+    var client = hprose.Client.create('http://hprose.com/example/');
     client.then(function(stub) {
         stub.hello('World')
         .then(function(result) {
@@ -33,13 +33,28 @@
         });
         stub.sum(1,2,3,4,5)
         .then(function(result) {
+            console.info(result);
             return stub.sum(result, 6, 7, 8);
         })
         .then(function(result) {
-            return result + 9;
+            console.info(result);
+            return stub.sum(result, 9);
         })
         .then(function(result) {
+            console.info(result);
             return stub.sum(result, 10, 11, 12);
+        })
+        .then(function(result) {
+            console.info(result);
+            return stub.sum(result, 13);
+        })
+        .then(function(result) {
+            console.info(result);
+            return result + 14;
+        })
+        .then(function(result) {
+            console.info(result);
+            return result + 15;
         })
         .then(function(result) {
             console.info(result);

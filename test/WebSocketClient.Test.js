@@ -23,7 +23,7 @@
 
 (function() {
     'use strict';
-    var client = new hprose.Client.create('ws://127.0.0.1:8080');
+    var client = hprose.Client.create('ws://127.0.0.1:8080');
     client.then(function(stub) {
         stub.hello('World')
         .then(function(result) {
