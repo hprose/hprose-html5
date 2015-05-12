@@ -24,7 +24,8 @@
     global.hprose.common = {
         Exception: global.hprose.Exception,
         ResultMode: global.hprose.ResultMode,
-        Filter: global.hprose.Filter
+        Filter: global.hprose.Filter,
+        Completer: global.hprose.Completer
     };
 
     global.hprose.io = {
