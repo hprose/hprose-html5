@@ -22,11 +22,11 @@
         "type": "git",
         "url": "https://github.com/hprose/hprose-html5.git"
     },
-    "license": "MIT",
     "main": [
         "dist/hprose-html5.js"
     ],
     "ignore": [
         "test", "src", "*.md"
-    ]
+    ],
+    "license": "MIT"
 }
