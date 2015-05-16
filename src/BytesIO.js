@@ -13,7 +13,7 @@
  *                                                        *
  * hprose BytesIO for HTML5.                              *
  *                                                        *
- * LastModified: Mar 4, 2015                              *
+ * LastModified: May 15, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -178,6 +178,15 @@
             _length += n;
         }
 
+        function writeAsciiString(str) {
+            var n = str.length;
+            if (n === 0) return;
+            _grow(n);
+            for (var i = 0; i < n; i++) {
+                _bytes[_length++] = str.charCodeAt(i);
+            }
+        }
+
         function writeString(str) {
             var n = str.length;
             if (n === 0) return;
@@ -246,7 +255,7 @@
         function readBytes(tag) {
             var pos = Array.prototype.indexOf.call(_bytes, tag, _off);
             var buf;
-            if (pos == -1) {
+            if (pos === -1) {
                 buf = _bytes.subarray(_off, _length);
                 _off = _length;
             }
@@ -262,10 +271,10 @@
         function readUntil(tag) {
             var pos = Array.prototype.indexOf.call(_bytes, tag, _off);
             var str = '';
-            if (pos == _off) {
+            if (pos === _off) {
                 _off++;
             }
-            else if (pos == -1) {
+            else if (pos === -1) {
                 str = getUTF8String(_bytes.subarray(_off, _length))[0];
                 _off = _length;
             }
@@ -343,6 +352,7 @@
             clear: { value: clear },
             writeByte: { value: writeByte },
             write: { value: write },
+            writeAsciiString: { value: writeAsciiString },
             writeString: { value: writeString },
             readByte: { value: readByte },
             read: { value: read },
@@ -373,4 +383,5 @@
     }
 
     Object.defineProperty(global.hprose.BytesIO, 'toString', { value: toString });
+
 })(this);

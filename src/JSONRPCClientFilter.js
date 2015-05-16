@@ -13,7 +13,7 @@
  *                                                        *
  * jsonrpc client filter for JavaScript.                  *
  *                                                        *
- * LastModified: Oct 18, 2014                             *
+ * LastModified: May 15, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/

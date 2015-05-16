@@ -13,7 +13,7 @@
  *                                                        *
  * hprose Reader for HTML5.                               *
  *                                                        *
- * LastModified: Jun 5, 2014                              *
+ * LastModified: May 15, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -58,16 +58,16 @@
         function __readRaw(ostream, tag) {
             ostream.writeByte(tag);
             switch (tag) {
-                case 0x30:
-                case 0x31:
-                case 0x32:
-                case 0x33:
-                case 0x34:
-                case 0x35:
-                case 0x36:
-                case 0x37:
-                case 0x38:
-                case 0x39:
+                case 48:
+                case 49:
+                case 50:
+                case 51:
+                case 52:
+                case 53:
+                case 54:
+                case 55:
+                case 56:
+                case 57:
                 case Tags.TagNull:
                 case Tags.TagEmpty:
                 case Tags.TagTrue:
@@ -269,7 +269,6 @@
         global.hprose.RawReader.call(this, stream);
         var classref = [];
         var refer = (simple ? fakeReaderRefer : realReaderRefer());
-        var unexpectedTag = this.unexpectedTag;
         function checkTag(expectTag, tag) {
             if (tag === undefined) tag = stream.readByte();
             if (tag !== expectTag) unexpectedTag(tag, expectTag);

@@ -12,7 +12,7 @@
  *                                                        *
  * hprose websocket client for HTML5.                     *
  *                                                        *
- * LastModified: Apr 17, 2015                             *
+ * LastModified: May 16, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -32,8 +32,9 @@
     var s_messages = [];
 
     global.hprose.WebSocketClient = function WebSocketClient(uri, functions) {
+        if (this.constructor !== WebSocketClient) return new WebSocketClient(uri, functions);
         Client.call(this, uri, functions);
-        var _timeout = 0;
+        this.timeout = 0;
         var self = this;
         var ready = false;
         var ws;
@@ -103,7 +104,7 @@
         function send(request) {
             var completer = new Completer();
             var timeoutId = undefined;
-            if (_timeout > 0) {
+            if (self.timeout > 0) {
                 timeoutId = global.setTimeout((function (id) {
                     return function() {
                         delete s_completers[id];
@@ -112,7 +113,7 @@
                         ws.close();
                         completer.completeError(new Exception('timeout'));
                     }
-                })(s_id), _timeout);
+                })(s_id), self.timeout);
             }
             s_completers[s_id] = completer;
             s_timeoutId[s_id] = timeoutId;
@@ -130,19 +131,7 @@
             }
             return completer.future;
         }
-        function setTimeout(value) {
-            if (typeof(value) === 'number') {
-                _timeout = value | 0;
-            }
-            else {
-                _timeout = 0;
-            }
-        }
-        function getTimeout() {
-            return _timeout;
-        }
         Object.defineProperties(this, {
-            timeout: { get: getTimeout, set: setTimeout },
             __send__: { value: send }
         });
         connect();

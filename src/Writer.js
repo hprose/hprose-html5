@@ -13,12 +13,13 @@
  *                                                        *
  * hprose Writer for HTML5.                               *
  *                                                        *
- * LastModified: Jun 5, 2014                              *
+ * LastModified: May 15, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
 
 (function (global) {
+    /*jshint node:true, eqeqeq:true, unused:false */
     'use strict';
 
     var Map = global.Map;
@@ -147,6 +148,7 @@
                         writeObjectWithRef(value);
                     }
                 }
+                break;
             }
         }
         function writeNumber(n) {
@@ -163,7 +165,7 @@
                 }
                 else {
                     stream.writeByte(Tags.TagInteger);
-                    stream.writeString('' + n);
+                    stream.writeAsciiString('' + n);
                     stream.writeByte(Tags.TagSemicolon);
                 }
             }
@@ -172,7 +174,7 @@
             }
             else if (isFinite(n)) {
                 stream.writeByte(Tags.TagDouble);
-                stream.writeString('' + n);
+                stream.writeAsciiString('' + n);
                 stream.writeByte(Tags.TagSemicolon);
             }
             else {
@@ -191,7 +193,7 @@
                 else {
                     stream.writeByte(Tags.TagInteger);
                 }
-                stream.writeString('' + n);
+                stream.writeAsciiString('' + n);
                 stream.writeByte(Tags.TagSemicolon);
             }
         }
@@ -206,7 +208,7 @@
                     stream.writeByte(0x30); // 0
                 }
                 else {
-                    stream.writeString('' + n);
+                    stream.writeAsciiString('' + n);
                 }
                 stream.writeByte(Tags.TagSemicolon);
             }
@@ -228,12 +230,12 @@
             var second = ('00' + date.getUTCSeconds()).slice(-2);
             var millisecond = ('000' + date.getUTCMilliseconds()).slice(-3);
             stream.writeByte(Tags.TagDate);
-            stream.writeString(year + month + day);
+            stream.writeAsciiString(year + month + day);
             stream.writeByte(Tags.TagTime);
-            stream.writeString(hour + minute + second);
+            stream.writeAsciiString(hour + minute + second);
             if (millisecond !== '000') {
                 stream.writeByte(Tags.TagPoint);
-                stream.writeString(millisecond);
+                stream.writeAsciiString(millisecond);
             }
             stream.writeByte(Tags.TagUTC);
         }
@@ -252,24 +254,24 @@
             if ((hour === '00') && (minute === '00') &&
                 (second === '00') && (millisecond === '000')) {
                 stream.writeByte(Tags.TagDate);
-                stream.writeString(year + month + day);
+                stream.writeAsciiString(year + month + day);
             }
             else if ((year === '1970') && (month === '01') && (day === '01')) {
                 stream.writeByte(Tags.TagTime);
-                stream.writeString(hour + minute + second);
+                stream.writeAsciiString(hour + minute + second);
                 if (millisecond !== '000') {
                     stream.writeByte(Tags.TagPoint);
-                    stream.writeString(millisecond);
+                    stream.writeAsciiString(millisecond);
                 }
             }
             else {
                 stream.writeByte(Tags.TagDate);
-                stream.writeString(year + month + day);
+                stream.writeAsciiString(year + month + day);
                 stream.writeByte(Tags.TagTime);
-                stream.writeString(hour + minute + second);
+                stream.writeAsciiString(hour + minute + second);
                 if (millisecond !== '000') {
                     stream.writeByte(Tags.TagPoint);
-                    stream.writeString(millisecond);
+                    stream.writeAsciiString(millisecond);
                 }
             }
             stream.writeByte(Tags.TagSemicolon);
@@ -284,10 +286,10 @@
             var second = ('00' + time.getSeconds()).slice(-2);
             var millisecond = ('000' + time.getMilliseconds()).slice(-3);
             stream.writeByte(Tags.TagTime);
-            stream.writeString(hour + minute + second);
+            stream.writeAsciiString(hour + minute + second);
             if (millisecond !== '000') {
                 stream.writeByte(Tags.TagPoint);
-                stream.writeString(millisecond);
+                stream.writeAsciiString(millisecond);
             }
             stream.writeByte(Tags.TagSemicolon);
         }
@@ -298,7 +300,7 @@
             refer.set(bytes);
             stream.writeByte(Tags.TagBytes);
             var n = bytes.byteLength || bytes.length;
-            if (n > 0) stream.writeString('' + n);
+            if (n > 0) stream.writeAsciiString('' + n);
             stream.writeByte(Tags.TagQuote);
             if (n > 0) stream.write(bytes);
             stream.writeByte(Tags.TagQuote);
@@ -310,7 +312,7 @@
             refer.set(str);
             var n = str.length;
             stream.writeByte(Tags.TagString);
-            if (n > 0) stream.writeString('' + n);
+            if (n > 0) stream.writeAsciiString('' + n);
             stream.writeByte(Tags.TagQuote);
             if (n > 0) stream.writeString(str);
             stream.writeByte(Tags.TagQuote);
@@ -322,7 +324,7 @@
             refer.set(a);
             var n = a.length;
             stream.writeByte(Tags.TagList);
-            if (n > 0) stream.writeString('' + n);
+            if (n > 0) stream.writeAsciiString('' + n);
             stream.writeByte(Tags.TagOpenbrace);
             for (var i = 0; i < n; i++) {
                 writeElem(a[i]);
@@ -358,7 +360,7 @@
             }
             var n = fields.length;
             stream.writeByte(Tags.TagMap);
-            if (n > 0) stream.writeString('' + n);
+            if (n > 0) stream.writeAsciiString('' + n);
             stream.writeByte(Tags.TagOpenbrace);
             for (var i = 0; i < n; i++) {
                 serialize(fields[i]);
@@ -373,7 +375,7 @@
             refer.set(map);
             var n = map.size;
             stream.writeByte(Tags.TagMap);
-            if (n > 0) stream.writeString('' + n);
+            if (n > 0) stream.writeAsciiString('' + n);
             stream.writeByte(Tags.TagOpenbrace);
             map.forEach(function(value, key) {
                 serialize(key);
@@ -402,7 +404,7 @@
                 index = writeClass(classname, fields);
             }
             stream.writeByte(Tags.TagObject);
-            stream.writeString('' + index);
+            stream.writeAsciiString('' + index);
             stream.writeByte(Tags.TagOpenbrace);
             refer.set(obj);
             var n = fields.length;
@@ -417,11 +419,11 @@
         function writeClass(classname, fields) {
             var n = fields.length;
             stream.writeByte(Tags.TagClass);
-            stream.writeString('' + classname.length);
+            stream.writeAsciiString('' + classname.length);
             stream.writeByte(Tags.TagQuote);
             stream.writeString(classname);
             stream.writeByte(Tags.TagQuote);
-            if (n > 0) stream.writeString('' + n);
+            if (n > 0) stream.writeAsciiString('' + n);
             stream.writeByte(Tags.TagOpenbrace);
             for (var i = 0; i < n; i++) {
                 writeString(fields[i]);
@@ -466,4 +468,5 @@
             reset: { value: reset }
         });
     };
+
 })(this);

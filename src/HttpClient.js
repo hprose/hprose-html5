@@ -12,7 +12,7 @@
  *                                                        *
  * hprose http client for HTML5.                          *
  *                                                        *
- * LastModified: Apr 17, 2015                             *
+ * LastModified: May 16, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -27,9 +27,9 @@
     function noop(){}
 
     global.hprose.HttpClient = function HttpClient(uri, functions) {
+        if (this.constructor !== HttpClient) return new HttpClient(uri, functions);
         Client.call(this, uri, functions);
         var _header = Object.create(null);
-        var _timeout = 30000;
         var _onreqprogress = noop;
         var _onresprogress = noop;
 
@@ -68,13 +68,13 @@
                 }
                 completer.completeError(new Exception('error'));
             };
-            if (_timeout > 0) {
+            if (self.timeout > 0) {
                 timeoutId = global.setTimeout(function () {
                     xhr.onload = function() {};
                     xhr.onerror = function() {};
                     xhr.abort();
                     completer.completeError(new Exception('timeout'));
-                }, _timeout);
+                }, self.timeout);
             }
             if (xhr.upload !== undefined) {
                 xhr.upload.onprogress = _onreqprogress;
@@ -90,17 +90,6 @@
                 xhr.send(request.buffer);
             }
             return completer.future;
-        }
-        function setTimeout(value) {
-            if (typeof(value) === 'number') {
-                _timeout = value | 0;
-            }
-            else {
-                _timeout = 0;
-            }
-        }
-        function getTimeout() {
-            return _timeout;
         }
         function setOnRequestProgress(value) {
             if (typeof(value) === 'function') {
@@ -130,7 +119,6 @@
             }
         }
         Object.defineProperties(this, {
-            timeout: { get: getTimeout, set: setTimeout },
             onProgress: { get: getOnRequestProgress, set: setOnRequestProgress },
             onprogress: { get: getOnRequestProgress, set: setOnRequestProgress },
             onRequestProgress: { get: getOnRequestProgress, set: setOnRequestProgress },

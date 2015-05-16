@@ -12,7 +12,7 @@
  *                                                        *
  * hprose client for HTML5.                               *
  *                                                        *
- * LastModified: Apr 17, 2015                             *
+ * LastModified: May 16, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -53,12 +53,12 @@
         var _simple             = false;
         var _useHarmonyMap      = false;
         var _onerror            = noop;
-        var _onready            = noop;
         var _filters            = [];
         var _batch              = false;
         var _batches            = [];
-        var _thenHandler        = noop;
-        var _catchErrorHandler  = noop;
+        var _completer          = new Completer();
+        var _future             = _completer.future;
+        var _timeout            = 30000;
 
         var self = this;
 
@@ -84,7 +84,6 @@
         }
 
         function initService(stub) {
-            var completer = new Completer();
             sendAndReceive(GETFUNCTIONS)
             .then(function (data) {
                 var error = null;
@@ -110,16 +109,15 @@
                     error = e;
                 }
                 if (error !== null) {
-                    completer.completeError(error);
+                    _completer.completeError(error);
                 }
                 else {
-                    completer.complete(stub);
+                    _completer.complete(stub);
                 }
             })
             .catchError(function(error) {
-                completer.completeError(error);
+                _completer.completeError(error);
             });
-            return completer.future;
         }
 
         function setFunction(stub, func) {
@@ -164,7 +162,6 @@
                 }
             }
             _ready = true;
-            _onready();
         }
 
         function copyargs(src, dest) {
@@ -533,19 +530,22 @@
                 _onerror = value;
             }
         }
-        function getOnReady() {
-            return _onready;
-        }
-        function setOnReady(value) {
-            if (typeof(value) === s_function) {
-                _onready = value;
-            }
-        }
         function getReady() {
             return _ready;
         }
         function getUri() {
             return _uri;
+        }
+        function getTimeout() {
+            return _timeout;
+        }
+        function setTimeout(value) {
+            if (typeof(value) === 'number') {
+                _timeout = value | 0;
+            }
+            else {
+                _timeout = 0;
+            }
         }
         function getByRef() {
             return _byref;
@@ -592,18 +592,34 @@
             return true;
         }
         function useService(uri, functions, create) {
-            if (typeof(functions) === s_boolean && create === undefined) {
-                create = functions;
+            if (create === undefined) {
+                if (typeof(functions) === s_boolean) {
+                    create = functions;
+                    functions = false;
+                }
+                if (!functions) {
+                    if (typeof(uri) === s_boolean) {
+                        create = uri;
+                        uri = false;
+                    }
+                    else if (uri && uri.constructor === Object ||
+                             Array.isArray(uri)) {
+                        functions = uri;
+                        uri = false;
+                    }
+                }
             }
             var stub = self;
             if (create) {
                 stub = {};
             }
             _ready = false;
-            if (uri === undefined) {
+            if (!uri && !_uri) {
                 return new Exception('You should set server uri first!');
             }
-            _uri = uri;
+            if (uri) {
+                _uri = uri;
+            }
             if (typeof(functions) === s_string ||
                 (functions && functions.constructor === Object)) {
                 functions = [functions];
@@ -612,17 +628,8 @@
                 setFunctions(stub, functions);
             }
             else {
-                var completer = new Completer();
-                global.setTimeout(function () {
-                    initService(stub)
-                    .then(function(stub) {
-                        completer.complete(stub);
-                    })
-                    .catchError(function(error) {
-                        completer.completeError(error);
-                    });
-                }, 0);
-                return completer.future;
+                global.setTimeout(function () { initService(stub); }, 0);
+                return _future;
             }
             return stub;
         }
@@ -660,32 +667,22 @@
             }
         }
         function then(handler) {
-            _thenHandler = handler;
-            return self;
+            return _future.then(handler);
         }
         function catchError(handler) {
-            _catchErrorHandler = handler;
-            return self;
+            return _future.catchError(handler);
         }
         /* function constructor */ {
             if (typeof(uri) === s_string) {
-                var f = useService(uri, functions);
-                if (f.then && f.catchError) {
-                    f.then(function(stub) {
-                        _thenHandler(stub);
-                    }).catchError(function(e) {
-                        _catchErrorHandler(e);
-                    });
-                }
+                useService(uri, functions);
             }
         }
         Object.defineProperties(this, {
             onError: { get: getOnError, set: setOnError },
             onerror: { get: getOnError, set: setOnError },
-            onReady: { get: getOnReady, set: setOnReady },
-            onready: { get: getOnReady, set: setOnReady },
             ready: { get: getReady },
             uri: { get: getUri },
+            timeout: { get: getTimeout, set: setTimeout },
             byref: { get: getByRef, set: setByRef },
             simple: { get: getSimpleMode, set: setSimpleMode },
             useHarmonyMap: { get: getUseHarmonyMap, set: setUseHarmonyMap },

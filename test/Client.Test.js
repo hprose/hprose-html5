@@ -26,6 +26,11 @@
     //var methodList = ['hello', 'sum', 'swapKeyAndValue', 'getUserList'];
     //var client = new hprose.Client.create('http://hprose.com/example/', methodList);
     var client = hprose.Client.create('http://hprose.com/example/');
+    client.onprogress = function(e) {
+        if (e.lengthComputable) {
+          console.log("progress: " + ((e.loaded / e.total) * 100));
+        }
+    };
     client.then(function(stub) {
         stub.hello('World')
         .then(function(result) {
@@ -105,11 +110,6 @@
     })
     .catchError(function(e) {
         console.error(e);
-    })
-    .onprogress = function(e) {
-        if (e.lengthComputable) {
-          console.log((e.loaded / e.total) * 100);
-        }
-    };
+    });
 
 })();

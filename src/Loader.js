@@ -13,7 +13,7 @@
  *                                                        *
  * hprose CommonJS/AMD/CMD loader for HTML5.              *
  *                                                        *
- * LastModified: May 5, 2015                              *
+ * LastModified: May 15, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -22,15 +22,14 @@
     'use strict';
 
     global.hprose.common = {
+        Completer: global.hprose.Completer,
         Exception: global.hprose.Exception,
-        ResultMode: global.hprose.ResultMode,
-        Filter: global.hprose.Filter,
-        Completer: global.hprose.Completer
+        ResultMode: global.hprose.ResultMode
     };
 
     global.hprose.io = {
-        ClassManager: global.hprose.ClassManager,
         BytesIO: global.hprose.BytesIO,
+        ClassManager: global.hprose.ClassManager,
         Tags: global.hprose.Tags,
         RawReader: global.hprose.RawReader,
         Reader: global.hprose.Reader,

@@ -13,7 +13,7 @@
  *                                                        *
  * hprose ClassManager for HTML5.                         *
  *                                                        *
- * LastModified: May 5, 2015                              *
+ * LastModified: May 15, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -46,5 +46,7 @@
     });
 
     global.hprose.register = register;
+
+    register(Object, 'Object');
 
 })(this);
