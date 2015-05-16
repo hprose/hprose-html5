@@ -45,9 +45,9 @@
             for (var name in _header) {
                 xhr.setRequestHeader(name, _header[name]);
             }
-            var timeoutId = undefined;
+            var timeoutId;
             xhr.onload = function () {
-                xhr.onload = function() {};
+                xhr.onload = noop;
                 if (xhr.status) {
                     if (timeoutId !== undefined) {
                         global.clearTimeout(timeoutId);
@@ -70,8 +70,8 @@
             };
             if (self.timeout > 0) {
                 timeoutId = global.setTimeout(function () {
-                    xhr.onload = function() {};
-                    xhr.onerror = function() {};
+                    xhr.onload = noop;
+                    xhr.onerror = noop;
                     xhr.abort();
                     completer.completeError(new Exception('timeout'));
                 }, self.timeout);
