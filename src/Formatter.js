@@ -13,7 +13,7 @@
  *                                                        *
  * hprose Formatter for HTML5.                            *
  *                                                        *
- * LastModified: Mar 28, 2014                             *
+ * LastModified: May 16, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -25,24 +25,29 @@
     var Writer = global.hprose.Writer;
     var Reader = global.hprose.Reader;
 
-    global.hprose.serialize = function serialize(value, simple) {
+    function serialize(value, simple) {
         var stream = new BytesIO();
         var writer = new Writer(stream, simple);
         writer.serialize(value);
         return stream;
-    };
+    }
 
-    global.hprose.unserialize = function unserialize(stream, simple, useHarmonyMap) {
+    function unserialize(stream, simple, useHarmonyMap) {
+        if (!(stream instanceof BytesIO)) {
+            stream = new BytesIO(stream);
+        }
         return new Reader(stream, simple, useHarmonyMap).unserialize();
-    };
+    }
 
     global.hprose.Formatter = {
         serialize: function (value, simple) {
-            return global.hprose.serialize(value, simple).takeBytes();
+            return serialize(value, simple).bytes;
         },
-        unserialize: function (bytes, simple, useHarmonyMap) {
-            return global.hprose.unserialize(new BytesIO(bytes), simple, useHarmonyMap);
-        }
+        unserialize: unserialize
     };
+
+    global.hprose.serialize = serialize;
+
+    global.hprose.unserialize = unserialize;
 
 })(this);
