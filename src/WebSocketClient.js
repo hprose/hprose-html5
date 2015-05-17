@@ -12,7 +12,7 @@
  *                                                        *
  * hprose websocket client for HTML5.                     *
  *                                                        *
- * LastModified: May 16, 2015                             *
+ * LastModified: May 17, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -38,7 +38,7 @@
         var self = this;
         var ready = false;
         var ws;
-        function send_message(id, request) {
+        function send(id, request) {
             var bytes = new BytesIO();
             bytes.writeByte((id >> 24) & 0xff);
             bytes.writeByte((id >> 16) & 0xff);
@@ -65,7 +65,7 @@
             ready = true;
             if (s_messages.length > 0) {
                 for (var id in s_messages) {
-                    send_message(id, s_messages[id]);
+                    send(id, s_messages[id]);
                 }
                 s_messages = [];
             }
@@ -101,7 +101,7 @@
             ws.onerror = onerror;
             ws.onclose = onclose;
         }
-        function send(request) {
+        function sendAndReceive(request) {
             var completer = new Completer();
             var timeoutId = undefined;
             if (self.timeout > 0) {
@@ -118,7 +118,7 @@
             s_completers[s_id] = completer;
             s_timeoutId[s_id] = timeoutId;
             if (ready) {
-                send_message(s_id, request);
+                send(s_id, request);
             }
             else {
                 s_messages[s_id] = request;
@@ -132,7 +132,7 @@
             return completer.future;
         }
         Object.defineProperties(this, {
-            __send__: { value: send }
+            sendAndReceive: { value: sendAndReceive }
         });
         connect();
     };

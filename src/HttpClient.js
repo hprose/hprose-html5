@@ -12,7 +12,7 @@
  *                                                        *
  * hprose http client for HTML5.                          *
  *                                                        *
- * LastModified: May 16, 2015                             *
+ * LastModified: May 17, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -34,7 +34,7 @@
         var _onresprogress = noop;
 
         var self = this;
-        function send(request) {
+        function sendAndReceive(request) {
             var completer = new Completer();
             var xhr = new XMLHttpRequest();
             xhr.open('POST', self.uri, true);
@@ -124,7 +124,7 @@
             onRequestProgress: { get: getOnRequestProgress, set: setOnRequestProgress },
             onResponseProgress: { get: getOnResponseProgress, set: setOnResponseProgress },
             setHeader: { value: setHeader },
-            __send__: { value: send }
+            sendAndReceive: { value: sendAndReceive }
         });
     };
 
