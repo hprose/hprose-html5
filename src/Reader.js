@@ -13,7 +13,7 @@
  *                                                        *
  * hprose Reader for HTML5.                               *
  *                                                        *
- * LastModified: May 15, 2015                             *
+ * LastModified: May 18, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -269,6 +269,12 @@
         global.hprose.RawReader.call(this, stream);
         var classref = [];
         var refer = (simple ? fakeReaderRefer : realReaderRefer());
+        function setUseHarmonyMap(value) {
+            useHarmonyMap = !!value;
+        }
+        function getUseHarmonyMap() {
+            return useHarmonyMap;
+        }
         function checkTag(expectTag, tag) {
             if (tag === undefined) tag = stream.readByte();
             if (tag !== expectTag) unexpectedTag(tag, expectTag);
@@ -646,6 +652,7 @@
             refer.reset();
         }
         Object.defineProperties(this, {
+            useHarmonyMap: { get: getUseHarmonyMap, set: setUseHarmonyMap },
             checkTag: { value: checkTag },
             checkTags: { value: checkTags },
             unserialize: { value: unserialize },

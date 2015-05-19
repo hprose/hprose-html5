@@ -13,7 +13,7 @@
  *                                                        *
  * hprose Future for HTML5.                               *
  *                                                        *
- * LastModified: May 5, 2015                              *
+ * LastModified: May 18, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -46,7 +46,7 @@
                 for (var i in m_callbacks) {
                     try {
                         var callback = m_callbacks[i];
-                        if (m_results[0].constructor === Future) {
+                        if (m_results[0] instanceof Future) {
                             m_results[0] = m_results[0].then(callback);
                         }
                         else {
@@ -73,7 +73,7 @@
         function then(callback) {
             if (m_results.length > 0) {
                 try {
-                    if (m_results[0].constructor === Future) {
+                    if (m_results[0] instanceof Future) {
                         m_results[0] = m_results[0].then(callback);
                     }
                     else {
@@ -101,5 +101,9 @@
             completeError: { value : completeError }
         });
     };
+
+    Object.defineProperty(global.hprose.Completer, 'isFuture', { value: function(obj) {
+        return obj instanceof Future;
+    }});
 
 })(this);

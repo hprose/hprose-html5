@@ -12,7 +12,7 @@
  *                                                        *
  * hprose client for HTML5.                               *
  *                                                        *
- * LastModified: May 17, 2015                             *
+ * LastModified: May 18, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -551,21 +551,18 @@
             return _byref;
         }
         function setByRef(value) {
-            if (value === undefined) value = true;
             _byref = !!value;
         }
         function getSimpleMode() {
             return _simple;
         }
         function setSimpleMode(value) {
-            if (value === undefined) value = true;
             _simple = !!value;
         }
         function getUseHarmonyMap() {
             return _useHarmonyMap;
         }
         function setUseHarmonyMap(value) {
-            if (value === undefined) value = true;
             _useHarmonyMap = !!value;
         }
         function getFilter() {
@@ -576,12 +573,18 @@
         }
         function setFilter(filter) {
             _filters.length = 0;
-            if (filter !== undefined && filter !== null) {
+            if (filter &&
+                typeof filter.inputFilter === 'function' &&
+                typeof filter.outputFilter === 'function') {
                 _filters.push(filter);
             }
         }
         function addFilter(filter) {
-            _filters.push(filter);
+            if (filter &&
+                typeof filter.inputFilter === 'function' &&
+                typeof filter.outputFilter === 'function') {
+                _filters.push(filter);
+            }
         }
         function removeFilter(filter) {
             var i = _filters.indexOf(filter);
