@@ -103,7 +103,7 @@
         }
         function sendAndReceive(request) {
             var completer = new Completer();
-            var timeoutId = undefined;
+            var timeoutId;
             if (self.timeout > 0) {
                 timeoutId = global.setTimeout((function (id) {
                     return function() {
@@ -112,7 +112,7 @@
                         delete s_messages[id];
                         ws.close();
                         completer.completeError(new Exception('timeout'));
-                    }
+                    };
                 })(s_id), self.timeout);
             }
             s_completers[s_id] = completer;
