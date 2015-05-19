@@ -13,7 +13,7 @@
  *                                                        *
  * Harmony Maps for HTML5.                                *
  *                                                        *
- * LastModified: Jun 5, 2014                              *
+ * LastModified: May 19, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -140,27 +140,6 @@
                 clear: function () { map = Object.create(null); }
             };
         };
-        var numberMap = function () {
-            var map = Object.create(null);
-            var isNegZero = function(value) {
-                return (value === 0 && 1/value === -Infinity);
-            };
-            var negZeroMap = noKeyMap();
-            return {
-                get: function (key) { return isNegZero(key) ? negZeroMap.get() : map[key]; },
-                set: function (key, value) {
-                    if (isNegZero(key)) {
-                        negZeroMap.set(key, value);
-                    }
-                    else {
-                        map[key] = value;
-                    }
-                },
-                has: function (key) { return isNegZero(key) ? negZeroMap.has() : key in map; },
-                'delete': function (key) { return isNegZero(key) ? negZeroMap['delete']() : delete map[key]; },
-                clear: function () { negZeroMap.clear(); map = Object.create(null); }
-            };
-        };
         var scalarMap = function () {
             var map = Object.create(null);
             return {
@@ -173,7 +152,7 @@
         };
         global.Map = function Map() {
             var map = {
-                'number': numberMap(),
+                'number': scalarMap(),
                 'string': scalarMap(),
                 'boolean': scalarMap(),
                 'object': objectMap(),

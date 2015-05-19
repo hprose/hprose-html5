@@ -13,7 +13,7 @@
  *                                                        *
  * hprose Writer for HTML5.                               *
  *                                                        *
- * LastModified: May 15, 2015                             *
+ * LastModified: May 19, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -26,10 +26,6 @@
     var BytesIO = global.hprose.BytesIO;
     var Tags = global.hprose.Tags;
     var ClassManager = global.hprose.ClassManager;
-
-    function isNegZero(value) {
-        return (value === 0 && 1/value === -Infinity);
-    }
 
     function getClassName(obj) {
         var cls = obj.constructor;
@@ -153,13 +149,7 @@
         }
         function writeNumber(n) {
             n = n.valueOf();
-            if (isNegZero(n)) {
-                stream.writeByte(Tags.TagInteger);
-                stream.writeByte(Tags.TagNeg);
-                stream.writeByte(0x30); // 0
-                stream.writeByte(Tags.TagSemicolon);
-            }
-            else if (n === (n | 0)) {
+            if (n === (n | 0)) {
                 if (0 <= n && n <= 9) {
                     stream.writeByte(n + 0x30);
                 }
@@ -203,13 +193,7 @@
             }
             else if (isFinite(n)) {
                 stream.writeByte(Tags.TagDouble);
-                if (isNegZero(n)) {
-                    stream.writeByte(Tags.TagNeg);
-                    stream.writeByte(0x30); // 0
-                }
-                else {
-                    stream.writeAsciiString('' + n);
-                }
+                stream.writeAsciiString('' + n);
                 stream.writeByte(Tags.TagSemicolon);
             }
             else {
