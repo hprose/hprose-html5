@@ -26,7 +26,7 @@
 
     function noop(){}
 
-    global.hprose.HttpClient = function HttpClient(uri, functions) {
+    function HttpClient(uri, functions) {
         if (this.constructor !== HttpClient) return new HttpClient(uri, functions);
         Client.call(this, uri, functions);
         var _header = Object.create(null);
@@ -126,17 +126,19 @@
             setHeader: { value: setHeader },
             sendAndReceive: { value: sendAndReceive }
         });
-    };
+    }
 
     function create(uri, functions) {
         var parser = document.createElement('a');
         parser.href = uri;
         if (parser.protocol === 'http:' ||
             parser.protocol === 'https:') {
-            return new global.hprose.HttpClient(uri, functions);
+            return new HttpClient(uri, functions);
         }
         throw new Exception('This client desn\'t support ' + parser.protocol + ' scheme.');
     }
 
-    Object.defineProperty(global.hprose.HttpClient, 'create', { value: create });
+    Object.defineProperty(HttpClient, 'create', { value: create });
+
+    global.hprose.HttpClient = HttpClient;
 })(this);

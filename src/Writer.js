@@ -77,7 +77,7 @@
         };
     };
 
-    global.hprose.Writer = function Writer(stream, simple) {
+    function Writer(stream, simple) {
         var classref = Object.create(null);
         var fieldsref = [];
         var refer = simple ? fakeWriterRefer : realWriterRefer(stream);
@@ -451,6 +451,8 @@
             writeObjectWithRef: { value: writeObjectWithRef },
             reset: { value: reset }
         });
-    };
+    }
+
+    global.hprose.Writer = Writer;
 
 })(this);

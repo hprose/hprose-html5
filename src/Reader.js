@@ -13,7 +13,7 @@
  *                                                        *
  * hprose Reader for HTML5.                               *
  *                                                        *
- * LastModified: May 18, 2015                             *
+ * LastModified: May 21, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -46,7 +46,7 @@
         }
     }
 
-    global.hprose.RawReader = function RawReader(stream) {
+    function RawReader(stream) {
         function readRaw() {
             var ostream = new BytesIO();
             _readRaw(ostream);
@@ -174,8 +174,9 @@
             },
             readRaw: { value: readRaw }
         });
-    };
+    }
 
+    global.hprose.RawReader = RawReader;
 
     var fakeReaderRefer = {
         set: function () {},
@@ -256,16 +257,15 @@
                 return cls;
             }
         }
-        cls = function () {
-            this.getClassName = function () {
-                return classname;
-            };
-        };
+        cls = function () {};
+        Object.defineProperty(cls.prototype, 'getClassName', { value: function () {
+            return classname;
+        }});
         ClassManager.register(cls, classname);
         return cls;
     }
 
-    global.hprose.Reader = function Reader(stream, simple, useHarmonyMap) {
+    function Reader(stream, simple, useHarmonyMap) {
         global.hprose.RawReader.call(this, stream);
         var classref = [];
         var refer = (simple ? fakeReaderRefer : realReaderRefer());
@@ -680,6 +680,7 @@
             readObject: { value: readObject },
             reset: { value: reset }
         });
-    };
+    }
 
+    global.hprose.Reader = Reader;
 })(this);

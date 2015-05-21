@@ -13,7 +13,7 @@
  *                                                        *
  * hprose CommonJS/AMD/CMD loader for HTML5.              *
  *                                                        *
- * LastModified: May 15, 2015                             *
+ * LastModified: May 21, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -40,9 +40,12 @@
     global.hprose.client = {
         Client: global.hprose.Client,
         HttpClient: global.hprose.HttpClient,
-        WebSocketClient: global.hprose.WebSocketClient,
-        JSONRPCClientFilter: global.hprose.JSONRPCClientFilter
+        WebSocketClient: global.hprose.WebSocketClient
     };
+
+    global.hprose.filter = {
+        JSONRPCClientFilter: global.hprose.JSONRPCClientFilter
+    }
 
     if (typeof define === "function") {
         if (define.cmd) {

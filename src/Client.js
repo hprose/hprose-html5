@@ -45,7 +45,7 @@
     var s_onSuccess = '_onSuccess';
     var s_onsuccess = '_onsuccess';
 
-    global.hprose.Client = function Client(uri, functions) {
+    function Client(uri, functions) {
         // private members
         var _uri;
         var _ready              = false;
@@ -699,7 +699,7 @@
             then: { value: then },
             catchError: { value: catchError }
         });
-    };
+    }
 
     function create(uri, functions) {
         var parser = document.createElement('a');
@@ -715,5 +715,7 @@
         throw new Exception('The ' + parser.protocol + ' client isn\'t implemented.');
     }
 
-    Object.defineProperty(global.hprose.Client, 'create', { value: create });
+    Object.defineProperty(Client, 'create', { value: create });
+
+    global.hprose.Client = Client;
 })(this);

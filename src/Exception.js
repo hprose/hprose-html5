@@ -13,7 +13,7 @@
  *                                                        *
  * hprose Exception for HTML5.                            *
  *                                                        *
- * LastModified: May 5, 2015                              *
+ * LastModified: May 21, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -21,11 +21,13 @@
 (function (global) {
     'use strict';
 
-    global.hprose.Exception = function Exception(message) {
+    function Exception(message) {
         this.message = message;
-    };
+    }
 
-    global.hprose.Exception.prototype = new Error();
-    global.hprose.Exception.prototype.name = 'hprose.Exception';
+    Exception.prototype = new Error();
+    Exception.prototype.name = 'hprose.Exception';
+
+    global.hprose.Exception = Exception;
 
 })(this);
