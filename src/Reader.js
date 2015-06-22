@@ -13,7 +13,7 @@
  *                                                        *
  * hprose Reader for HTML5.                               *
  *                                                        *
- * LastModified: May 21, 2015                             *
+ * LastModified: Jun 22, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -22,7 +22,6 @@
     'use strict';
 
     var Map = global.Map;
-    var Exception = global.hprose.Exception;
     var BytesIO = global.hprose.BytesIO;
     var Tags = global.hprose.Tags;
     var ClassManager = global.hprose.ClassManager;
@@ -36,13 +35,13 @@
             else {
                 expectTagStr = String.fromCharCode.apply(String, expectTags);
             }
-            throw new Exception('Tag "' + expectTagStr + '" expected, but "' + String.fromCharCode(tag) + '" found in stream');
+            throw new Error('Tag "' + expectTagStr + '" expected, but "' + String.fromCharCode(tag) + '" found in stream');
         }
         else if (tag) {
-            throw new Exception('Unexpected serialize tag "' + String.fromCharCode(tag) + '" in stream');
+            throw new Error('Unexpected serialize tag "' + String.fromCharCode(tag) + '" in stream');
         }
         else {
-            throw new Exception('No byte found in stream');
+            throw new Error('No byte found in stream');
         }
     }
 
@@ -322,7 +321,7 @@
                 case Tags.TagClass: readClass(); return readObject();
                 case Tags.TagObject: return readObjectWithoutTag();
                 case Tags.TagRef: return readRef();
-                case Tags.TagError: throw new Exception(readString());
+                case Tags.TagError: throw new Error(readString());
                 default: unexpectedTag(tag);
             }
         }

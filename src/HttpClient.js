@@ -12,7 +12,7 @@
  *                                                        *
  * hprose http client for HTML5.                          *
  *                                                        *
- * LastModified: May 17, 2015                             *
+ * LastModified: Jun 22, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -20,7 +20,6 @@
 (function (global) {
     'use strict';
 
-    var Exception = global.hprose.Exception;
     var Client = global.hprose.Client;
     var Completer = global.hprose.Completer;
 
@@ -57,7 +56,7 @@
                         completer.complete(new Uint8Array(xhr.response));
                     }
                     else {
-                        completer.completeError(new Exception(xhr.status + ':' + xhr.statusText));
+                        completer.completeError(new Error(xhr.status + ':' + xhr.statusText));
                     }
                 }
             };
@@ -66,14 +65,14 @@
                     global.clearTimeout(timeoutId);
                     timeoutId = undefined;
                 }
-                completer.completeError(new Exception('error'));
+                completer.completeError(new Error('error'));
             };
             if (self.timeout > 0) {
                 timeoutId = global.setTimeout(function () {
                     xhr.onload = noop;
                     xhr.onerror = noop;
                     xhr.abort();
-                    completer.completeError(new Exception('timeout'));
+                    completer.completeError(new Error('timeout'));
                 }, self.timeout);
             }
             if (xhr.upload !== undefined) {
@@ -135,7 +134,7 @@
             parser.protocol === 'https:') {
             return new HttpClient(uri, functions);
         }
-        throw new Exception('This client desn\'t support ' + parser.protocol + ' scheme.');
+        throw new Error('This client desn\'t support ' + parser.protocol + ' scheme.');
     }
 
     Object.defineProperty(HttpClient, 'create', { value: create });

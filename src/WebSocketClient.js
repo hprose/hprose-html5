@@ -12,7 +12,7 @@
  *                                                        *
  * hprose websocket client for HTML5.                     *
  *                                                        *
- * LastModified: May 21, 2015                             *
+ * LastModified: Jun 22, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -20,7 +20,6 @@
 (function (global) {
     'use strict';
 
-    var Exception = global.hprose.Exception;
     var Client = global.hprose.Client;
     var BytesIO = global.hprose.BytesIO;
     var Completer = global.hprose.Completer;
@@ -90,7 +89,7 @@
             connect();
         }
         function onerror(e) {
-            self.onerror("WebSocket", new Exception(e.data));
+            self.onerror("WebSocket", new Error(e.data));
         }
         function connect() {
             ready = false;
@@ -111,7 +110,7 @@
                         delete s_timeoutId[id];
                         delete s_messages[id];
                         ws.close();
-                        completer.completeError(new Exception('timeout'));
+                        completer.completeError(new Error('timeout'));
                     };
                 })(s_id), self.timeout);
             }
@@ -144,7 +143,7 @@
             parser.protocol === 'wss:') {
             return new WebSocketClient(uri, functions);
         }
-        throw new Exception('This client desn\'t support ' + parser.protocol + ' scheme.');
+        throw new Error('This client desn\'t support ' + parser.protocol + ' scheme.');
     }
 
     Object.defineProperty(WebSocketClient, 'create', { value: create });

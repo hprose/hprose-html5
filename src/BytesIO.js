@@ -13,15 +13,13 @@
  *                                                        *
  * hprose BytesIO for HTML5.                              *
  *                                                        *
- * LastModified: May 21, 2015                             *
+ * LastModified: Jun 22, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
 
 (function (global) {
     'use strict';
-
-    var Exception = global.hprose.Exception;
 
     var _EMPTY_BYTES = new Uint8Array(0);
     var _INIT_SIZE = 1024;
@@ -51,7 +49,7 @@
                                     (array[off++] & 0x3F);
                 }
                 else {
-                    throw new Exception('Unfinished UTF-8 octet sequence');
+                    throw new Error('Unfinished UTF-8 octet sequence');
                 }
                 break;
             case 14:
@@ -61,7 +59,7 @@
                                    (array[off++] & 0x3F);
                 }
                 else {
-                    throw new Exception('Unfinished UTF-8 octet sequence');
+                    throw new Error('Unfinished UTF-8 octet sequence');
                 }
                 break;
             case 15:
@@ -75,15 +73,15 @@
                         charCodes[i] = ((rune & 0x03FF) | 0xDC00);
                     }
                     else {
-                        throw new Exception('Character outside valid Unicode range: 0x' + rune.toString(16));
+                        throw new Error('Character outside valid Unicode range: 0x' + rune.toString(16));
                     }
                 }
                 else {
-                    throw new Exception('Unfinished UTF-8 octet sequence');
+                    throw new Error('Unfinished UTF-8 octet sequence');
                 }
                 break;
             default:
-                throw new Exception('Bad UTF-8 encoding 0x' + unit.toString(16));
+                throw new Error('Bad UTF-8 encoding 0x' + unit.toString(16));
             }
         }
         if (i < n) {
@@ -220,7 +218,7 @@
                             continue;
                         }
                     }
-                    throw new Exception('Malformed string');
+                    throw new Error('Malformed string');
                 }
             }
         }
@@ -325,6 +323,14 @@
             return new BytesIO(toBytes());
         }
 
+        function trunc() {
+            _bytes = _bytes.subarray(_off, _length);
+            _length = _bytes.length;
+            _off = 0;
+            _wmark = 0;
+            _rmark = 0;
+        }
+
         /* function constructor() */ {
             var a = arguments;
             switch (a.length) {
@@ -364,7 +370,8 @@
             takeBytes: { value: takeBytes },
             toBytes: { value: toBytes },
             toString: { value: toString },
-            clone: { value: clone }
+            clone: { value: clone },
+            trunc: { value: trunc }
         });
     }
 

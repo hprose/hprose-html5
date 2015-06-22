@@ -107,8 +107,8 @@
             console.info(result);
         });
         client.endBatch();
-    })
-    .catchError(function(e) {
+    },
+    function(e) {
         console.error(e);
     });
 

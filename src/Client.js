@@ -12,7 +12,7 @@
  *                                                        *
  * hprose client for HTML5.                               *
  *                                                        *
- * LastModified: May 18, 2015                             *
+ * LastModified: Jun 22, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -21,7 +21,6 @@
     'use strict';
 
     var Tags = global.hprose.Tags;
-    var Exception = global.hprose.Exception;
     var ResultMode = global.hprose.ResultMode;
     var BytesIO = global.hprose.BytesIO;
     var Writer = global.hprose.Writer;
@@ -46,6 +45,7 @@
     var s_onsuccess = '_onsuccess';
 
     function Client(uri, functions) {
+
         // private members
         var _uri;
         var _ready              = false;
@@ -62,62 +62,62 @@
 
         var self = this;
 
-        // private methods
-
         function sendAndReceive(request) {
             var completer = new Completer();
             var context = {client: self, userdata: {}};
             for (var i = 0, n = _filters.length; i < n; i++) {
                 request = _filters[i].outputFilter(request, context);
             }
-            self.sendAndReceive(request)
-            .then(function(response) {
-                for (var i = _filters.length - 1; i >= 0; i--) {
-                    response = _filters[i].inputFilter(response, context);
+            self.sendAndReceive(request).then(
+                function(response) {
+                    for (var i = _filters.length - 1; i >= 0; i--) {
+                        response = _filters[i].inputFilter(response, context);
+                    }
+                    completer.complete(response);
+                },
+                function(error) {
+                    completer.completeError(error);
                 }
-                completer.complete(response);
-            })
-            .catchError(function(error) {
-                completer.completeError(error);
-            });
+            );
             return completer.future;
         }
 
         function initService(stub) {
-            sendAndReceive(GETFUNCTIONS)
-            .then(function (data) {
-                var error = null;
-                try {
-                    var stream = new BytesIO(data);
-                    var reader = new Reader(stream, true);
-                    var tag = stream.readByte();
-                    switch (tag) {
-                        case Tags.TagError:
-                            error = new Exception(reader.readString());
-                            break;
-                        case Tags.TagFunctions:
-                            var functions = reader.readList();
-                            reader.checkTag(Tags.TagEnd);
-                            setFunctions(stub, functions);
-                            break;
-                        default:
-                            error = new Exception('Wrong Response:\r\n' + stream.toString());
-                            break;
+            sendAndReceive(GETFUNCTIONS).then(
+                function (data) {
+                    var error = null;
+                    try {
+                        var stream = new BytesIO(data);
+                        var reader = new Reader(stream, true);
+                        var tag = stream.readByte();
+                        switch (tag) {
+                            case Tags.TagError:
+                                error = new Error(reader.readString());
+                                break;
+                            case Tags.TagFunctions:
+                                var functions = reader.readList();
+                                reader.checkTag(Tags.TagEnd);
+                                setFunctions(stub, functions);
+                                break;
+                            default:
+                                error = new Error('Wrong Response:\r\n' + stream.toString());
+                                break;
+                        }
                     }
-                }
-                catch (e) {
-                    error = e;
-                }
-                if (error !== null) {
+                    catch (e) {
+                        error = e;
+                    }
+                    if (error !== null) {
+                        _completer.completeError(error);
+                    }
+                    else {
+                        _completer.complete(stub);
+                    }
+                },
+                function(error) {
                     _completer.completeError(error);
                 }
-                else {
-                    _completer.complete(stub);
-                }
-            })
-            .catchError(function(error) {
-                _completer.completeError(error);
-            });
+            );
         }
 
         function setFunction(stub, func) {
@@ -168,6 +168,7 @@
             var n = Math.min(src.length, dest.length);
             for (var i = 0; i < n; ++i) dest[i] = src[i];
         }
+
         function _invoke(stub, func, args) {
             var completer = new Completer();
             var resultMode = ResultMode.Normal, stream;
@@ -370,6 +371,14 @@
                     delete args[count - 1];
                     args.length--;
                 }
+                if (_batch) {
+                    if (resultMode === ResultMode.RawWithEndTag) {
+                        throw new Error("ResultMode.RawWithEndTag doesn't support in batch mode.");
+                    }
+                    else if (resultMode === ResultMode.Raw) {
+                        throw new Error("ResultMode.Raw doesn't support in batch mode.");
+                    }
+                }
                 stream = new BytesIO();
                 stream.writeByte(Tags.TagCall);
                 var writer = new Writer(stream, simple);
@@ -386,6 +395,7 @@
                     _batches.push({args: args,
                                    func: func,
                                    data: stream.bytes,
+                                   resultMode: resultMode,
                                    callback: callback,
                                    errorHandler: errorHandler,
                                    completer: completer});
@@ -413,110 +423,116 @@
                 var batches = _batches.slice(0);
                 _batches.length = 0;
 
-                sendAndReceive(request.bytes)
-                .then(function (response) {
-                    var result = null;
-                    var error = null;
-                    var i;
-                    if (resultMode === ResultMode.RawWithEndTag) {
-                        result = response;
-                    }
-                    else if (resultMode === ResultMode.Raw) {
-                        result = response.subarray(0, response.byteLength - 1);
-                    }
-                    else {
-                        var stream = new BytesIO(response);
-                        var reader = new Reader(stream, false, _useHarmonyMap);
-                        var tag;
-                        i = -1;
-                        try {
-                            while ((tag = stream.readByte()) !== Tags.TagEnd) {
-                                switch (tag) {
-                                case Tags.TagResult:
-                                    if (resultMode === ResultMode.Serialized) {
-                                        result = reader.readRaw();
-                                    }
-                                    else {
+                sendAndReceive(request.bytes).then(
+                    function (response) {
+                        var result = null;
+                        var error = null;
+                        var i;
+                        if (resultMode === ResultMode.RawWithEndTag) {
+                            result = response;
+                        }
+                        else if (resultMode === ResultMode.Raw) {
+                            result = response.subarray(0, response.byteLength - 1);
+                        }
+                        else {
+                            var stream = new BytesIO(response);
+                            var reader = new Reader(stream, false, _useHarmonyMap);
+                            var tag;
+                            i = -1;
+                            try {
+                                while ((tag = stream.readByte()) !== Tags.TagEnd) {
+                                    switch (tag) {
+                                    case Tags.TagResult:
+                                        if (batch) {
+                                            resultMode = batches[i+1].resultMode;
+                                        }
+                                        if (resultMode === ResultMode.Serialized) {
+                                            result = reader.readRaw();
+                                        }
+                                        else {
+                                            reader.reset();
+                                            result = reader.unserialize();
+                                        }
+                                        if (batch) {
+                                            batches[++i].result = result;
+                                            batches[i].error = null;
+                                        }
+                                        break;
+                                    case Tags.TagArgument:
                                         reader.reset();
-                                        result = reader.unserialize();
+                                        var _args = reader.readList();
+                                        if (batch) {
+                                            copyargs(_args, batches[i].args);
+                                        }
+                                        else {
+                                            copyargs(_args, args);
+                                        }
+                                        break;
+                                    case Tags.TagError:
+                                        reader.reset();
+                                        error = new Error(reader.readString());
+                                        if (batch) {
+                                            batches[++i].error = error;
+                                        }
+                                        break;
+                                    default:
+                                        error = new Error('Wrong Response:\r\n' + response.toString());
+                                        if (batch) {
+                                            batches[++i].error = error;
+                                        }
+                                        break;
                                     }
-                                    if (batch) {
-                                        batches[++i].result = result;
-                                        batches[i].error = null;
-                                    }
-                                    break;
-                                case Tags.TagArgument:
-                                    reader.reset();
-                                    var _args = reader.readList();
-                                    if (batch) {
-                                        copyargs(_args, batches[i].args);
-                                    }
-                                    else {
-                                        copyargs(_args, args);
-                                    }
-                                    break;
-                                case Tags.TagError:
-                                    reader.reset();
-                                    error = new Exception(reader.readString());
-                                    if (batch) {
-                                        batches[++i].error = error;
-                                    }
-                                    break;
-                                default:
-                                    error = new Exception('Wrong Response:\r\n' + response.toString());
-                                    if (batch) {
-                                        batches[++i].error = error;
-                                    }
-                                    break;
+                                }
+                            }
+                            catch (e) {
+                                error = e;
+                                if (batch) {
+                                    batches[i < 0 ? 0 : i >= batchSize ? i - 1 : i].error = error;
                                 }
                             }
                         }
-                        catch (e) {
-                            error = e;
-                            if (batch) {
-                                batches[i < 0 ? 0 : i >= batchSize ? i - 1 : i].error = error;
-                            }
-                        }
-                    }
 
-                    if (!batch) {
-                        batchSize  = 1;
-                        batches = [{args: args,
-                                    func: func,
-                                    callback: callback,
-                                    errorHandler: errorHandler,
-                                    result: result,
-                                    error: error,
-                                    completer: completer}];
-                    }
-                    for (i = 0; i < batchSize; ++i) {
-                        var item = batches[i];
-                        if (item.error) {
-                            item.completer.completeError(item.error);
-                            if (item.errorHandler) {
-                                item.errorHandler(item.func, item.error);
+                        if (!batch) {
+                            batchSize  = 1;
+                            batches = [{args: args,
+                                        func: func,
+                                        callback: callback,
+                                        errorHandler: errorHandler,
+                                        result: result,
+                                        error: error,
+                                        completer: completer}];
+                        }
+                        for (i = 0; i < batchSize; ++i) {
+                            var item = batches[i];
+                            if (item.error) {
+                                item.completer.completeError(item.error);
+                                if (item.errorHandler) {
+                                    item.errorHandler(item.func, item.error);
+                                }
+                                else {
+                                    _onerror(item.func, item.error);
+                                    self.emit('error', item.func, item.error);
+                                }
                             }
                             else {
-                                _onerror(item.func, item.error);
+                                item.completer.complete(item.result);
+                                if (item.callback) {
+                                    item.callback(item.result, item.args);
+                                }
                             }
+                        }
+                    },
+                    function(error) {
+                        completer.completeError(error);
+                        if (errorHandler) {
+                            errorHandler(func, error);
                         }
                         else {
-                            item.completer.complete(item.result);
-                            if (item.callback) {
-                                item.callback(item.result, item.args);
-                            }
+                            _onerror(func, error);
+                            self.emit('error', func, error);
                         }
                     }
-                })
-                .catchError(function(error) {
-                    completer.completeError(error);
-                    if (errorHandler) {
-                        errorHandler(func, error);
-                    }
-                    else {
-                        _onerror(func, error);
-                    }
-                });
+                );
             }
             return completer.future;
         }
@@ -618,7 +634,7 @@
             }
             _ready = false;
             if (!uri && !_uri) {
-                return new Exception('You should set server uri first!');
+                return new Error('You should set server uri first!');
             }
             if (uri) {
                 _uri = uri;
@@ -669,12 +685,18 @@
                 _invoke();
             }
         }
-        function then(handler) {
-            return _future.then(handler);
+        var then = function(onComplete, onError) {
+            return _future.then(onComplete, onError);
+        };
+        function getThen() {
+            var _then = then;
+            then = null;
+            return _then;
         }
-        function catchError(handler) {
-            return _future.catchError(handler);
+        function catchError(onError) {
+            return _future.catchError(onError);
         }
+
         /* function constructor */ {
             if (typeof(uri) === s_string) {
                 useService(uri, functions);
@@ -696,7 +718,7 @@
             invoke: { value: invoke },
             beginBatch: { value: beginBatch },
             endBatch: { value: endBatch },
-            then: { value: then },
+            then: { get: getThen },
             catchError: { value: catchError }
         });
     }
@@ -712,7 +734,7 @@
             parser.protocol === 'wss:') {
             return new global.hprose.WebSocketClient(uri, functions);
         }
-        throw new Exception('The ' + parser.protocol + ' client isn\'t implemented.');
+        throw new Error('The ' + parser.protocol + ' client isn\'t implemented.');
     }
 
     Object.defineProperty(Client, 'create', { value: create });
