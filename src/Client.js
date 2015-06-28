@@ -100,7 +100,7 @@
                                 setFunctions(stub, functions);
                                 break;
                             default:
-                                error = new Error('Wrong Response:\r\n' + BytesIO.toString(stream));
+                                error = new Error('Wrong Response:\r\n' + BytesIO.toString(data));
                                 break;
                         }
                     }
