@@ -12,7 +12,7 @@
  *                                                        *
  * hprose client for HTML5.                               *
  *                                                        *
- * LastModified: Jun 22, 2015                             *
+ * LastModified: Jun 28, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -100,7 +100,7 @@
                                 setFunctions(stub, functions);
                                 break;
                             default:
-                                error = new Error('Wrong Response:\r\n' + stream.toString());
+                                error = new Error('Wrong Response:\r\n' + BytesIO.toString(stream));
                                 break;
                         }
                     }
@@ -476,7 +476,7 @@
                                         }
                                         break;
                                     default:
-                                        error = new Error('Wrong Response:\r\n' + response.toString());
+                                        error = new Error('Wrong Response:\r\n' + BytesIO.toString(response));
                                         if (batch) {
                                             batches[++i].error = error;
                                         }
