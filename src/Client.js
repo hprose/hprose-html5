@@ -12,7 +12,7 @@
  *                                                        *
  * hprose client for HTML5.                               *
  *                                                        *
- * LastModified: Jun 28, 2015                             *
+ * LastModified: Jul 13, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -20,6 +20,7 @@
 (function (global) {
     'use strict';
 
+    var Map = global.Map;
     var Tags = global.hprose.Tags;
     var ResultMode = global.hprose.ResultMode;
     var BytesIO = global.hprose.BytesIO;
@@ -59,6 +60,7 @@
         var _completer          = new Completer();
         var _future             = _completer.future;
         var _timeout            = 30000;
+        var _remoteEvents       = Object.create(null);
 
         var self = this;
 
@@ -696,7 +698,70 @@
         function catchError(onError) {
             return _future.catchError(onError);
         }
-
+        function getRemoteEvent(name, id, create) {
+            if (_remoteEvents[name]) {
+                var remoteEvents = _remoteEvents[name];
+                if (remoteEvents.has(id)) {
+                    return remoteEvents.get(id);
+                }
+                return null;
+            }
+            if (create) {
+                _remoteEvents[name] = new Map();
+            }
+            return null;
+        }
+        function addRemoteEvent(name, id, callback) {
+            var remoteEvent = getRemoteEvent(name, id, true);
+            if (remoteEvent === null) {
+                remoteEvent = {
+                    handler: function(result) {
+                        var remoteEvent = getRemoteEvent(name, id, false);
+                        if (remoteEvent) {
+                            var cb = function() {
+                                invoke(name, id, remoteEvent.handler, function() {
+                                    global.setTimeout(cb, 0);
+                                });
+                            };
+                            global.setTimeout(cb, 0);
+                            global.setTimeout(function() {
+                                var callbacks = remoteEvent.callbacks;
+                                for (var i in callbacks) {
+                                    callbacks[i](result);
+                                }
+                            }, 0);
+                        }
+                    },
+                    callbacks: []
+                };
+                _remoteEvents[name].set(id, remoteEvent);
+                var cb = function() {
+                    invoke(name, id, remoteEvent.handler, function() {
+                        global.setTimeout(cb, 0);
+                    });
+                };
+                global.setTimeout(cb, 0);
+            }
+            if (remoteEvent.callbacks.indexOf(callback) < 0) {
+                remoteEvent.callbacks.push(callback);
+            }
+        }
+        function removeRemoteEvent(name, id, callback) {
+            var remoteEvent = getRemoteEvent(name, id, false);
+            if (remoteEvent !== null) {
+                var p = remoteEvent.callbacks.indexOf(callback);
+                if (p >= 0) {
+                    remoteEvent.callbacks[p] = remoteEvent.callbacks[remoteEvent.callbacks.length - 1];
+                    remoteEvent.callbacks.length--;
+                }
+                if (remoteEvent.callbacks.length === 0) {
+                    _remoteEvents[name]['delete'](id);
+                }
+            }
+        }
+        function removeAllRemoteEvent(name) {
+            delete _remoteEvents[name];
+        }
         /* function constructor */ {
             if (typeof(uri) === s_string) {
                 useService(uri, functions);
@@ -719,7 +784,10 @@
             beginBatch: { value: beginBatch },
             endBatch: { value: endBatch },
             then: { get: getThen },
-            catchError: { value: catchError }
+            catchError: { value: catchError },
+            addRemoteEvent: {value: addRemoteEvent },
+            removeRemoteEvent: {value: removeRemoteEvent },
+            removeAllRemoteEvent: {value: removeAllRemoteEvent }
         });
     }
 
