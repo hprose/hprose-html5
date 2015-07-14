@@ -12,7 +12,7 @@
  *                                                        *
  * hprose client for HTML5.                               *
  *                                                        *
- * LastModified: Jul 13, 2015                             *
+ * LastModified: Jul 14, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -20,7 +20,6 @@
 (function (global) {
     'use strict';
 
-    var Map = global.Map;
     var Tags = global.hprose.Tags;
     var ResultMode = global.hprose.ResultMode;
     var BytesIO = global.hprose.BytesIO;
@@ -61,6 +60,7 @@
         var _future             = _completer.future;
         var _timeout            = 30000;
         var _remoteEvents       = Object.create(null);
+        var _id                 = null;
 
         var self = this;
 
@@ -701,17 +701,41 @@
         function getRemoteEvent(name, id, create) {
             if (_remoteEvents[name]) {
                 var remoteEvents = _remoteEvents[name];
-                if (remoteEvents.has(id)) {
-                    return remoteEvents.get(id);
+                if (remoteEvents[id]) {
+                    return remoteEvents[id];
                 }
                 return null;
             }
             if (create) {
-                _remoteEvents[name] = new Map();
+                _remoteEvents[name] = Object.create(null);
             }
             return null;
         }
+        // addRemoteEvent(name, callback)
+        // addRemoteEvent(name, id, callback)
         function addRemoteEvent(name, id, callback) {
+            if (typeof name !== s_string) {
+                throw new Error("event name must be a string.");
+            }
+            if (id === undefined || id === null) {
+                if (typeof callback === s_function) {
+                    id = callback;
+                }
+                else {
+                    throw new Error("callback must be a function.");
+                }
+            }
+            if (typeof id === s_function) {
+                callback = id;
+                if (_id === null) {
+                    _id = invoke("#");
+                }
+                _id.then(function(id) {
+                    addRemoteEvent(name, id, callback);
+                    return id;
+                });
+                return;
+            }
             var remoteEvent = getRemoteEvent(name, id, true);
             if (remoteEvent === null) {
                 remoteEvent = {
@@ -736,7 +760,7 @@
                     },
                     callbacks: []
                 };
-                _remoteEvents[name].set(id, remoteEvent);
+                _remoteEvents[name][id] = remoteEvent;
                 var cb = function() {
                     invoke(name, id, remoteEvent.handler, function() {
                         global.setTimeout(cb, 0);
@@ -748,21 +772,61 @@
                 remoteEvent.callbacks.push(callback);
             }
         }
-        function removeRemoteEvent(name, id, callback) {
-            var remoteEvent = getRemoteEvent(name, id, false);
-            if (remoteEvent !== null) {
-                var p = remoteEvent.callbacks.indexOf(callback);
-                if (p >= 0) {
-                    remoteEvent.callbacks[p] = remoteEvent.callbacks[remoteEvent.callbacks.length - 1];
-                    remoteEvent.callbacks.length--;
-                }
-                if (remoteEvent.callbacks.length === 0) {
-                    _remoteEvents[name]['delete'](id);
+        function delRemoteEvent(remoteEvents, id, callback) {
+            if (remoteEvents) {
+                var remoteEvent = remoteEvents[id];
+                if (remoteEvent) {
+                    var callbacks = remoteEvent.callbacks;
+                    var p = callbacks.indexOf(callback);
+                    if (p >= 0) {
+                        callbacks[p] = callbacks[callbacks.length - 1];
+                        callbacks.length--;
+                    }
+                    if (callbacks.length === 0) {
+                        delete remoteEvents[id];
+                    }
                 }
             }
         }
-        function removeAllRemoteEvent(name) {
-            delete _remoteEvents[name];
+        // removeRemoteEvent(name)
+        // removeRemoteEvent(name, callback)
+        // removeRemoteEvent(name, id)
+        // removeRemoteEvent(name, id, callback)
+        function removeRemoteEvent(name, id, callback) {
+            if (typeof name !== s_string) {
+                throw new Error("event name must be a string.");
+            }
+            if (id === undefined || id === null) {
+                if (typeof callback === s_function) {
+                    id = callback;
+                }
+                else {
+                    delete _remoteEvents[name];
+                    return;
+                }
+            }
+            if (typeof id === s_function) {
+                callback = id;
+                id = null;
+            }
+            if (id === null) {
+                if (_id === null) {
+                    if (_remoteEvents[name]) {
+                        var remoteEvents = _remoteEvents[name];
+                        for (id in remoteEvents) {
+                            delRemoteEvent(remoteEvents, id, callback);
+                        }
+                    }
+                }
+                else {
+                    _id.then(function(id) {
+                        removeRemoteEvent(name, id, callback);
+                        return id;
+                    });
+                }
+                return;
+            }
+            delRemoteEvent(_remoteEvents[name], id, callback);
         }
         /* function constructor */ {
             if (typeof(uri) === s_string) {
@@ -788,8 +852,7 @@
             then: { get: getThen },
             catchError: { value: catchError },
             addRemoteEvent: {value: addRemoteEvent },
-            removeRemoteEvent: {value: removeRemoteEvent },
-            removeAllRemoteEvent: {value: removeAllRemoteEvent }
+            removeRemoteEvent: {value: removeRemoteEvent }
         });
     }
 
