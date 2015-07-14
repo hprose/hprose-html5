@@ -724,12 +724,14 @@
                                 });
                             };
                             global.setTimeout(cb, 0);
-                            global.setTimeout(function() {
-                                var callbacks = remoteEvent.callbacks;
-                                for (var i in callbacks) {
-                                    callbacks[i](result);
-                                }
-                            }, 0);
+                            if (result !== null) {
+                                global.setTimeout(function() {
+                                    var callbacks = remoteEvent.callbacks;
+                                    for (var i in callbacks) {
+                                        callbacks[i](result);
+                                    }
+                                }, 0);
+                            }
                         }
                     },
                     callbacks: []
