@@ -852,7 +852,9 @@
             then: { get: getThen },
             catchError: { value: catchError },
             addRemoteEvent: {value: addRemoteEvent },
-            removeRemoteEvent: {value: removeRemoteEvent }
+            remoteOn: {value: addRemoteEvent },
+            removeRemoteEvent: {value: removeRemoteEvent },
+            remoteOff: {value: removeRemoteEvent }
         });
     }
 
