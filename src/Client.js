@@ -649,7 +649,7 @@
                 setFunctions(stub, functions);
             }
             else {
-                setImmediate(function () { initService(stub); });
+                setImmediate(initService, stub);
                 return _future;
             }
             return stub;
