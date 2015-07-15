@@ -13,13 +13,13 @@
  *                                                        *
  * hprose Writer for HTML5.                               *
  *                                                        *
- * LastModified: May 19, 2015                             *
+ * LastModified: Jul 15, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
 
-(function (global) {
-    /*jshint node:true, eqeqeq:true, unused:false */
+/* jshint -W067 */
+(function (global, undefined) {
     'use strict';
 
     var Map = global.Map;
@@ -455,4 +455,6 @@
 
     global.hprose.Writer = Writer;
 
-})(this);
+}(function() {
+    return this || (1, eval)('this');
+}()));

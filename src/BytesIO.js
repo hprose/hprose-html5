@@ -13,12 +13,13 @@
  *                                                        *
  * hprose BytesIO for HTML5.                              *
  *                                                        *
- * LastModified: Jun 22, 2015                             *
+ * LastModified: Jul 15, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
 
-(function (global) {
+/* jshint -W067 */
+(function (global, undefined) {
     'use strict';
 
     var _EMPTY_BYTES = new Uint8Array(0);
@@ -396,5 +397,6 @@
 
     global.hprose.BytesIO = BytesIO;
 
-
-})(this);
+}(function() {
+    return this || (1, eval)('this');
+}()));

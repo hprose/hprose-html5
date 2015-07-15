@@ -12,12 +12,13 @@
  *                                                        *
  * hprose websocket client for HTML5.                     *
  *                                                        *
- * LastModified: Jun 22, 2015                             *
+ * LastModified: Jul 15, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
 
-(function (global) {
+/* jshint -W067 */
+(function (global, undefined) {
     'use strict';
 
     var Client = global.hprose.Client;
@@ -149,4 +150,7 @@
     Object.defineProperty(WebSocketClient, 'create', { value: create });
 
     global.hprose.WebSocketClient = WebSocketClient;
-})(this);
+
+}(function() {
+    return this || (1, eval)('this');
+}()));

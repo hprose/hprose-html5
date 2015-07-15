@@ -12,14 +12,16 @@
  *                                                        *
  * hprose client for HTML5.                               *
  *                                                        *
- * LastModified: Jul 14, 2015                             *
+ * LastModified: Jul 15, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
 
-(function (global) {
+/* jshint -W067 */
+(function (global, undefined) {
     'use strict';
 
+    var setImmediate = global.setImmediate;
     var Tags = global.hprose.Tags;
     var ResultMode = global.hprose.ResultMode;
     var BytesIO = global.hprose.BytesIO;
@@ -513,7 +515,6 @@
                                 }
                                 else {
                                     _onerror(item.func, item.error);
-                                    self.emit('error', item.func, item.error);
                                 }
                             }
                             else {
@@ -531,7 +532,6 @@
                         }
                         else {
                             _onerror(func, error);
-                            self.emit('error', func, error);
                         }
                     }
                 );
@@ -649,7 +649,7 @@
                 setFunctions(stub, functions);
             }
             else {
-                global.setTimeout(function () { initService(stub); }, 0);
+                setImmediate(function () { initService(stub); });
                 return _future;
             }
             return stub;
@@ -732,7 +732,6 @@
                 }
                 _id.then(function(id) {
                     addRemoteEvent(name, id, callback);
-                    return id;
                 });
                 return;
             }
@@ -744,17 +743,17 @@
                         if (remoteEvent) {
                             var cb = function() {
                                 invoke(name, id, remoteEvent.handler, function() {
-                                    global.setTimeout(cb, 0);
+                                    setImmediate(cb);
                                 });
                             };
-                            global.setTimeout(cb, 0);
+                            setImmediate(cb);
                             if (result !== null) {
-                                global.setTimeout(function() {
+                                setImmediate(function() {
                                     var callbacks = remoteEvent.callbacks;
                                     for (var i in callbacks) {
                                         callbacks[i](result);
                                     }
-                                }, 0);
+                                });
                             }
                         }
                     },
@@ -763,10 +762,10 @@
                 _remoteEvents[name][id] = remoteEvent;
                 var cb = function() {
                     invoke(name, id, remoteEvent.handler, function() {
-                        global.setTimeout(cb, 0);
+                        setImmediate(cb);
                     });
                 };
-                global.setTimeout(cb, 0);
+                setImmediate(cb);
             }
             if (remoteEvent.callbacks.indexOf(callback) < 0) {
                 remoteEvent.callbacks.push(callback);
@@ -875,4 +874,7 @@
     Object.defineProperty(Client, 'create', { value: create });
 
     global.hprose.Client = Client;
-})(this);
+
+}(function() {
+    return this || (1, eval)('this');
+}()));

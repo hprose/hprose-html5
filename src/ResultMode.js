@@ -13,11 +13,12 @@
  *                                                        *
  * hprose ResultMode for HTML5.                           *
  *                                                        *
- * LastModified: May 5, 2015                              *
+ * LastModified: Jul 15, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
 
+/* jshint -W067 */
 (function (global) {
     'use strict';
 
@@ -32,4 +33,6 @@
     global.hprose.Raw           = global.hprose.ResultMode.Raw;
     global.hprose.RawWithEndTag = global.hprose.ResultMode.RawWithEndTag;
 
-})(this);
+}(function() {
+    return this || (1, eval)('this');
+}()));

@@ -25,32 +25,32 @@
     "use strict";
     var completer = new hprose.Completer();
     var future = completer.future;
+    future.then(function(result) {
+        return result + 1;
+    }).then(function(result) {
+        return result + 1;
+    }).then(function(result) {
+        console.log(result);
+    });
+    future.then(function(result) {
+        console.log(result);
+    });
     completer.complete(1);
-    future.then(function(result) {
-        return result + 1;
-    }).then(function(result) {
-        return result + 1;
-    }).then(function(result) {
-        console.log(result);
-    });
-    future.then(function(result) {
-        console.log(result);
-    });
 })();
 
 (function() {
     "use strict";
     var completer = new hprose.Completer();
     var future = completer.future;
+    future.then(null, function(result) {
+        return result + 1;
+    }).then(function(result) {
+        return result + 1;
+    }).then(function(result) {
+        console.log(result);
+    });
+    future.then(null, function(result) {
+        console.log(result);
+    });
     completer.completeError(1);
-    future.then(null, function(result) {
-        return result + 1;
-    }).then(function(result) {
-        return result + 1;
-    }).then(function(result) {
-        console.log(result);
-    });
-    future.then(null, function(result) {
-        console.log(result);
-    });
 })();
