@@ -12,7 +12,7 @@
  *                                                        *
  * hprose client for HTML5.                               *
  *                                                        *
- * LastModified: Jul 15, 2015                             *
+ * LastModified: Jul 16, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -27,6 +27,7 @@
     var BytesIO = global.hprose.BytesIO;
     var Writer = global.hprose.Writer;
     var Reader = global.hprose.Reader;
+    var Future = global.hprose.Future;
     var Completer = global.hprose.Completer;
 
     var GETFUNCTIONS = new Uint8Array(1);
@@ -61,7 +62,7 @@
         var _completer          = new Completer();
         var _future             = _completer.future;
         var _timeout            = 30000;
-        var _remoteEvents       = Object.create(null);
+        var _topics             = Object.create(null);
         var _id                 = null;
 
         var self = this;
@@ -125,9 +126,9 @@
         }
 
         function setFunction(stub, func) {
-            return function () {
+            return Future.wrap(function () {
                 return _invoke(stub, func, arguments);
-            };
+            });
         }
 
         function setMethods(stub, obj, namespace, name, methods) {
@@ -698,31 +699,31 @@
         function catchError(onError) {
             return _future.catchError(onError);
         }
-        function getRemoteEvent(name, id, create) {
-            if (_remoteEvents[name]) {
-                var remoteEvents = _remoteEvents[name];
-                if (remoteEvents[id]) {
-                    return remoteEvents[id];
+        function getTopic(name, id, create) {
+            if (_topics[name]) {
+                var topics = _topics[name];
+                if (topics[id]) {
+                    return topics[id];
                 }
                 return null;
             }
             if (create) {
-                _remoteEvents[name] = Object.create(null);
+                _topics[name] = Object.create(null);
             }
             return null;
         }
-        // addRemoteEvent(name, callback)
-        // addRemoteEvent(name, id, callback)
-        function addRemoteEvent(name, id, callback) {
+        // subscribe(name, callback)
+        // subscribe(name, id, callback)
+        function subscribe(name, id, callback) {
             if (typeof name !== s_string) {
-                throw new Error("event name must be a string.");
+                throw new TypeError("event name must be a string.");
             }
             if (id === undefined || id === null) {
                 if (typeof callback === s_function) {
                     id = callback;
                 }
                 else {
-                    throw new Error("callback must be a function.");
+                    throw new TypeError("callback must be a function.");
                 }
             }
             if (typeof id === s_function) {
@@ -731,76 +732,88 @@
                     _id = invoke("#");
                 }
                 _id.then(function(id) {
-                    addRemoteEvent(name, id, callback);
+                    subscribe(name, id, callback);
                 });
                 return;
             }
-            var remoteEvent = getRemoteEvent(name, id, true);
-            if (remoteEvent === null) {
-                remoteEvent = {
+            if (typeof callback !== s_function) {
+                throw new TypeError("callback must be a function.");
+            }
+            if (Future.isFuture(id)) {
+                id.then(function(id) {
+                    subscribe(name, id, callback);
+                });
+                return;
+            }
+            var topic = getTopic(name, id, true);
+            if (topic === null) {
+                topic = {
                     handler: function(result) {
-                        var remoteEvent = getRemoteEvent(name, id, false);
-                        if (remoteEvent) {
+                        var topic = getTopic(name, id, false);
+                        if (topic) {
                             var cb = function() {
-                                invoke(name, id, remoteEvent.handler, function() {
+                                invoke(name, id, topic.handler, function() {
                                     setImmediate(cb);
                                 });
                             };
                             setImmediate(cb);
                             if (result !== null) {
-                                setImmediate(function() {
-                                    var callbacks = remoteEvent.callbacks;
-                                    for (var i in callbacks) {
-                                        callbacks[i](result);
-                                    }
-                                });
+                                var callbacks = topic.callbacks;
+                                for (var i = 0, n = callbacks.length; i < n; ++i) {
+                                    callbacks[i](result);
+                                }
                             }
                         }
                     },
-                    callbacks: []
+                    callbacks: [callback]
                 };
-                _remoteEvents[name][id] = remoteEvent;
+                _topics[name][id] = topic;
                 var cb = function() {
-                    invoke(name, id, remoteEvent.handler, function() {
+                    invoke(name, id, topic.handler, function() {
                         setImmediate(cb);
                     });
                 };
-                setImmediate(cb);
+                cb();
             }
-            if (remoteEvent.callbacks.indexOf(callback) < 0) {
-                remoteEvent.callbacks.push(callback);
+            else if (topic.callbacks.indexOf(callback) < 0) {
+                topic.callbacks.push(callback);
             }
         }
-        function delRemoteEvent(remoteEvents, id, callback) {
-            if (remoteEvents) {
-                var remoteEvent = remoteEvents[id];
-                if (remoteEvent) {
-                    var callbacks = remoteEvent.callbacks;
-                    var p = callbacks.indexOf(callback);
-                    if (p >= 0) {
-                        callbacks[p] = callbacks[callbacks.length - 1];
-                        callbacks.length--;
+        function delTopic(topics, id, callback) {
+            if (topics) {
+                if (typeof callback === s_function) {
+                    var topic = topics[id];
+                    if (topic) {
+                        var callbacks = topic.callbacks;
+                        var p = callbacks.indexOf(callback);
+                        if (p >= 0) {
+                            callbacks[p] = callbacks[callbacks.length - 1];
+                            callbacks.length--;
+                        }
+                        if (callbacks.length === 0) {
+                            delete topics[id];
+                        }
                     }
-                    if (callbacks.length === 0) {
-                        delete remoteEvents[id];
-                    }
+                }
+                else {
+                    delete topics[id];
                 }
             }
         }
-        // removeRemoteEvent(name)
-        // removeRemoteEvent(name, callback)
-        // removeRemoteEvent(name, id)
-        // removeRemoteEvent(name, id, callback)
-        function removeRemoteEvent(name, id, callback) {
+        // unsubscribe(name)
+        // unsubscribe(name, callback)
+        // unsubscribe(name, id)
+        // unsubscribe(name, id, callback)
+        function unsubscribe(name, id, callback) {
             if (typeof name !== s_string) {
-                throw new Error("event name must be a string.");
+                throw new TypeError("event name must be a string.");
             }
             if (id === undefined || id === null) {
                 if (typeof callback === s_function) {
                     id = callback;
                 }
                 else {
-                    delete _remoteEvents[name];
+                    delete _topics[name];
                     return;
                 }
             }
@@ -810,22 +823,30 @@
             }
             if (id === null) {
                 if (_id === null) {
-                    if (_remoteEvents[name]) {
-                        var remoteEvents = _remoteEvents[name];
-                        for (id in remoteEvents) {
-                            delRemoteEvent(remoteEvents, id, callback);
+                    if (_topics[name]) {
+                        var topics = _topics[name];
+                        for (id in topics) {
+                            delTopic(topics, id, callback);
                         }
                     }
                 }
                 else {
                     _id.then(function(id) {
-                        removeRemoteEvent(name, id, callback);
-                        return id;
+                        unsubscribe(name, id, callback);
                     });
                 }
-                return;
             }
-            delRemoteEvent(_remoteEvents[name], id, callback);
+            else if (Future.isFuture(id)) {
+                id.then(function(id) {
+                    unsubscribe(name, id, callback);
+                });
+            }
+            else {
+                delTopic(_topics[name], id, callback);
+            }
+        }
+        function getId() {
+            return _id;
         }
         /* function constructor */ {
             if (typeof(uri) === s_string) {
@@ -837,6 +858,7 @@
             onerror: { get: getOnError, set: setOnError },
             ready: { get: getReady },
             uri: { get: getUri },
+            id: { get: getId },
             timeout: { get: getTimeout, set: setTimeout },
             byref: { get: getByRef, set: setByRef },
             simple: { get: getSimpleMode, set: setSimpleMode },
@@ -845,15 +867,13 @@
             addFilter: { value: addFilter },
             removeFilter: { value: removeFilter },
             useService: { value: useService },
-            invoke: { value: invoke },
+            invoke: { value: Future.wrap(invoke, self) },
             beginBatch: { value: beginBatch },
             endBatch: { value: endBatch },
             then: { get: getThen },
             catchError: { value: catchError },
-            addRemoteEvent: {value: addRemoteEvent },
-            remoteOn: {value: addRemoteEvent },
-            removeRemoteEvent: {value: removeRemoteEvent },
-            remoteOff: {value: removeRemoteEvent }
+            subscribe: {value: subscribe },
+            unsubscribe: {value: unsubscribe }
         });
     }
 

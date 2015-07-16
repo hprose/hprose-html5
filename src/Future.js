@@ -13,7 +13,7 @@
  *                                                        *
  * hprose Future for HTML5.                               *
  *                                                        *
- * LastModified: Jul 15, 2015                             *
+ * LastModified: Jul 16, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -41,6 +41,10 @@
             });
             return completer.future;
         }
+    }
+
+    function isFuture(obj) {
+        return (obj instanceof Future) && (typeof (obj.then === "function"));
     }
 
     function delayed(duration, computation) {
@@ -80,18 +84,49 @@
         return sync(function() { return v; });
     }
 
+    function wrap(handler, scope) {
+        return function() {
+            var args = arguments;
+            var count = 0;
+            var length = args.length;
+            var completer = new Completer();
+            function checkCount() {
+                if (count === length) {
+                    completer.complete(args);
+                }
+            }
+            function changeArgs(n) {
+                return function(value) {
+                    args[n] = value;
+                    ++count;
+                    checkCount();
+                };
+            }
+            for (var i = 0; i < length; ++i) {
+                if (isFuture(args[i])) {
+                    args[i].then(changeArgs(i), changeArgs(i));
+                }
+                else {
+                    ++count;
+                }
+            }
+            checkCount();
+            return completer.future.then(function(args) {
+                return handler.apply(scope, args);
+            });
+        };
+    }
+
     Object.defineProperties(Future, {
+        isFuture: { value: isFuture },
         delayed: { value: delayed },
         error: { value: error },
         sync: { value : sync },
-        value: { value : value }
+        value: { value : value },
+        wrap: { value: wrap }
     });
 
     global.hprose.Future = Future;
-
-    function isFuture(obj) {
-        return (obj instanceof Future) && (typeof (obj.then === "function"));
-    }
 
     function Completer(sync) {
         var _status = PENDING;

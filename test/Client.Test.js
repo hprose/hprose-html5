@@ -25,45 +25,29 @@
     'use strict';
     //var methodList = ['hello', 'sum', 'swapKeyAndValue', 'getUserList'];
     //var client = new hprose.Client.create('http://hprose.com/example/', methodList);
+
     var client = hprose.Client.create('http://hprose.com/example/');
     client.onprogress = function(e) {
         if (e.lengthComputable) {
           console.log("progress: " + ((e.loaded / e.total) * 100));
         }
     };
+
+    console.info = hprose.Future.wrap(console.info, console);
+
     client.then(function(stub) {
-        stub.hello('World')
-        .then(function(result) {
-            console.info(result);
-        });
-        stub.sum(1,2,3,4,5)
-        .then(function(result) {
-            console.info(result);
-            return stub.sum(result, 6, 7, 8);
-        })
-        .then(function(result) {
-            console.info(result);
-            return stub.sum(result, 9);
-        })
-        .then(function(result) {
-            console.info(result);
-            return stub.sum(result, 10, 11, 12);
-        })
-        .then(function(result) {
-            console.info(result);
-            return stub.sum(result, 13);
-        })
-        .then(function(result) {
-            console.info(result);
-            return result + 14;
-        })
-        .then(function(result) {
-            console.info(result);
-            return result + 15;
-        })
-        .then(function(result) {
-            console.info(result);
-        });
+        console.info(stub.hello('World'));
+
+        var result = stub.sum(1,2,3,4,5);
+        console.info(result);
+        result = stub.sum(result, 6, 7, 8);
+        console.info(result);
+        result = stub.sum(result, 9);
+        console.info(result);
+        result = stub.sum(result, 10, 11, 12);
+        console.info(result);
+        result = stub.sum(result, 13);
+        console.info(result);
         var weeks = {
             'Monday': 'Mon',
             'Tuesday': 'Tue',
@@ -74,8 +58,9 @@
             'Sunday': 'Sun',
         };
         var args = [weeks];
-        client.invoke('swapKeyAndValue', args, true)
-        .then(function(result) {
+        result = client.invoke('swapKeyAndValue', args, true);
+        console.info(result);
+        result.then(function(result) {
             console.info(weeks);
             console.info(result);
             console.info(args[0]);
@@ -83,29 +68,17 @@
         .catchError(function(e) {
             console.error(e);
         });
-        stub.getUserList()
-        .then(function(result) {
-            console.info(result);
-        });
+        console.info(stub.getUserList());
         client.beginBatch();
-        stub.hello('World')
-        .then(function(result) {
-            console.info(result);
-        });
-        stub.sum(1,2,3,4,5)
-        .then(function(result) {
-            console.info(result);
-        });
+        console.info(stub.hello('World'));
+        console.info(stub.sum(1,2,3,4,5));
         var args2 = [weeks];
         stub.swapKeyAndValue(weeks, function(result, args) {
             console.info(weeks);
             console.info(result);
             console.info(args[0]);
         }, true);
-        client.getUserList()
-        .then(function(result) {
-            console.info(result);
-        });
+        console.info(client.getUserList());
         client.endBatch();
     },
     function(e) {
