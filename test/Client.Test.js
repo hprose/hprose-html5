@@ -13,7 +13,7 @@
  *                                                        *
  * hprose Client test for HTML5.                          *
  *                                                        *
- * LastModified: Apr 17, 2015                             *
+ * LastModified: Jul 17, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -35,8 +35,8 @@
 
     console.info = hprose.Future.wrap(console.info, console);
 
-    client.then(function(stub) {
-        console.info(stub.hello('World'));
+    client.ready(function(stub) {
+        hprose.Future.exec(console.log, console, stub.hello('World'));
 
         var result = stub.sum(1,2,3,4,5);
         console.info(result);

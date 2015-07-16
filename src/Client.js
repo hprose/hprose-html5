@@ -51,7 +51,6 @@
 
         // private members
         var _uri;
-        var _ready              = false;
         var _byref              = false;
         var _simple             = false;
         var _useHarmonyMap      = false;
@@ -166,7 +165,6 @@
                     }
                 }
             }
-            _ready = true;
         }
 
         function copyargs(src, dest) {
@@ -549,9 +547,6 @@
                 _onerror = value;
             }
         }
-        function getReady() {
-            return _ready;
-        }
         function getUri() {
             return _uri;
         }
@@ -635,7 +630,6 @@
             if (create) {
                 stub = {};
             }
-            _ready = false;
             if (!uri && !_uri) {
                 return new Error('You should set server uri first!');
             }
@@ -688,16 +682,8 @@
                 _invoke();
             }
         }
-        var then = function(onComplete, onError) {
+        function ready(onComplete, onError) {
             return _future.then(onComplete, onError);
-        };
-        function getThen() {
-            var _then = then;
-            then = null;
-            return _then;
-        }
-        function catchError(onError) {
-            return _future.catchError(onError);
         }
         function getTopic(name, id, create) {
             if (_topics[name]) {
@@ -739,7 +725,7 @@
             if (typeof callback !== s_function) {
                 throw new TypeError("callback must be a function.");
             }
-            if (Future.isFuture(id)) {
+            if (Future.isPromise(id)) {
                 id.then(function(id) {
                     subscribe(name, id, callback);
                 });
@@ -836,7 +822,7 @@
                     });
                 }
             }
-            else if (Future.isFuture(id)) {
+            else if (Future.isPromise(id)) {
                 id.then(function(id) {
                     unsubscribe(name, id, callback);
                 });
@@ -856,7 +842,6 @@
         Object.defineProperties(this, {
             onError: { get: getOnError, set: setOnError },
             onerror: { get: getOnError, set: setOnError },
-            ready: { get: getReady },
             uri: { get: getUri },
             id: { get: getId },
             timeout: { get: getTimeout, set: setTimeout },
@@ -870,8 +855,7 @@
             invoke: { value: Future.wrap(invoke, self) },
             beginBatch: { value: beginBatch },
             endBatch: { value: endBatch },
-            then: { get: getThen },
-            catchError: { value: catchError },
+            ready: { value: ready },
             subscribe: {value: subscribe },
             unsubscribe: {value: unsubscribe }
         });

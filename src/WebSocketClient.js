@@ -101,11 +101,7 @@
                 if (!_keepAlive) close();
             }
         }
-        function onclose(e) {
-            onerror(e);
-            ws = null;
-        }
-        function onerror(e) {
+        function fails(e) {
             for (var id in _completers) {
                 var timeoutId = _timeoutIds[id];
                 var completer = _completers[id];
@@ -113,13 +109,19 @@
                     global.clearTimeout(timeoutId);
                 }
                 if (completer !== undefined) {
-                    completer.completeError(new Error(e.data));
+                    completer.completeError(e);
                 }
                 delete _completers[id];
                 delete _timeoutIds[id];
                 delete _requests[id];
             }
             _count = 0;
+        }
+        function onclose(e) {
+            fails(new Error(e.code + ":" + e.reason));
+            ws = null;
+        }
+        function onerror(e) {
         }
         function connect() {
             ready = false;
