@@ -90,27 +90,28 @@
             var count = 0;
             var length = args.length;
             var completer = new Completer();
-            function checkCount() {
+            function check() {
                 if (count === length) {
                     completer.complete(args);
                 }
             }
-            function changeArgs(n) {
+            function fetch(i) {
                 return function(value) {
-                    args[n] = value;
+                    args[i] = value;
                     ++count;
-                    checkCount();
+                    check();
                 };
             }
             for (var i = 0; i < length; ++i) {
                 if (isFuture(args[i])) {
-                    args[i].then(changeArgs(i), changeArgs(i));
+                    var f = fetch(i);
+                    args[i].then(f, f);
                 }
                 else {
                     ++count;
                 }
             }
-            checkCount();
+            check();
             return completer.future.then(function(args) {
                 return handler.apply(scope, args);
             });
