@@ -27,9 +27,10 @@
 
     function noop(){}
     var s_id = 0;
-    var s_completers = [];
-    var s_timeoutId = [];
-    var s_messages = [];
+    var s_messagecount = 0;
+    var s_completers = Object.create(null);
+    var s_timeoutId = Object.create(null);
+    var s_messages = Object.create(null);
 
     function WebSocketClient(uri, functions) {
         if (this.constructor !== WebSocketClient) return new WebSocketClient(uri, functions);
@@ -63,12 +64,13 @@
         }
         function onopen(e) {
             ready = true;
-            if (s_messages.length > 0) {
+            if (s_messagecount > 0) {
                 for (var id in s_messages) {
                     send(id, s_messages[id]);
+                    delete s_messages[id];
                 }
-                s_messages = [];
             }
+            s_messagecount = 0;
         }
         function onmessage(e) {
             var bytes = new BytesIO(e.data);
@@ -82,15 +84,26 @@
             delete s_completers[id];
             if (timeoutId !== undefined) {
                 global.clearTimeout(timeoutId);
-                timeoutId = undefined;
             }
-            completer.complete(bytes.read(bytes.length - 4));
+            if (completer !== undefined) {
+                completer.complete(bytes.read(bytes.length - 4));
+            }
         }
         function onclose(e) {
             connect();
         }
         function onerror(e) {
-            self.onerror("WebSocket", new Error(e.data));
+            for (var id in s_completers) {
+                var timeoutId = s_timeoutId[id];
+                var completer = s_completers[id];
+                completer.completeError(new Error(e.data));
+                if (timeoutId !== undefined) {
+                    global.clearTimeout(timeoutId);
+                }
+                delete s_completers[id];
+                delete s_timeoutId[id];
+                delete s_messages[id];
+            }
         }
         function connect() {
             ready = false;
@@ -110,7 +123,6 @@
                         delete s_completers[id];
                         delete s_timeoutId[id];
                         delete s_messages[id];
-                        ws.close();
                         completer.completeError(new Error('timeout'));
                     };
                 })(s_id), self.timeout);
@@ -122,6 +134,7 @@
             }
             else {
                 s_messages[s_id] = request;
+                ++s_messagecount;
             }
             if (s_id < 0x7fffffff) {
                 ++s_id;
