@@ -26,19 +26,27 @@
     var Completer = global.hprose.Completer;
 
     function noop(){}
-    var s_id = 0;
-    var s_messagecount = 0;
-    var s_completers = Object.create(null);
-    var s_timeoutId = Object.create(null);
-    var s_messages = Object.create(null);
-
     function WebSocketClient(uri, functions) {
         if (this.constructor !== WebSocketClient) return new WebSocketClient(uri, functions);
+
         Client.call(this, uri, functions);
         this.timeout = 0;
-        var self = this;
+
+        var _id = 0;
+        var _count = 0;
+        var _reqcount = 0;
+        var _completers = Object.create(null);
+        var _timeoutIds = Object.create(null);
+        var _requests = Object.create(null);
+        var _keepAlive = true;
         var ready = false;
-        var ws;
+        var ws = null;
+
+        var self = this;
+
+        function getNextId() {
+            return (_id < 0x7fffffff) ? ++_id : _id = 0;
+        }
         function send(id, request) {
             var bytes = new BytesIO();
             bytes.writeByte((id >> 24) & 0xff);
@@ -64,13 +72,13 @@
         }
         function onopen(e) {
             ready = true;
-            if (s_messagecount > 0) {
-                for (var id in s_messages) {
-                    send(id, s_messages[id]);
-                    delete s_messages[id];
+            if (_reqcount > 0) {
+                for (var id in _requests) {
+                    send(id, _requests[id]);
+                    delete _requests[id];
                 }
             }
-            s_messagecount = 0;
+            _reqcount = 0;
         }
         function onmessage(e) {
             var bytes = new BytesIO(e.data);
@@ -78,32 +86,40 @@
             id = id | bytes.readByte() << 16;
             id = id | bytes.readByte() << 8;
             id = id | bytes.readByte();
-            var timeoutId = s_timeoutId[id];
-            var completer = s_completers[id];
-            delete s_timeoutId[id];
-            delete s_completers[id];
+            var timeoutId = _timeoutIds[id];
+            var completer = _completers[id];
+            delete _timeoutIds[id];
+            delete _completers[id];
             if (timeoutId !== undefined) {
                 global.clearTimeout(timeoutId);
             }
             if (completer !== undefined) {
+                --_count;
                 completer.complete(bytes.read(bytes.length - 4));
+            }
+            if (_count === 0) {
+                if (!_keepAlive) close();
             }
         }
         function onclose(e) {
-            connect();
+            onerror(e);
+            ws = null;
         }
         function onerror(e) {
-            for (var id in s_completers) {
-                var timeoutId = s_timeoutId[id];
-                var completer = s_completers[id];
-                completer.completeError(new Error(e.data));
+            for (var id in _completers) {
+                var timeoutId = _timeoutIds[id];
+                var completer = _completers[id];
                 if (timeoutId !== undefined) {
                     global.clearTimeout(timeoutId);
                 }
-                delete s_completers[id];
-                delete s_timeoutId[id];
-                delete s_messages[id];
+                if (completer !== undefined) {
+                    completer.completeError(new Error(e.data));
+                }
+                delete _completers[id];
+                delete _timeoutIds[id];
+                delete _requests[id];
             }
+            _count = 0;
         }
         function connect() {
             ready = false;
@@ -115,39 +131,56 @@
             ws.onclose = onclose;
         }
         function sendAndReceive(request) {
+            if (ws === null ||
+                ws.readyState === WebSocket.CLOSING ||
+                ws.readyState === WebSocket.CLOSED) {
+                connect();
+            }
+            ++_count;
+            var id = getNextId();
             var completer = new Completer();
             var timeoutId;
             if (self.timeout > 0) {
-                timeoutId = global.setTimeout((function (id) {
-                    return function() {
-                        delete s_completers[id];
-                        delete s_timeoutId[id];
-                        delete s_messages[id];
-                        completer.completeError(new Error('timeout'));
-                    };
-                })(s_id), self.timeout);
+                timeoutId = global.setTimeout(function() {
+                    delete _completers[id];
+                    delete _timeoutIds[id];
+                    delete _requests[id];
+                    --_count;
+                    completer.completeError(new Error('timeout'));
+                }, self.timeout);
             }
-            s_completers[s_id] = completer;
-            s_timeoutId[s_id] = timeoutId;
+            _completers[id] = completer;
+            _timeoutIds[id] = timeoutId;
             if (ready) {
-                send(s_id, request);
+                send(id, request);
             }
             else {
-                s_messages[s_id] = request;
-                ++s_messagecount;
-            }
-            if (s_id < 0x7fffffff) {
-                ++s_id;
-            }
-            else {
-                s_id = 0;
+                _requests[id] = request;
+                ++_reqcount;
             }
             return completer.future;
         }
+        function close() {
+            if (ws !== null) {
+                ws.onopen = null;
+                ws.onmessage = null;
+                ws.onerror = null;
+                ws.onclose = null;
+                ws.close();
+            }
+        }
+        function setKeepAlive(value) {
+            _keepAlive = !!value;
+        }
+        function getKeepAlive() {
+            return _keepAlive;
+        }
+
         Object.defineProperties(this, {
-            sendAndReceive: { value: sendAndReceive }
+            sendAndReceive: { value: sendAndReceive },
+            keepAlive: { get: getKeepAlive, set: setKeepAlive },
+            close: { value: close }
         });
-        connect();
     }
 
     function create(uri, functions) {
