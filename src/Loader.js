@@ -23,6 +23,7 @@
     'use strict';
 
     global.hprose.common = {
+        TimeoutError: global.hprose.TimeoutError,
         Completer: global.hprose.Completer,
         Future: global.hprose.Future,
         ResultMode: global.hprose.ResultMode

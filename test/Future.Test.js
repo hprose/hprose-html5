@@ -153,3 +153,27 @@
      // true
      // 3
 })();
+
+(function() {
+    "use strict";
+    var Future = hprose.Future;
+    function add(a, b) { return a + b; }
+    var a = Future.resolve(3);
+    var b = Future.resolve(5);
+    Future.run(console.log, console, Future.run(add, null, a, b)); // 8
+})();
+
+(function() {
+    "use strict";
+    var Future = hprose.Future;
+    Future.delayed(500, function() { return "one"; })
+          .timeout(300)
+          .then(function(value) {
+              console.log(value);
+          })
+          .catchError(function(reason) {
+              console.error(reason);
+          }, function(e) {
+              return e instanceof hprose.TimeoutError;
+          });
+})();

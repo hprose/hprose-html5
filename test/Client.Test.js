@@ -36,7 +36,7 @@
     console.info = hprose.Future.wrap(console.info, console);
 
     client.ready(function(stub) {
-        hprose.Future.exec(console.log, console, stub.hello('World'));
+        hprose.Future.run(console.log, console, stub.hello('World'));
 
         var result = stub.sum(1,2,3,4,5);
         console.info(result);

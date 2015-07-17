@@ -24,6 +24,7 @@
     var Client = global.hprose.Client;
     var BytesIO = global.hprose.BytesIO;
     var Completer = global.hprose.Completer;
+    var TimeoutError = global.hprose.TimeoutError;
 
     function noop(){}
     function WebSocketClient(uri, functions) {
@@ -148,7 +149,7 @@
                     delete _timeoutIds[id];
                     delete _requests[id];
                     --_count;
-                    completer.completeError(new Error('timeout'));
+                    completer.completeError(new TimeoutError('timeout'));
                 }, self.timeout);
             }
             _completers[id] = completer;

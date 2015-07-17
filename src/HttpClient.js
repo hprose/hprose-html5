@@ -12,7 +12,7 @@
  *                                                        *
  * hprose http client for HTML5.                          *
  *                                                        *
- * LastModified: Jul 15, 2015                             *
+ * LastModified: Jul 17, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -23,6 +23,7 @@
 
     var Client = global.hprose.Client;
     var Completer = global.hprose.Completer;
+    var TimeoutError = global.hprose.TimeoutError;
 
     function noop(){}
 
@@ -73,7 +74,7 @@
                     xhr.onload = noop;
                     xhr.onerror = noop;
                     xhr.abort();
-                    completer.completeError(new Error('timeout'));
+                    completer.completeError(new TimeoutError('timeout'));
                 }, self.timeout);
             }
             if (xhr.upload !== undefined) {

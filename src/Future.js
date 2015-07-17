@@ -27,6 +27,7 @@
     var REJECTED = 2;
 
     var setImmediate = global.setImmediate;
+    var TimeoutError = global.hprose.TimeoutError;
 
     function Future(computation) {
         if (typeof computation === "function") {
@@ -211,7 +212,7 @@
         return completer.future;
     }
 
-    function exec(handler, thisArg /*, args */) {
+    function run(handler, thisArg /*, args */) {
         var args = Array.prototype.slice.call(arguments, 2);
         return all(args).then(function(args) {
             return handler.apply(thisArg, args);
@@ -286,7 +287,7 @@
         join: { value: join },
         any: { value: any },
         settle: { value: settle },
-        exec: {value: exec },
+        run: {value: run },
         wrap: { value: wrap },
         // for array
         forEach: { value: forEach },
@@ -299,8 +300,19 @@
     });
 
     Object.defineProperties(Future.prototype, {
-        catchError: { value: function(onError) {
-            return this.then(null, onError);
+        catchError: { value: function(onError, test) {
+            if (typeof test === 'function') {
+                var self = this;
+                return this['catch'](function(e) {
+                    if (test(e)) {
+                        return self['catch'](onError);
+                    }
+                    else {
+                        return self;
+                    }
+                });
+            }
+            return this['catch'](onError);
         } },
         'catch': { value: function(onError) {
             return this.then(null, onError);
@@ -318,6 +330,15 @@
                     throw e;
                 }
             );
+        } },
+        timeout: { value: function(duration, reason) {
+            var completer = new Completer();
+            var timeoutId = global.setTimeout(function() {
+                completer.completeError(reason || new TimeoutError('timeout'));
+            }, duration);
+            this.whenComplete(function() { clearTimeout(timeoutId); })
+                .then(completer.complete, completer.completeError);
+            return completer.future;
         } },
         delay: { value: function(duration) {
             var completer = new Completer();
@@ -400,8 +421,9 @@
                 }
                 x.then(resolvePromise, rejectPromise)
                  .then(next.complete, next.completeError);
+                return;
             }
-            else if ((typeof x === "object") || (typeof x === "function")) {
+            if ((typeof x === "object") || (typeof x === "function")) {
                 var then;
                 try {
                     then = x.then;
@@ -423,13 +445,14 @@
                     catch (e) {
                         next.completeError(e);
                     }
-                }
-                else if (resolvePromise) {
-                    run(resolvePromise, next, x);
+                    return;
                 }
             }
-            else if (resolvePromise) {
+            if (resolvePromise) {
                 run(resolvePromise, next, x);
+            }
+            else {
+                next.complete(x);
             }
         }
 
@@ -455,6 +478,9 @@
                     if (task.rejectPromise) {
                         run(task.rejectPromise, task.next, error);
                     }
+                    else {
+                        task.next.completeError(error);
+                    }
                 }
             }
         }
@@ -464,11 +490,21 @@
             if (typeof onError !== "function") onError = null;
             if (onComplete || onError) {
                 var next = new Completer(sync);
-                if (onComplete && (_status === FULFILLED)) {
-                    resolve(onComplete, onError, next, _result);
+                if (_status === FULFILLED) {
+                    if (onComplete) {
+                        resolve(onComplete, onError, next, _result);
+                    }
+                    else {
+                        next.complete(_result);
+                    }
                 }
-                else if (onError && (_status === REJECTED)) {
-                    run(onError, next, _error);
+                else if (_status === REJECTED) {
+                    if (onError) {
+                        run(onError, next, _error);
+                    }
+                    else {
+                        next.completeError(_error);
+                    }
                 }
                 else {
                     _tasks.push({
