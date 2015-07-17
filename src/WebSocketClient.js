@@ -24,7 +24,6 @@
     var Client = global.hprose.Client;
     var BytesIO = global.hprose.BytesIO;
     var Completer = global.hprose.Completer;
-    var TimeoutError = global.hprose.TimeoutError;
 
     function noop(){}
     function WebSocketClient(uri, functions) {

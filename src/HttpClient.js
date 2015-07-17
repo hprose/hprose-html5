@@ -23,7 +23,6 @@
 
     var Client = global.hprose.Client;
     var Completer = global.hprose.Completer;
-    var TimeoutError = global.hprose.TimeoutError;
 
     function noop(){}
 

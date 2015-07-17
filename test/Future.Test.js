@@ -174,6 +174,6 @@
           .catchError(function(reason) {
               console.error(reason);
           }, function(e) {
-              return e instanceof hprose.TimeoutError;
+              return e instanceof TimeoutError;
           });
 })();

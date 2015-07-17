@@ -27,7 +27,6 @@
     var REJECTED = 2;
 
     var setImmediate = global.setImmediate;
-    var TimeoutError = global.hprose.TimeoutError;
 
     function Future(computation) {
         if (typeof computation === "function") {
@@ -111,24 +110,15 @@
         var count = arraysize(array);
         var result = new Array(n);
         var completer = new Completer();
-        function check() {
-            if (count === 0) {
-                completer.complete(result);
-            }
-        }
-        function resolve(i) {
-            return function(value) {
-                result[i] = value;
-                --count;
-                check();
-            };
-        }
-        function reject(e) {
-            completer.completeError(e);
-        }
         Array.prototype.forEach.call(array, function(element, index) {
             var f = (isPromise(element) ? element : value(element));
-            f.then(resolve(index), reject);
+            f.then(function(value) {
+                result[index] = value;
+                if (--count === 0) {
+                    completer.complete(result);
+                }
+            },
+            completer.completeError);
         });
         return completer.future;
     }
@@ -157,19 +147,15 @@
         var count =  arraysize(array);
         var reasons = new Array(n);
         var completer = new Completer();
-        function reject(i) {
-            return function(e) {
-                reasons[i] = e;
-                --count;
-                if (count === 0) {
-                    completer.completeError(reasons);
-                }
-            };
-        }
         if (n) {
             Array.prototype.forEach.call(array, function(element, index) {
                 var f = (isPromise(element) ? element : value(element));
-                f.then(completer.complete, reject(index));
+                f.then(completer.complete, function(e) {
+                    reasons[index] = e;
+                    if (--count === 0) {
+                        completer.completeError(reasons);
+                    }
+                });
             });
         }
         else {
@@ -186,28 +172,14 @@
         var count = arraysize(array);
         var result = new Array(n);
         var completer = new Completer();
-        function check() {
-            if (count === 0) {
-                completer.complete(result);
-            }
-        }
-        function resolve(i) {
-            return function(value) {
-                result[i] = { state: 'fulfilled', value: value };
-                --count;
-                check();
-            };
-        }
-        function reject(i) {
-            return function(reason) {
-                result[i] = { state: 'rejected', reason: reason };
-                --count;
-                check();
-            };
-        }
         Array.prototype.forEach.call(array, function(element, index) {
             var f = (isPromise(element) ? element : value(element));
-            f.then(resolve(index), reject(index));
+            f.whenComplete(function() {
+                result[index] = f.inspect();
+                if (--count === 0) {
+                    completer.complete(result);
+                }
+            });
         });
         return completer.future;
     }
@@ -304,12 +276,7 @@
             if (typeof test === 'function') {
                 var self = this;
                 return this['catch'](function(e) {
-                    if (test(e)) {
-                        return self['catch'](onError);
-                    }
-                    else {
-                        return self;
-                    }
+                    return (test(e) ? self['catch'](onError) : self);
                 });
             }
             return this['catch'](onError);
