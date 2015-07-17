@@ -13,7 +13,7 @@
  *                                                        *
  * jsonrpc client filter for JavaScript.                  *
  *                                                        *
- * LastModified: Jul 15, 2015                             *
+ * LastModified: Jul 17, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -30,7 +30,7 @@
     var s_id = 1;
 
     function JSONRPCClientFilter(version) {
-        this.version = version || "2.0";
+        this.version = version || '2.0';
     }
 
     JSONRPCClientFilter.prototype.inputFilter = function inputFilter(data, context) {
@@ -74,11 +74,11 @@
                     tag = stream.readByte();
                 }
             }
-            if (this.version === "1.1") {
-                request.version = "1.1";
+            if (this.version === '1.1') {
+                request.version = '1.1';
             }
-            else if (this.version === "2.0") {
-                request.jsonrpc = "2.0";
+            else if (this.version === '2.0') {
+                request.jsonrpc = '2.0';
             }
             request.id = s_id++;
             requests.push(request);

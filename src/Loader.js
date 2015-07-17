@@ -48,15 +48,15 @@
         JSONRPCClientFilter: global.hprose.JSONRPCClientFilter
     };
 
-    if (typeof define === "function") {
+    if (typeof define === 'function') {
         if (define.cmd) {
             define('hprose', [], global.hprose);
         }
         else if (define.amd) {
-            define("hprose", [], function() { return global.hprose; });
+            define('hprose', [], function() { return global.hprose; });
         }
     }
-    if (typeof module === "object" && typeof module.exports === "object") {
+    if (typeof module === 'object' && typeof module.exports === 'object') {
         module.exports = global.hprose;
     }
 }(function() {

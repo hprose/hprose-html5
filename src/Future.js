@@ -29,7 +29,7 @@
     var setImmediate = global.setImmediate;
 
     function Future(computation) {
-        if (typeof computation === "function") {
+        if (typeof computation === 'function') {
             var completer = new Completer();
             setImmediate(function() {
                 try {
@@ -44,11 +44,11 @@
     }
 
     function isFuture(obj) {
-        return (obj instanceof Future) && (typeof (obj.then === "function"));
+        return (obj instanceof Future) && (typeof (obj.then === 'function'));
     }
 
     function isPromise(obj) {
-        return isFuture(obj) || ((global.Promise) && (obj instanceof global.Promise) && (typeof (obj.then === "function")));
+        return isFuture(obj) || ((global.Promise) && (obj instanceof global.Promise) && (typeof (obj.then === 'function')));
     }
 
     function delayed(duration, computation) {
@@ -390,7 +390,7 @@
                  .then(next.complete, next.completeError);
                 return;
             }
-            if ((typeof x === "object") || (typeof x === "function")) {
+            if ((typeof x === 'object') || (typeof x === 'function')) {
                 var then;
                 try {
                     then = x.then;
@@ -404,7 +404,7 @@
                     }
                     return;
                 }
-                if (typeof then === "function") {
+                if (typeof then === 'function') {
                     try {
                         var f = then.call(x, resolvePromise, rejectPromise);
                         f.then(next.complete, next.completeError);
@@ -453,8 +453,8 @@
         }
 
         function then(onComplete, onError) {
-            if (typeof onComplete !== "function") onComplete = null;
-            if (typeof onError !== "function") onError = null;
+            if (typeof onComplete !== 'function') onComplete = null;
+            if (typeof onError !== 'function') onError = null;
             if (onComplete || onError) {
                 var next = new Completer(sync);
                 if (_status === FULFILLED) {

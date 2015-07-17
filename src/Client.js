@@ -702,20 +702,20 @@
         // subscribe(name, id, callback)
         function subscribe(name, id, callback) {
             if (typeof name !== s_string) {
-                throw new TypeError("event name must be a string.");
+                throw new TypeError('topic name must be a string.');
             }
             if (id === undefined || id === null) {
                 if (typeof callback === s_function) {
                     id = callback;
                 }
                 else {
-                    throw new TypeError("callback must be a function.");
+                    throw new TypeError('callback must be a function.');
                 }
             }
             if (typeof id === s_function) {
                 callback = id;
                 if (_id === null) {
-                    _id = invoke("#");
+                    _id = invoke('#');
                 }
                 _id.then(function(id) {
                     subscribe(name, id, callback);
@@ -723,7 +723,7 @@
                 return;
             }
             if (typeof callback !== s_function) {
-                throw new TypeError("callback must be a function.");
+                throw new TypeError('callback must be a function.');
             }
             if (Future.isPromise(id)) {
                 id.then(function(id) {
@@ -792,7 +792,7 @@
         // unsubscribe(name, id, callback)
         function unsubscribe(name, id, callback) {
             if (typeof name !== s_string) {
-                throw new TypeError("event name must be a string.");
+                throw new TypeError('topic name must be a string.');
             }
             if (id === undefined || id === null) {
                 if (typeof callback === s_function) {

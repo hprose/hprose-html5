@@ -12,7 +12,7 @@
  *                                                        *
  * hprose websocket client for HTML5.                     *
  *                                                        *
- * LastModified: Jul 15, 2015                             *
+ * LastModified: Jul 17, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -118,7 +118,7 @@
             _count = 0;
         }
         function onclose(e) {
-            fails(new Error(e.code + ":" + e.reason));
+            fails(new Error(e.code + ':' + e.reason));
             ws = null;
         }
         function onerror(e) {
@@ -126,7 +126,7 @@
         function connect() {
             ready = false;
             ws = new WebSocket(self.uri);
-            ws.binaryType = "arraybuffer";
+            ws.binaryType = 'arraybuffer';
             ws.onopen = onopen;
             ws.onmessage = onmessage;
             ws.onerror = onerror;
