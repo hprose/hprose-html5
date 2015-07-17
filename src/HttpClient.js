@@ -36,6 +36,7 @@
         var self = this;
         function sendAndReceive(request) {
             var completer = new Completer();
+            var future = completer.future;
             var xhr = new XMLHttpRequest();
             xhr.open('POST', self.uri, true);
             if (global.location !== undefined && global.location.protocol !== 'file:') {
@@ -45,14 +46,9 @@
             for (var name in _header) {
                 xhr.setRequestHeader(name, _header[name]);
             }
-            var timeoutId;
-            xhr.onload = function () {
+            xhr.onload = function() {
                 xhr.onload = noop;
                 if (xhr.status) {
-                    if (timeoutId !== undefined) {
-                        global.clearTimeout(timeoutId);
-                        timeoutId = undefined;
-                    }
                     if (xhr.status === 200) {
                         completer.complete(new Uint8Array(xhr.response));
                     }
@@ -62,19 +58,18 @@
                 }
             };
             xhr.onerror = function() {
-                if (timeoutId !== undefined) {
-                    global.clearTimeout(timeoutId);
-                    timeoutId = undefined;
-                }
                 completer.completeError(new Error('error'));
             };
             if (self.timeout > 0) {
-                timeoutId = global.setTimeout(function () {
+                future = future.timeout(self.timeout).catchError(function(e) {
                     xhr.onload = noop;
                     xhr.onerror = noop;
                     xhr.abort();
-                    completer.completeError(new TimeoutError('timeout'));
-                }, self.timeout);
+                    throw e;
+                },
+                function(e) {
+                    return e instanceof TimeoutError;
+                });
             }
             if (xhr.upload !== undefined) {
                 xhr.upload.onprogress = _onreqprogress;
@@ -89,7 +84,7 @@
             else {
                 xhr.send(request.buffer);
             }
-            return completer.future;
+            return future;
         }
         function setOnRequestProgress(value) {
             if (typeof(value) === 'function') {

@@ -36,7 +36,6 @@
         var _count = 0;
         var _reqcount = 0;
         var _completers = Object.create(null);
-        var _timeoutIds = Object.create(null);
         var _requests = Object.create(null);
         var _keepAlive = true;
         var ready = false;
@@ -86,13 +85,8 @@
             id = id | bytes.readByte() << 16;
             id = id | bytes.readByte() << 8;
             id = id | bytes.readByte();
-            var timeoutId = _timeoutIds[id];
             var completer = _completers[id];
-            delete _timeoutIds[id];
             delete _completers[id];
-            if (timeoutId !== undefined) {
-                global.clearTimeout(timeoutId);
-            }
             if (completer !== undefined) {
                 --_count;
                 completer.complete(bytes.read(bytes.length - 4));
@@ -101,24 +95,16 @@
                 if (!_keepAlive) close();
             }
         }
-        function fails(e) {
+        function onclose(e) {
             for (var id in _completers) {
-                var timeoutId = _timeoutIds[id];
                 var completer = _completers[id];
-                if (timeoutId !== undefined) {
-                    global.clearTimeout(timeoutId);
-                }
                 if (completer !== undefined) {
-                    completer.completeError(e);
+                    completer.completeError(new Error(e.code + ':' + e.reason));
                 }
                 delete _completers[id];
-                delete _timeoutIds[id];
                 delete _requests[id];
             }
             _count = 0;
-        }
-        function onclose(e) {
-            fails(new Error(e.code + ':' + e.reason));
             ws = null;
         }
         function onerror(e) {
@@ -141,18 +127,19 @@
             ++_count;
             var id = getNextId();
             var completer = new Completer();
-            var timeoutId;
+            var future = completer.future;
             if (self.timeout > 0) {
-                timeoutId = global.setTimeout(function() {
+                future = future.timeout(self.timeout).catchError(function(e) {
                     delete _completers[id];
-                    delete _timeoutIds[id];
                     delete _requests[id];
                     --_count;
-                    completer.completeError(new TimeoutError('timeout'));
-                }, self.timeout);
+                    throw e;
+                },
+                function(e) {
+                    return e instanceof TimeoutError;
+                });
             }
             _completers[id] = completer;
-            _timeoutIds[id] = timeoutId;
             if (ready) {
                 send(id, request);
             }
@@ -160,7 +147,7 @@
                 _requests[id] = request;
                 ++_reqcount;
             }
-            return completer.future;
+            return future;
         }
         function close() {
             if (ws !== null) {
