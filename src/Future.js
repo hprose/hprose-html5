@@ -13,7 +13,7 @@
  *                                                        *
  * hprose Future for HTML5.                               *
  *                                                        *
- * LastModified: Jul 17, 2015                             *
+ * LastModified: Jul 18, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -27,6 +27,10 @@
     var REJECTED = 2;
 
     var setImmediate = global.setImmediate;
+    var setTimeout = global.setTimeout;
+    var clearTimeout = global.clearTimeout;
+    var arrayForEach = Array.prototype.forEach;
+    var arraySlice = Array.prototype.slice;
 
     function Future(computation) {
         if (typeof computation === 'function') {
@@ -56,7 +60,7 @@
             computation = function() { return null; };
         }
         var completer = new Completer();
-        global.setTimeout(function() {
+        setTimeout(function() {
             try {
                 completer.complete(computation());
             }
@@ -98,7 +102,7 @@
 
     function arraysize(array) {
         var size = 0;
-        Array.prototype.forEach.call(array, function() { ++size; });
+        arrayForEach.call(array, function() { ++size; });
         return size;
     }
 
@@ -110,7 +114,7 @@
             var result = new Array(n);
             if (count === 0) return value(result);
             var completer = new Completer();
-            Array.prototype.forEach.call(array, function(element, index) {
+            arrayForEach.call(array, function(element, index) {
                 var f = (isPromise(element) ? element : value(element));
                 f.then(function(value) {
                     result[index] = value;
@@ -132,7 +136,7 @@
         array = isPromise(array) ? array : value(array);
         return array.then(function(array) {
             var completer = new Completer();
-            Array.prototype.forEach.call(array, function(element) {
+            arrayForEach.call(array, function(element) {
                 var f = (isPromise(element) ? element : value(element));
                 f.then(completer.complete, completer.completeError);
             });
@@ -150,7 +154,7 @@
             }
             var reasons = new Array(n);
             var completer = new Completer();
-            Array.prototype.forEach.call(array, function(element, index) {
+            arrayForEach.call(array, function(element, index) {
                 var f = (isPromise(element) ? element : value(element));
                 f.then(completer.complete, function(e) {
                     reasons[index] = e;
@@ -171,7 +175,7 @@
             var result = new Array(n);
             if (count === 0) return value(result);
             var completer = new Completer();
-            Array.prototype.forEach.call(array, function(element, index) {
+            arrayForEach.call(array, function(element, index) {
                 var f = (isPromise(element) ? element : value(element));
                 f.whenComplete(function() {
                     result[index] = f.inspect();
@@ -185,7 +189,7 @@
     }
 
     function run(handler, thisArg /*, args */) {
-        var args = Array.prototype.slice.call(arguments, 2);
+        var args = arraySlice.call(arguments, 2);
         return all(args).then(function(args) {
             return handler.apply(thisArg, args);
         });
@@ -302,7 +306,7 @@
         } },
         timeout: { value: function(duration, reason) {
             var completer = new Completer();
-            var timeoutId = global.setTimeout(function() {
+            var timeoutId = setTimeout(function() {
                 completer.completeError(reason || new TimeoutError('timeout'));
             }, duration);
             this.whenComplete(function() { clearTimeout(timeoutId); })
@@ -312,7 +316,7 @@
         delay: { value: function(duration) {
             var completer = new Completer();
             this.then(function(result) {
-                global.setTimeout(function() {
+                setTimeout(function() {
                     completer.complete(result);
                 }, duration);
             },
@@ -350,7 +354,7 @@
             });
         } },
         call: { value: function(method) {
-            var args = Array.prototype.slice.call(arguments, 1);
+            var args = arraySlice.call(arguments, 1);
             return this.then(function(result) {
                 return all(args).then(function(args) {
                     return result[method].apply(result, args);
@@ -358,7 +362,7 @@
             });
         } },
         bind: { value: function(method) {
-            var bindargs = Array.prototype.slice.call(arguments);
+            var bindargs = arraySlice.call(arguments);
             if (Array.isArray(method)) {
                 for (var i = 0, n = method.length; i < n; ++i) {
                     bindargs[0] = method[i];
@@ -369,7 +373,7 @@
             var self = this;
             Object.defineProperty(this, method, {
                 value: function() {
-                    var args = Array.prototype.slice.call(arguments);
+                    var args = arraySlice.call(arguments);
                     return self.then(function(result) {
                         return all(bindargs.concat(args)).then(function(args) {
                             return result[method].apply(result, args);
