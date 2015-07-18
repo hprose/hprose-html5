@@ -12,7 +12,7 @@
  *                                                        *
  * hprose client for HTML5.                               *
  *                                                        *
- * LastModified: Jul 16, 2015                             *
+ * LastModified: Jul 19, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -28,7 +28,6 @@
     var Writer = global.hprose.Writer;
     var Reader = global.hprose.Reader;
     var Future = global.hprose.Future;
-    var Completer = global.hprose.Completer;
 
     var GETFUNCTIONS = new Uint8Array(1);
     GETFUNCTIONS[0] = Tags.TagEnd;
@@ -58,8 +57,7 @@
         var _filters            = [];
         var _batch              = false;
         var _batches            = [];
-        var _completer          = new Completer();
-        var _future             = _completer.future;
+        var _future             = new Future();
         var _timeout            = 30000;
         var _topics             = Object.create(null);
         var _id                 = null;
@@ -80,41 +78,37 @@
         }
 
         function initService(stub) {
-            sendAndReceive(GETFUNCTIONS).then(
-                function (data) {
-                    var error = null;
-                    try {
-                        var stream = new BytesIO(data);
-                        var reader = new Reader(stream, true);
-                        var tag = stream.readByte();
-                        switch (tag) {
-                            case Tags.TagError:
-                                error = new Error(reader.readString());
-                                break;
-                            case Tags.TagFunctions:
-                                var functions = reader.readList();
-                                reader.checkTag(Tags.TagEnd);
-                                setFunctions(stub, functions);
-                                break;
-                            default:
-                                error = new Error('Wrong Response:\r\n' + BytesIO.toString(data));
-                                break;
-                        }
+            sendAndReceive(GETFUNCTIONS).then(function (data) {
+                var error = null;
+                try {
+                    var stream = new BytesIO(data);
+                    var reader = new Reader(stream, true);
+                    var tag = stream.readByte();
+                    switch (tag) {
+                        case Tags.TagError:
+                            error = new Error(reader.readString());
+                            break;
+                        case Tags.TagFunctions:
+                            var functions = reader.readList();
+                            reader.checkTag(Tags.TagEnd);
+                            setFunctions(stub, functions);
+                            break;
+                        default:
+                            error = new Error('Wrong Response:\r\n' + BytesIO.toString(data));
+                            break;
                     }
-                    catch (e) {
-                        error = e;
-                    }
-                    if (error !== null) {
-                        _completer.completeError(error);
-                    }
-                    else {
-                        _completer.complete(stub);
-                    }
-                },
-                function(error) {
-                    _completer.completeError(error);
                 }
-            );
+                catch (e) {
+                    error = e;
+                }
+                if (error !== null) {
+                    _future.reject(error);
+                }
+                else {
+                    _future.resolve(stub);
+                }
+            },
+            _future.reject);
         }
 
         function setFunction(stub, func) {
@@ -166,7 +160,7 @@
         }
 
         function _invoke(stub, func, args) {
-            var completer = new Completer();
+            var future = new Future();
             var resultMode = ResultMode.Normal, stream;
             if (!_batch && !_batches.length || _batch) {
                 var byref = _byref;
@@ -394,7 +388,7 @@
                                    resultMode: resultMode,
                                    callback: callback,
                                    errorHandler: errorHandler,
-                                   completer: completer});
+                                   future: future});
                 }
                 else {
                     stream.writeByte(Tags.TagEnd);
@@ -496,12 +490,12 @@
                                         errorHandler: errorHandler,
                                         result: result,
                                         error: error,
-                                        completer: completer}];
+                                        future: future}];
                         }
                         for (i = 0; i < batchSize; ++i) {
                             var item = batches[i];
                             if (item.error) {
-                                item.completer.completeError(item.error);
+                                item.future.reject(item.error);
                                 if (item.errorHandler) {
                                     item.errorHandler(item.func, item.error);
                                 }
@@ -510,7 +504,7 @@
                                 }
                             }
                             else {
-                                item.completer.complete(item.result);
+                                item.future.resolve(item.result);
                                 if (item.callback) {
                                     item.callback(item.result, item.args);
                                 }
@@ -518,7 +512,7 @@
                         }
                     },
                     function(error) {
-                        completer.completeError(error);
+                        future.reject(error);
                         if (errorHandler) {
                             errorHandler(func, error);
                         }
@@ -528,7 +522,7 @@
                     }
                 );
             }
-            return completer.future;
+            return future;
         }
 
         // public methods
@@ -633,13 +627,12 @@
                 (functions && functions.constructor === Object)) {
                 functions = [functions];
             }
-            if (Array.isArray(functions)) {
-                setFunctions(stub, functions);
-            }
-            else {
+            if (!Array.isArray(functions)) {
                 setImmediate(initService, stub);
                 return _future;
             }
+            setFunctions(stub, functions);
+            _future.resolve(stub);
             return stub;
         }
         function invoke() {

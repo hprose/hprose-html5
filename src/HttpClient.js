@@ -12,7 +12,7 @@
  *                                                        *
  * hprose http client for HTML5.                          *
  *                                                        *
- * LastModified: Jul 17, 2015                             *
+ * LastModified: Jul 19, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -22,7 +22,7 @@
     'use strict';
 
     var Client = global.hprose.Client;
-    var Completer = global.hprose.Completer;
+    var Future = global.hprose.Future;
 
     function noop(){}
 
@@ -35,8 +35,7 @@
 
         var self = this;
         function sendAndReceive(request) {
-            var completer = new Completer();
-            var future = completer.future;
+            var future = new Future();
             var xhr = new XMLHttpRequest();
             xhr.open('POST', self.uri, true);
             if (global.location !== undefined && global.location.protocol !== 'file:') {
@@ -50,27 +49,16 @@
                 xhr.onload = noop;
                 if (xhr.status) {
                     if (xhr.status === 200) {
-                        completer.complete(new Uint8Array(xhr.response));
+                        future.resolve(new Uint8Array(xhr.response));
                     }
                     else {
-                        completer.completeError(new Error(xhr.status + ':' + xhr.statusText));
+                        future.reject(new Error(xhr.status + ':' + xhr.statusText));
                     }
                 }
             };
             xhr.onerror = function() {
-                completer.completeError(new Error('error'));
+                future.reject(new Error('error'));
             };
-            if (self.timeout > 0) {
-                future = future.timeout(self.timeout).catchError(function(e) {
-                    xhr.onload = noop;
-                    xhr.onerror = noop;
-                    xhr.abort();
-                    throw e;
-                },
-                function(e) {
-                    return e instanceof TimeoutError;
-                });
-            }
             if (xhr.upload !== undefined) {
                 xhr.upload.onprogress = _onreqprogress;
             }
@@ -83,6 +71,17 @@
             }
             else {
                 xhr.send(request.buffer);
+            }
+            if (self.timeout > 0) {
+                return future.timeout(self.timeout).catchError(function(e) {
+                    xhr.onload = noop;
+                    xhr.onerror = noop;
+                    xhr.abort();
+                    throw e;
+                },
+                function(e) {
+                    return e instanceof TimeoutError;
+                });
             }
             return future;
         }
