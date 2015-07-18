@@ -177,3 +177,17 @@
               return e instanceof TimeoutError;
           });
 })();
+
+(function() {
+    "use strict";
+    var Future = hprose.Future;
+    var delayedDate = Future.delayed(1000, function() { return new Date(); });
+    var log = Future.wrap(console.log, console);
+    log(delayedDate);
+    delayedDate.bind(Object.getOwnPropertyNames(Date.prototype));
+    log(delayedDate.getTime());
+    log(delayedDate.call('toLocaleString'));
+    log(delayedDate.apply('toTimeString'));
+    delayedDate.set('year', delayedDate.getFullYear());
+    log(delayedDate.get('year'));
+})();

@@ -103,24 +103,25 @@
     }
 
     function all(array) {
-        if (isPromise(array)) {
-            return array.then(all);
-        }
-        var n = array.length;
-        var count = arraysize(array);
-        var result = new Array(n);
-        var completer = new Completer();
-        Array.prototype.forEach.call(array, function(element, index) {
-            var f = (isPromise(element) ? element : value(element));
-            f.then(function(value) {
-                result[index] = value;
-                if (--count === 0) {
-                    completer.complete(result);
-                }
-            },
-            completer.completeError);
+        array = isPromise(array) ? array : value(array);
+        return array.then(function(array) {
+            var n = array.length;
+            var count = arraysize(array);
+            var result = new Array(n);
+            if (count === 0) return value(result);
+            var completer = new Completer();
+            Array.prototype.forEach.call(array, function(element, index) {
+                var f = (isPromise(element) ? element : value(element));
+                f.then(function(value) {
+                    result[index] = value;
+                    if (--count === 0) {
+                        completer.complete(result);
+                    }
+                },
+                completer.completeError);
+            });
+            return completer.future;
         });
-        return completer.future;
     }
 
     function join() {
@@ -128,26 +129,27 @@
     }
 
     function race(array) {
-        if (isPromise(array)) {
-            return array.then(race);
-        }
-        var completer = new Completer();
-        Array.prototype.forEach.call(array, function(element) {
-            var f = (isPromise(element) ? element : value(element));
-            f.then(completer.complete, completer.completeError);
+        array = isPromise(array) ? array : value(array);
+        return array.then(function(array) {
+            var completer = new Completer();
+            Array.prototype.forEach.call(array, function(element) {
+                var f = (isPromise(element) ? element : value(element));
+                f.then(completer.complete, completer.completeError);
+            });
+            return completer.future;
         });
-        return completer.future;
     }
 
     function any(array) {
-        if (isPromise(array)) {
-            return array.then(any);
-        }
-        var n = array.length;
-        var count =  arraysize(array);
-        var reasons = new Array(n);
-        var completer = new Completer();
-        if (n) {
+        array = isPromise(array) ? array : value(array);
+        return array.then(function(array) {
+            var n = array.length;
+            var count =  arraysize(array);
+            if (count === 0) {
+                return error(new RangeError('any(): array must not be empty'));
+            }
+            var reasons = new Array(n);
+            var completer = new Completer();
             Array.prototype.forEach.call(array, function(element, index) {
                 var f = (isPromise(element) ? element : value(element));
                 f.then(completer.complete, function(e) {
@@ -157,31 +159,29 @@
                     }
                 });
             });
-        }
-        else {
-            completer.completeError(new RangeError('any(): array must not be empty'));
-        }
-        return completer.future;
+            return completer.future;
+        });
     }
 
     function settle(array) {
-        if (isPromise(array)) {
-            return array.then(settle);
-        }
-        var n = array.length;
-        var count = arraysize(array);
-        var result = new Array(n);
-        var completer = new Completer();
-        Array.prototype.forEach.call(array, function(element, index) {
-            var f = (isPromise(element) ? element : value(element));
-            f.whenComplete(function() {
-                result[index] = f.inspect();
-                if (--count === 0) {
-                    completer.complete(result);
-                }
+        array = isPromise(array) ? array : value(array);
+        return array.then(function(array) {
+            var n = array.length;
+            var count = arraysize(array);
+            var result = new Array(n);
+            if (count === 0) return value(result);
+            var completer = new Completer();
+            Array.prototype.forEach.call(array, function(element, index) {
+                var f = (isPromise(element) ? element : value(element));
+                f.whenComplete(function() {
+                    result[index] = f.inspect();
+                    if (--count === 0) {
+                        completer.complete(result);
+                    }
+                });
             });
+            return completer.future;
         });
-        return completer.future;
     }
 
     function run(handler, thisArg /*, args */) {
@@ -268,7 +268,7 @@
         filter: { value: filter },
         map: { value: map },
         reduce: { value: reduce },
-        reduceRight: { value: reduceRight },
+        reduceRight: { value: reduceRight }
     });
 
     Object.defineProperties(Future.prototype, {
@@ -288,13 +288,15 @@
             return this.then(
                 function(v) {
                     var f = action();
-                    if (isPromise(f)) return f.then(function() { return v; });
-                    return v;
+                    if (f === undefined) return v;
+                    f = isPromise(f) ? f : value(f);
+                    return f.then(function() { return v; });
                 },
                 function(e) {
                     var f = action();
-                    if (isPromise(f)) return f.then(function() { throw e; });
-                    throw e;
+                    if (f === undefined) throw e;
+                    f = isPromise(f) ? f : value(f);
+                    return f.then(function() { throw e; });
                 }
             );
         } },
@@ -327,6 +329,55 @@
             return this.then(function(array) {
                 return onFulfilledArray.apply(thisArg, array);
             });
+        } },
+        get: { value: function(key) {
+            return this.then(function(result) {
+                return result[key];
+            });
+        } },
+        set: { value: function(key, value) {
+            return this.then(function(result) {
+                result[key] = value;
+                return result;
+            });
+        } },
+        apply: { value: function(method, args) {
+            args = args || [];
+            return this.then(function(result) {
+                return all(args).then(function(args) {
+                    return result[method].apply(result, args);
+                });
+            });
+        } },
+        call: { value: function(method) {
+            var args = Array.prototype.slice.call(arguments, 1);
+            return this.then(function(result) {
+                return all(args).then(function(args) {
+                    return result[method].apply(result, args);
+                });
+            });
+        } },
+        bind: { value: function(method) {
+            var bindargs = Array.prototype.slice.call(arguments);
+            if (Array.isArray(method)) {
+                for (var i = 0, n = method.length; i < n; ++i) {
+                    bindargs[0] = method[i];
+                    this.bind.apply(this, bindargs);
+                }
+            }
+            bindargs.shift();
+            var self = this;
+            Object.defineProperty(this, method, {
+                value: function() {
+                    var args = Array.prototype.slice.call(arguments);
+                    return self.then(function(result) {
+                        return all(bindargs.concat(args)).then(function(args) {
+                            return result[method].apply(result, args);
+                        });
+                    });
+                }
+            });
+            return this;
         } },
         forEach: { value: function(callback, thisArg) {
             return forEach(this, callback, thisArg);
