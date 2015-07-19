@@ -47,11 +47,11 @@
         return classname;
     }
 
-    var fakeWriterRefer = {
-        set: function () {},
-        write: function () { return false; },
-        reset: function () {}
-    };
+    var fakeWriterRefer = Object.create(null, {
+        set: { value: function () {} },
+        write: { value: function () { return false; } },
+        reset: { value: function () {} }
+    });
 
     function RealWriterRefer(stream) {
         Object.defineProperties(this, {
@@ -443,7 +443,7 @@
             writeBoolean(this, value);
         } },
         writeUTCDate: { value: function(value) {
-            writeUTCDate(this, value );
+            writeUTCDate(this, value);
         } },
         writeUTCDateWithRef: { value: function(value) {
             if (!this._refer.write(value)) {
@@ -451,7 +451,7 @@
             }
         } },
         writeDate: { value: function(value) {
-            writeDate(this, value );
+            writeDate(this, value);
         } },
         writeDateWithRef: { value: function(value) {
             if (!this._refer.write(value)) {
@@ -459,7 +459,7 @@
             }
         } },
         writeTime: { value: function(value) {
-            writeTime(this, value );
+            writeTime(this, value);
         } },
         writeTimeWithRef: { value: function(value) {
             if (!this._refer.write(value)) {
@@ -467,7 +467,7 @@
             }
         } },
         writeBytes: { value: function(value) {
-            writeBytes(this, value );
+            writeBytes(this, value);
         } },
         writeBytesWithRef: { value: function(value) {
             if (!this._refer.write(value)) {
@@ -475,7 +475,7 @@
             }
         } },
         writeString: { value: function(value) {
-            writeString(this, value );
+            writeString(this, value);
         } },
         writeStringWithRef: { value: function(value) {
             if (!this._refer.write(value)) {
