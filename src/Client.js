@@ -57,7 +57,7 @@
         var _filters            = [];
         var _batch              = false;
         var _batches            = [];
-        var _future             = new Future();
+        var _ready              = new Future();
         var _timeout            = 30000;
         var _topics             = Object.create(null);
         var _id                 = null;
@@ -102,13 +102,13 @@
                     error = e;
                 }
                 if (error !== null) {
-                    _future.reject(error);
+                    _ready.reject(error);
                 }
                 else {
-                    _future.resolve(stub);
+                    _ready.resolve(stub);
                 }
             },
-            _future.reject);
+            _ready.reject);
         }
 
         function setFunction(stub, func) {
@@ -629,10 +629,10 @@
             }
             if (!Array.isArray(functions)) {
                 setImmediate(initService, stub);
-                return _future;
+                return _ready;
             }
             setFunctions(stub, functions);
-            _future.resolve(stub);
+            _ready.resolve(stub);
             return stub;
         }
         function invoke() {
@@ -669,7 +669,7 @@
             }
         }
         function ready(onComplete, onError) {
-            return _future.then(onComplete, onError);
+            return _ready.then(onComplete, onError);
         }
         function getTopic(name, id, create) {
             if (_topics[name]) {
