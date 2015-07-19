@@ -723,17 +723,19 @@
                     handler: function(result) {
                         var topic = getTopic(name, id, false);
                         if (topic) {
-                            var cb = function() {
-                                invoke(name, id, topic.handler, function() {
-                                    setImmediate(cb);
-                                });
-                            };
-                            setImmediate(cb);
                             if (result !== null) {
                                 var callbacks = topic.callbacks;
                                 for (var i = 0, n = callbacks.length; i < n; ++i) {
                                     callbacks[i](result);
                                 }
+                            }
+                            if (getTopic(name, id, create) !== null) {
+                                var cb = function() {
+                                    invoke(name, id, topic.handler, function() {
+                                        setImmediate(cb);
+                                    });
+                                };
+                                setImmediate(cb);
                             }
                         }
                     },
