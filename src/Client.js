@@ -729,7 +729,7 @@
                                     callbacks[i](result);
                                 }
                             }
-                            if (getTopic(name, id, create) !== null) {
+                            if (getTopic(name, id, false) !== null) {
                                 var cb = function() {
                                     invoke(name, id, topic.handler, function() {
                                         setImmediate(cb);
