@@ -284,13 +284,13 @@
         // port from Dart
         delayed: { value: delayed },
         error: { value: error },
-        sync: { value : sync },
-        value: { value : value },
+        sync: { value: sync },
+        value: { value: value },
         // Promise compatible
-        all: { value : all },
-        race: { value : race },
-        resolve: { value : value },
-        reject: { value : error },
+        all: { value: all },
+        race: { value: race },
+        resolve: { value: value },
+        reject: { value: error },
         // extended methods
         promise: { value: promise },
         isFuture: { value: isFuture },
@@ -298,8 +298,8 @@
         join: { value: join },
         any: { value: any },
         settle: { value: settle },
-        attempt: {value: attempt },
-        run: {value: run },
+        attempt: { value: attempt },
+        run: { value: run },
         wrap: { value: wrap },
         // for array
         forEach: { value: forEach },

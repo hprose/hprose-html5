@@ -90,7 +90,7 @@
             stream: { value: stream },
             _classref: { value: Object.create(null), writable: true },
             _fieldsref: { value: [], writable: true },
-            _refer: { value: simple ? fakeWriterRefer : realWriterRefer(stream) },
+            _refer: { value: simple ? fakeWriterRefer : realWriterRefer(stream) }
         });
     }
 
