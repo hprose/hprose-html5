@@ -67,11 +67,16 @@
             console.info(result);
             console.info(args[0]);
         });
-        console.info(client.getUserList());
+        console.info(stub.getUserList());
         client.endBatch();
+        stub.hello('World', function(result) {
+            console.assert(result === undefined);
+        }, { oneway: true });
+        stub.hello('World', function(result) {
+            console.assert(result === 'Hello World');
+        }, { idempotent: true });
     },
     function(e) {
         console.error(e);
     });
-
 })();
