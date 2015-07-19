@@ -96,7 +96,6 @@
             ws.onmessage = onmessage;
             ws.onerror = noop;
             ws.onclose = onclose;
-            console.info(ws);
         }
         function sendAndReceive(request) {
             if (ws === null ||
