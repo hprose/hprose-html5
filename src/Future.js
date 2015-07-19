@@ -29,8 +29,8 @@
     var setImmediate = global.setImmediate;
     var setTimeout = global.setTimeout;
     var clearTimeout = global.clearTimeout;
-    var arrayForEach = Array.prototype.forEach;
-    var arraySlice = Array.prototype.slice;
+    var foreach = Function.prototype.call.bind(Array.prototype.forEach);
+    var slice = Function.prototype.call.bind(Array.prototype.slice);
 
     function syncCall(callback, next, x) {
         try {
@@ -130,7 +130,7 @@
 
     function arraysize(array) {
         var size = 0;
-        arrayForEach.call(array, function() { ++size; });
+        foreach(array, function() { ++size; });
         return size;
     }
 
@@ -142,7 +142,7 @@
             var result = new Array(n);
             if (count === 0) return value(result);
             var future = new Future();
-            arrayForEach.call(array, function(element, index) {
+            foreach(array, function(element, index) {
                 var f = (isPromise(element) ? element : value(element));
                 f.then(function(value) {
                     result[index] = value;
@@ -164,7 +164,7 @@
         array = isPromise(array) ? array : value(array);
         return array.then(function(array) {
             var future = new Future();
-            arrayForEach.call(array, function(element) {
+            foreach(array, function(element) {
                 var f = (isPromise(element) ? element : value(element));
                 f.then(future.resolve, future.reject);
             });
@@ -182,7 +182,7 @@
             }
             var reasons = new Array(n);
             var future = new Future();
-            arrayForEach.call(array, function(element, index) {
+            foreach(array, function(element, index) {
                 var f = (isPromise(element) ? element : value(element));
                 f.then(future.resolve, function(e) {
                     reasons[index] = e;
@@ -203,7 +203,7 @@
             var result = new Array(n);
             if (count === 0) return value(result);
             var future = new Future();
-            arrayForEach.call(array, function(element, index) {
+            foreach(array, function(element, index) {
                 var f = (isPromise(element) ? element : value(element));
                 f.whenComplete(function() {
                     result[index] = f.inspect();
@@ -217,7 +217,7 @@
     }
 
     function run(handler, thisArg /*, args */) {
-        var args = arraySlice.call(arguments, 2);
+        var args = slice(arguments, 2);
         return all(args).then(function(args) {
             return handler.apply(thisArg, args);
         });
@@ -499,7 +499,7 @@
             });
         } },
         call: { value: function(method) {
-            var args = arraySlice.call(arguments, 1);
+            var args = slice(arguments, 1);
             return this.then(function(result) {
                 return all(args).then(function(args) {
                     return result[method].apply(result, args);
@@ -507,7 +507,7 @@
             });
         } },
         bind: { value: function(method) {
-            var bindargs = arraySlice.call(arguments);
+            var bindargs = slice(arguments);
             if (Array.isArray(method)) {
                 for (var i = 0, n = method.length; i < n; ++i) {
                     bindargs[0] = method[i];
@@ -517,7 +517,7 @@
             bindargs.shift();
             var self = this;
             Object.defineProperty(this, method, { value: function() {
-                var args = arraySlice.call(arguments);
+                var args = slice(arguments);
                 return self.then(function(result) {
                     return all(bindargs.concat(args)).then(function(args) {
                         return result[method].apply(result, args);

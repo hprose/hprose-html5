@@ -13,7 +13,7 @@
  *                                                        *
  * setImmediate for HTML5.                                *
  *                                                        *
- * LastModified: Jul 15, 2015                             *
+ * LastModified: Jul 19, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -34,15 +34,15 @@
     }
 
     var doc = global.document;
-    var slice = Array.prototype.slice;
-    var toString = Object.prototype.toString;
+    var slice = Function.prototype.call.bind(Array.prototype.slice);
+    var toString = Function.prototype.call.bind(Object.prototype.toString);
     var polifill = {};
     var nextId = 1;
     var tasks = {};
     var lock = false;
 
     function wrap(handler) {
-        var args = slice.call(arguments, 1);
+        var args = slice(arguments, 1);
         return function() {
             handler.apply(undefined, args);
         };
@@ -174,7 +174,7 @@
 
     // Don't get fooled by e.g. browserify environments.
     // For Node.js before 0.9
-    } else if (toString.call(global.process) === '[object process]') {
+    } else if (toString(global.process) === '[object process]') {
         attachTo.setImmediate = polifill.nextTick();
 
     // For non-IE10 modern browsers
