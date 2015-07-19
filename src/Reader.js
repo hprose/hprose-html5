@@ -46,7 +46,6 @@
         }
     }
 
-
     function readRaw(stream) {
         var ostream = new BytesIO();
         _readRaw(stream, ostream);
