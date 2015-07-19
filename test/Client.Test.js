@@ -37,7 +37,6 @@
 
     client.ready(function(stub) {
         hprose.Future.run(console.log, console, stub.hello('World'));
-
         var result = stub.sum(1,2,3,4,5);
         console.info(result);
         result = stub.sum(result, 6, 7, 8);
@@ -57,27 +56,17 @@
             'Saturday': 'Sat',
             'Sunday': 'Sun',
         };
-        var args = [weeks];
-        result = client.invoke('swapKeyAndValue', args, true);
-        console.info(result);
-        result.then(function(result) {
-            console.info(weeks);
-            console.info(result);
-            console.info(args[0]);
-        })
-        .catchError(function(e) {
-            console.error(e);
-        });
+        console.info(stub.swapKeyAndValue(weeks));
         console.info(stub.getUserList());
         client.beginBatch();
         console.info(stub.hello('World'));
         console.info(stub.sum(1,2,3,4,5));
-        var args2 = [weeks];
+        stub.swapKeyAndValue.byref = true;
         stub.swapKeyAndValue(weeks, function(result, args) {
             console.info(weeks);
             console.info(result);
             console.info(args[0]);
-        }, true);
+        });
         console.info(client.getUserList());
         client.endBatch();
     },

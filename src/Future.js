@@ -216,7 +216,14 @@
         });
     }
 
-    function run(handler, thisArg /*, args */) {
+    function attempt(handler/*, arg1, arg2, ... */) {
+        var args = slice(arguments, 1);
+        return all(args).then(function(args) {
+            return handler.apply(undefined, args);
+        });
+    }
+
+    function run(handler, thisArg/*, arg1, arg2, ... */) {
         var args = slice(arguments, 2);
         return all(args).then(function(args) {
             return handler.apply(thisArg, args);
@@ -291,6 +298,7 @@
         join: { value: join },
         any: { value: any },
         settle: { value: settle },
+        attempt: {value: attempt },
         run: {value: run },
         wrap: { value: wrap },
         // for array
