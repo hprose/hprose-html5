@@ -324,7 +324,9 @@
                  .then(next.resolve, next.reject);
                 return;
             }
-            if ((typeof x === 'object') || (typeof x === 'function')) {
+            if ((x !== null) &&
+                (typeof x === 'object') ||
+                (typeof x === 'function')) {
                 var then;
                 try {
                     then = x.then;
