@@ -712,7 +712,7 @@
             addFilter: { value: addFilter },
             removeFilter: { value: removeFilter },
             useService: { value: useService },
-            invoke: { value: Future.wrap(invoke, self) },
+            invoke: { value: invoke },
             beginBatch: { value: beginBatch },
             endBatch: { value: endBatch },
             ready: { value: ready },
