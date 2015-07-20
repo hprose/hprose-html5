@@ -13,7 +13,7 @@
  *                                                        *
  * hprose Future for HTML5.                               *
  *                                                        *
- * LastModified: Jul 19, 2015                             *
+ * LastModified: Jul 20, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -134,14 +134,14 @@
         return size;
     }
 
-    function all(array) {
+    function all(array, sync) {
         array = isPromise(array) ? array : value(array);
         return array.then(function(array) {
             var n = array.length;
             var count = arraysize(array);
             var result = new Array(n);
             if (count === 0) return value(result);
-            var future = new Future();
+            var future = new Future(sync);
             foreach(array, function(element, index) {
                 var f = (isPromise(element) ? element : value(element));
                 f.then(function(value) {
@@ -160,10 +160,10 @@
         return all(arguments);
     }
 
-    function race(array) {
+    function race(array, sync) {
         array = isPromise(array) ? array : value(array);
         return array.then(function(array) {
-            var future = new Future();
+            var future = new Future(sync);
             foreach(array, function(element) {
                 var f = (isPromise(element) ? element : value(element));
                 f.then(future.resolve, future.reject);
@@ -172,7 +172,7 @@
         });
     }
 
-    function any(array) {
+    function any(array, sync) {
         array = isPromise(array) ? array : value(array);
         return array.then(function(array) {
             var n = array.length;
@@ -181,7 +181,7 @@
                 throw new RangeError('any(): array must not be empty');
             }
             var reasons = new Array(n);
-            var future = new Future();
+            var future = new Future(sync);
             foreach(array, function(element, index) {
                 var f = (isPromise(element) ? element : value(element));
                 f.then(future.resolve, function(e) {
@@ -195,14 +195,14 @@
         });
     }
 
-    function settle(array) {
+    function settle(array, sync) {
         array = isPromise(array) ? array : value(array);
         return array.then(function(array) {
             var n = array.length;
             var count = arraysize(array);
             var result = new Array(n);
             if (count === 0) return value(result);
-            var future = new Future();
+            var future = new Future(sync);
             foreach(array, function(element, index) {
                 var f = (isPromise(element) ? element : value(element));
                 f.whenComplete(function() {
@@ -218,64 +218,64 @@
 
     function attempt(handler/*, arg1, arg2, ... */) {
         var args = slice(arguments, 1);
-        return all(args).then(function(args) {
+        return all(args, true).then(function(args) {
             return handler.apply(undefined, args);
         });
     }
 
     function run(handler, thisArg/*, arg1, arg2, ... */) {
         var args = slice(arguments, 2);
-        return all(args).then(function(args) {
+        return all(args, true).then(function(args) {
             return handler.apply(thisArg, args);
         });
     }
 
     function wrap(handler, thisArg) {
         return function() {
-            return all(arguments).then(function(args) {
+            return all(arguments, true).then(function(args) {
                 return handler.apply(thisArg, args);
             });
         };
     }
 
     function forEach(array, callback, thisArg) {
-        return all(array).then(function(array) {
+        return all(array, true).then(function(array) {
             return array.forEach(callback, thisArg);
         });
     }
 
     function every(array, callback, thisArg) {
-        return all(array).then(function(array) {
+        return all(array, true).then(function(array) {
             return array.every(callback, thisArg);
         });
     }
 
     function some(array, callback, thisArg) {
-        return all(array).then(function(array) {
+        return all(array, true).then(function(array) {
             return array.some(callback, thisArg);
         });
     }
 
     function filter(array, callback, thisArg) {
-        return all(array).then(function(array) {
+        return all(array, true).then(function(array) {
             return array.filter(callback, thisArg);
         });
     }
 
     function map(array, callback, thisArg) {
-        return all(array).then(function(array) {
+        return all(array, true).then(function(array) {
             return array.map(callback, thisArg);
         });
     }
 
     function reduce(array, callback, initialValue) {
-        return all(array).then(function(array) {
+        return all(array, true).then(function(array) {
             return array.reduce(callback, initialValue);
         });
     }
 
     function reduceRight(array, callback, initialValue) {
-        return all(array).then(function(array) {
+        return all(array, true).then(function(array) {
             return array.reduceRight(callback, initialValue);
         });
     }
@@ -503,7 +503,7 @@
         apply: { value: function(method, args) {
             args = args || [];
             return this.then(function(result) {
-                return all(args).then(function(args) {
+                return all(args, true).then(function(args) {
                     return result[method].apply(result, args);
                 });
             });
@@ -511,7 +511,7 @@
         call: { value: function(method) {
             var args = slice(arguments, 1);
             return this.then(function(result) {
-                return all(args).then(function(args) {
+                return all(args, true).then(function(args) {
                     return result[method].apply(result, args);
                 });
             });
@@ -529,7 +529,7 @@
             Object.defineProperty(this, method, { value: function() {
                 var args = slice(arguments);
                 return self.then(function(result) {
-                    return all(bindargs.concat(args)).then(function(args) {
+                    return all(bindargs.concat(args), true).then(function(args) {
                         return result[method].apply(result, args);
                     });
                 });

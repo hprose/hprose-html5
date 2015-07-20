@@ -25,9 +25,12 @@
     'use strict';
     var client = hprose.Client.create('ws://127.0.0.1:8080', ['hello']);
     client.ready(function(stub) {
+        stub.hello.idempotent = true;
         stub.hello('World')
         .then(function(result) {
             console.info(result);
+        },function(e) {
+            console.error(e);
         });
         client.beginBatch();
         stub.hello('World 1')

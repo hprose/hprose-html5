@@ -12,7 +12,7 @@
  *                                                        *
  * hprose http client for HTML5.                          *
  *                                                        *
- * LastModified: Jul 19, 2015                             *
+ * LastModified: Jul 20, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -57,17 +57,6 @@
                 }
             };
             xhr.onerror = function() {
-                if (env.idempotent) {
-                    if (--env.retry >= 0) {
-                        var interval = (6 - env.retry) * 500;
-                        if (env.retry > 5) interval = 500;
-                        setTimeout(function() {
-                            sendAndReceive(request, env)
-                            .then(future.resolve, future.reject);
-                        }, interval);
-                        return;
-                    }
-                }
                 future.reject(new Error('error'));
             };
             if (xhr.upload !== undefined) {
@@ -83,12 +72,8 @@
             else {
                 xhr.send(request.buffer);
             }
-            if (env.oneway) {
-                future.resolve();
-                return future;
-            }
             if (env.timeout > 0) {
-                return future.timeout(env.timeout).catchError(function(e) {
+                future = future.timeout(env.timeout).catchError(function(e) {
                     xhr.onload = noop;
                     xhr.onerror = noop;
                     xhr.abort();
@@ -98,6 +83,7 @@
                     return e instanceof TimeoutError;
                 });
             }
+            if (env.oneway) future.resolve();
             return future;
         }
         function setOnRequestProgress(value) {

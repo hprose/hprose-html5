@@ -12,7 +12,7 @@
  *                                                        *
  * hprose client for HTML5.                               *
  *                                                        *
- * LastModified: Jul 19, 2015                             *
+ * LastModified: Jul 20, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -49,7 +49,7 @@
         var _byref              = false;
         var _simple             = false;
         var _timeout            = 30000;
-        var _retry              = 3;
+        var _retry              = 10;
         var _useHarmonyMap      = false;
         var _onerror            = noop;
         var _filters            = [];
@@ -61,23 +61,46 @@
 
         var self = this;
 
-        function sendAndReceive(request, env) {
+        function sendAndReceive(env, onsuccess, onerror) {
+            var request = env.data;
             var context = {client: self, userdata: {}};
             for (var i = 0, n = _filters.length; i < n; i++) {
                 request = _filters[i].outputFilter(request, context);
             }
-            return self.sendAndReceive(request, env).then(function(response) {
+            self.sendAndReceive(request, env).then(function(response) {
                 if (env.oneway) return;
                 for (var i = _filters.length - 1; i >= 0; i--) {
                     response = _filters[i].inputFilter(response, context);
                 }
                 return response;
+            }).then(onsuccess, function(e) {
+                if (retry(env, onsuccess, onerror)) return;
+                onerror(e);
             });
         }
 
+        function retry(env, onsuccess, onerror) {
+            if (env.idempotent) {
+                if (--env.retry >= 0) {
+                    var interval = (10 - env.retry) * 500;
+                    if (env.retry > 10) interval = 500;
+                    global.setTimeout(function() {
+                        sendAndReceive(env, onsuccess, onerror);
+                    }, interval);
+                    return true;
+                }
+            }
+            return false;
+        }
+
         function initService(stub) {
-            var env = {timeout: _timeout};
-            sendAndReceive(GETFUNCTIONS, env).then(function (data) {
+            var env = {
+                data: GETFUNCTIONS,
+                retry: _retry,
+                idempotent: true,
+                timeout: _timeout,
+            };
+            var onsuccess = function(data) {
                 var error = null;
                 try {
                     var stream = new BytesIO(data);
@@ -106,8 +129,8 @@
                 else {
                     _ready.resolve(stub);
                 }
-            },
-            _ready.reject);
+            };
+            sendAndReceive(env, onsuccess, _ready.reject);
         }
 
         function setFunction(stub, func) {
@@ -202,6 +225,7 @@
                 onerror: undefined,
                 useHarmonyMap: _useHarmonyMap
             };
+
             if (!_batch && !_batches.length || _batch) {
                 if (func in stub) {
                     var method = stub[func];
@@ -261,7 +285,9 @@
                 var batches = _batches;
                 _batches = [];
 
-                sendAndReceive(request.bytes, env).then(function(response) {
+                env.data = request.bytes;
+
+                var onsuccess = function(response) {
                     if (env.oneway) {
                         future.resolve();
                         if (env.onsuccess) {
@@ -336,7 +362,6 @@
                             }
                         }
                     }
-
                     if (!batch) {
                         batchSize  = 1;
                         batches = [{args: args,
@@ -364,8 +389,8 @@
                             }
                         }
                     }
-                },
-                function(error) {
+                };
+                var onerror = function(error) {
                     future.reject(error);
                     if (env.onerror) {
                         env.onerror(func, error);
@@ -373,7 +398,8 @@
                     else {
                         _onerror(func, error);
                     }
-                });
+                };
+                sendAndReceive(env, onsuccess, onerror);
             }
             return future;
         }
@@ -505,9 +531,7 @@
             return _invoke(self, func, args);
         }
         function beginBatch() {
-            if(!_batch) {
-                _batch = true;
-            }
+            _batch = true;
         }
         function endBatch() {
             _batch = false;
@@ -692,8 +716,8 @@
             beginBatch: { value: beginBatch },
             endBatch: { value: endBatch },
             ready: { value: ready },
-            subscribe: {value: subscribe },
-            unsubscribe: {value: unsubscribe }
+            subscribe: { value: subscribe },
+            unsubscribe: { value: unsubscribe }
         });
     }
 

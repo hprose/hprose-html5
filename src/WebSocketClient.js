@@ -12,7 +12,7 @@
  *                                                        *
  * hprose websocket client for HTML5.                     *
  *                                                        *
- * LastModified: Jul 19, 2015                             *
+ * LastModified: Jul 20, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -97,7 +97,7 @@
             ws.onerror = noop;
             ws.onclose = onclose;
         }
-        function sendAndReceive(request) {
+        function sendAndReceive(request, env) {
             if (ws === null ||
                 ws.readyState === WebSocket.CLOSING ||
                 ws.readyState === WebSocket.CLOSED) {
@@ -109,7 +109,7 @@
             _futures[id] = future;
             ready.then(function() { send(id, request); });
             if (self.timeout > 0) {
-                return future.timeout(self.timeout).catchError(function(e) {
+                future = future.timeout(self.timeout).catchError(function(e) {
                     delete _futures[id];
                     --_count;
                     throw e;
@@ -118,6 +118,7 @@
                     return e instanceof TimeoutError;
                 });
             }
+            if (env.oneway) future.resolve();
             return future;
         }
         function close() {
