@@ -13,7 +13,7 @@
  *                                                        *
  * hprose Future test for HTML5.                          *
  *                                                        *
- * LastModified: Jun 22, 2015                             *
+ * LastModified: Jul 20, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -191,3 +191,47 @@
     delayedDate.set('year', delayedDate.getFullYear());
     log(delayedDate.get('year'));
 })();
+
+(function(global) {
+    var Promise = global.Promise;
+    var promiseCount = 0;
+
+    function testPromise() {
+        var thisPromiseCount = ++promiseCount;
+
+        console.log(thisPromiseCount +
+            ') Started (Sync code started)');
+
+        // We make a new promise: we promise the string 'result' (after waiting 3s)
+        var p1 = new Promise(
+            // The resolver function is called with the ability to resolve or
+            // reject the promise
+            function(resolve, reject) {
+                console.log(thisPromiseCount +
+                    ') Promise started (Async code started)');
+                // This only is an example to create asynchronism
+                global.setTimeout(
+                    function() {
+                        // We fulfill the promise !
+                        resolve(thisPromiseCount);
+                    }, Math.random() * 2000 + 1000);
+            });
+
+        // We define what to do when the promise is fulfilled
+        //but we only call this if the promise is resolved/fulfilled
+        p1.then(
+            // Just log the message and a value
+            function(val) {
+                console.log(val +
+                    ') Promise fulfilled (Async code terminated)');
+            }).catch(function() { console.log('promise was rejected');});
+
+        console.log(thisPromiseCount +
+            ') Promise made (Sync code terminated)');
+    }
+
+    testPromise();
+    testPromise();
+    testPromise();
+    testPromise();
+})(this);

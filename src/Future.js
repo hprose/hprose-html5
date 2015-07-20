@@ -26,6 +26,7 @@
     var FULFILLED = 1;
     var REJECTED = 2;
 
+    var hasPromise = 'Promise' in global;
     var setImmediate = global.setImmediate;
     var setTimeout = global.setTimeout;
     var clearTimeout = global.clearTimeout;
@@ -80,7 +81,7 @@
     }
 
     function isPromise(obj) {
-        return isFuture(obj) || ((global.Promise) && (obj instanceof global.Promise) && (typeof (obj.then === 'function')));
+        return isFuture(obj) || (hasPromise && (obj instanceof global.Promise) && (typeof (obj.then === 'function')));
     }
 
     function delayed(duration, value) {
@@ -581,6 +582,23 @@
     });
 
     global.hprose.Completer = Completer;
+
+    if (hasPromise) return;
+
+    global.Promise = function(executor) {
+        Future.call(this);
+        executor(this.resolve, this.reject);
+    };
+
+    global.Promise.prototype = Object.create(Future.prototype);
+    global.Promise.prototype.constructor = Future;
+
+    Object.defineProperties(global.Promise, {
+        all: { value: all },
+        race: { value: race },
+        resolve: { value: value },
+        reject: { value: error }
+    });
 
 }(function() {
     return this || (1, eval)('this');
