@@ -34,8 +34,8 @@
         var _onresprogress = noop;
 
         var self = this;
-        function sendAndReceive(request, env) {
-            var future = new Future();
+
+        function send(request, future) {
             var xhr = new XMLHttpRequest();
             xhr.open('POST', self.uri, true);
             if (global.location !== undefined && global.location.protocol !== 'file:') {
@@ -72,6 +72,12 @@
             else {
                 xhr.send(request.buffer);
             }
+            return xhr;
+        }
+
+        function sendAndReceive(request, env) {
+            var future = new Future();
+            var xhr = send(request, future);
             if (env.timeout > 0) {
                 future = future.timeout(env.timeout).catchError(function(e) {
                     xhr.onload = noop;
