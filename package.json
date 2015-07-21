@@ -29,7 +29,17 @@
     "middleware",
     "webapi",
     "async",
-    "future"
+    "batch",
+    "multicall",
+    "future",
+    "promise",
+    "comet",
+    "push",
+    "pub-sub",
+    "publish",
+    "subscribe",
+    "idempotent",
+    "oneway"
   ],
   "maintainers": [
     {
