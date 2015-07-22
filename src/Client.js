@@ -12,7 +12,7 @@
  *                                                        *
  * hprose client for HTML5.                               *
  *                                                        *
- * LastModified: Jul 20, 2015                             *
+ * LastModified: Jul 22, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -373,30 +373,52 @@
                     }
                     for (i = 0; i < batchSize; ++i) {
                         var item = batches[i];
-                        if (item.error) {
-                            item.future.reject(item.error);
-                            if (item.env.onerror) {
-                                item.env.onerror(item.func, item.error);
+                        try {
+                            if (item.error) {
+                                if (item.env.onerror) {
+                                    item.result = item.env.onerror(item.func, item.error);
+                                    item.future.resolve(item.result);
+                                }
+                                else {
+                                    _onerror(item.func, item.error);
+                                    item.future.reject(item.error);
+                                }
                             }
                             else {
-                                _onerror(item.func, item.error);
+                                if (item.env.onsuccess) {
+                                    try {
+                                        item.result = item.env.onsuccess(item.result, item.args);
+                                    }
+                                    catch (e) {
+                                        if (item.env.onerror) {
+                                            item.result = item.env.onerror(item.func, e);
+                                        }
+                                        else {
+                                            item.future.reject(e);
+                                        }
+                                    }
+                                }
+                                item.future.resolve(item.result);
                             }
                         }
-                        else {
-                            item.future.resolve(item.result);
-                            if (item.env.onsuccess) {
-                                item.env.onsuccess(item.result, item.args);
-                            }
+                        catch (e) {
+                            item.future.reject(e);
                         }
                     }
                 };
                 var onerror = function(error) {
-                    future.reject(error);
-                    if (env.onerror) {
-                        env.onerror(func, error);
+                    try {
+                        if (env.onerror) {
+                            var result = env.onerror(func, error);
+                            future.resolve(result);
+                        }
+                        else {
+                            _onerror(func, error);
+                            future.reject(error);
+                        }
                     }
-                    else {
-                        _onerror(func, error);
+                    catch (e) {
+                        future.reject(e);
                     }
                 };
                 sendAndReceive(env, onsuccess, onerror);

@@ -75,6 +75,27 @@
         stub.hello('World', function(result) {
             console.assert(result === 'Hello World');
         }, { idempotent: true });
+        stub.hello("world", function(){
+          throw "Hello Error - 1!";
+        },function(name, err){
+          console.error("Error:", err);
+        });
+        stub.hello("world", function(){
+          throw "Hello Error - 2!";
+        }).catchError(function(err){
+          console.error("Error:", err);
+        });
+        stub.hello("world").then(function(){
+          throw "Hello Error - 3!";
+        }).catchError(function(err){
+          console.error("Error:", err);
+        });
+        stub.hello("world").then(function(){
+          throw "Hello Error - 4!";
+        },function(err){
+          console.error("Error:", err); // must not run
+        });
+
     },
     function(e) {
         console.error(e);
