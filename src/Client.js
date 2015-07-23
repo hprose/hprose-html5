@@ -49,7 +49,9 @@
         var _byref              = false;
         var _simple             = false;
         var _timeout            = 30000;
-        var _retry              = 10;
+        var _retry              = 3;
+        var _lock               = false;
+        var _tasks              = [];
         var _useHarmonyMap      = false;
         var _onerror            = noop;
         var _filters            = [];
@@ -212,6 +214,10 @@
 
         function _invoke(stub, func, args) {
             var future = new Future();
+            if (_lock) {
+                _tasks.push({ args: [stub, func, args], result: future });
+                return future;
+            }
             var stream;
             var env = {
                 mode: ResultMode.Normal,
@@ -221,12 +227,12 @@
                 retry: _retry,
                 idempotent: false,
                 oneway: false,
+                sync: false,
                 onsuccess: undefined,
                 onerror: undefined,
                 useHarmonyMap: _useHarmonyMap
             };
-
-            if (!_batch && !_batches.length || _batch) {
+            if (stub) {
                 if (func in stub) {
                     var method = stub[func];
                     for (var key in method) {
@@ -243,6 +249,9 @@
                     else if (env.mode === ResultMode.Raw) {
                         throw new Error("ResultMode.Raw doesn't support in batch mode.");
                     }
+                }
+                else {
+                    if (env.sync) _lock = true;
                 }
                 stream = new BytesIO();
                 stream.writeByte(Tags.TagCall);
@@ -423,6 +432,17 @@
                 };
                 sendAndReceive(env, onsuccess, onerror);
             }
+            future.whenComplete(function() {
+                if (env.sync) {
+                    _lock = false;
+                    setImmediate(function(tasks) {
+                        tasks.forEach(function(task) {
+                            _invoke.apply(self, task.args).then(task.result.resolve, task.result.reject);
+                        });
+                    }, _tasks);
+                    _tasks = [];
+                }
+            });
             return future;
         }
 
@@ -577,9 +597,9 @@
             }
             return null;
         }
-        // subscribe(name, callback)
-        // subscribe(name, id, callback)
-        function subscribe(name, id, callback) {
+        // subscribe(name, callback, timeout)
+        // subscribe(name, id, callback, timeout)
+        function subscribe(name, id, callback, timeout) {
             if (typeof name !== s_string) {
                 throw new TypeError('topic name must be a string.');
             }
@@ -592,12 +612,13 @@
                 }
             }
             if (typeof id === s_function) {
+                timeout = callback;
                 callback = id;
                 if (_id === null) {
-                    _id = invoke('#');
+                    _id = invoke('#', pass, { sync: true });
                 }
                 _id.then(function(id) {
-                    subscribe(name, id, callback);
+                    subscribe(name, id, callback, timeout);
                 });
                 return;
             }
@@ -606,12 +627,16 @@
             }
             if (Future.isPromise(id)) {
                 id.then(function(id) {
-                    subscribe(name, id, callback);
+                    subscribe(name, id, callback, timeout);
                 });
                 return;
             }
+            if (timeout === undefined) timeout = _timeout;
             var topic = getTopic(name, id, true);
             if (topic === null) {
+                var cb = function() {
+                    invoke(name, id, topic.handler, cb, { timeout: timeout });
+                };
                 topic = {
                     handler: function(result) {
                         var topic = getTopic(name, id, false);
@@ -622,24 +647,12 @@
                                     callbacks[i](result);
                                 }
                             }
-                            if (getTopic(name, id, false) !== null) {
-                                var cb = function() {
-                                    invoke(name, id, topic.handler, function() {
-                                        setImmediate(cb);
-                                    });
-                                };
-                                setImmediate(cb);
-                            }
+                            if (getTopic(name, id, false) !== null) cb();
                         }
                     },
                     callbacks: [callback]
                 };
                 _topics[name][id] = topic;
-                var cb = function() {
-                    invoke(name, id, topic.handler, function() {
-                        setImmediate(cb);
-                    });
-                };
                 cb();
             }
             else if (topic.callbacks.indexOf(callback) < 0) {
