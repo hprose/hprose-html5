@@ -12,7 +12,7 @@
  *                                                        *
  * hprose client for HTML5.                               *
  *                                                        *
- * LastModified: Jul 22, 2015                             *
+ * LastModified: Jul 23, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -63,8 +63,8 @@
 
         var self = this;
 
-        function sendAndReceive(env, onsuccess, onerror) {
-            var request = env.data;
+        function sendAndReceive(data, env, onsuccess, onerror) {
+            var request = data;
             var context = {client: self, userdata: {}};
             for (var i = 0, n = _filters.length; i < n; i++) {
                 request = _filters[i].outputFilter(request, context);
@@ -76,18 +76,18 @@
                 }
                 return response;
             }).then(onsuccess, function(e) {
-                if (retry(env, onsuccess, onerror)) return;
+                if (retry(data, env, onsuccess, onerror)) return;
                 onerror(e);
             });
         }
 
-        function retry(env, onsuccess, onerror) {
+        function retry(data, env, onsuccess, onerror) {
             if (env.idempotent) {
                 if (--env.retry >= 0) {
                     var interval = (10 - env.retry) * 500;
                     if (env.retry > 10) interval = 500;
                     global.setTimeout(function() {
-                        sendAndReceive(env, onsuccess, onerror);
+                        sendAndReceive(data, env, onsuccess, onerror);
                     }, interval);
                     return true;
                 }
@@ -97,7 +97,6 @@
 
         function initService(stub) {
             var env = {
-                data: GETFUNCTIONS,
                 retry: _retry,
                 idempotent: true,
                 timeout: _timeout,
@@ -132,7 +131,7 @@
                     _ready.resolve(stub);
                 }
             };
-            sendAndReceive(env, onsuccess, _ready.reject);
+            sendAndReceive(GETFUNCTIONS, env, onsuccess, _ready.reject);
         }
 
         function setFunction(stub, func) {
@@ -294,8 +293,6 @@
                 var batches = _batches;
                 _batches = [];
 
-                env.data = request.bytes;
-
                 var onsuccess = function(response) {
                     if (env.oneway) {
                         future.resolve();
@@ -430,7 +427,7 @@
                         future.reject(e);
                     }
                 };
-                sendAndReceive(env, onsuccess, onerror);
+                sendAndReceive(request.bytes, env, onsuccess, onerror);
             }
             future.whenComplete(function() {
                 if (env.sync) {
