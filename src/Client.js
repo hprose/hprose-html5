@@ -511,7 +511,6 @@
             });
         }
 
-        // public methods
         function getOnError() {
             return _onerror;
         }
@@ -784,6 +783,24 @@
         function getId() {
             return _id;
         }
+        function addInvokeHandler(handler) {
+            var oldInvokeHandler = invokeHandler;
+            invokeHandler = function(func, args, context) {
+                return handler(func, args, context, oldInvokeHandler);
+            };
+        }
+        function addBeforeFilterHandler(handler) {
+            var oldBeforeFilterHandler = beforeFilterHandler;
+            beforeFilterHandler = function(request, context) {
+                return handler(request, context, oldBeforeFilterHandler);
+            };
+        }
+        function addAfterFilterHandler(handler) {
+            var oldAeforeFilterHandler = afterFilterHandler;
+            afterFilterHandler = function(request, context) {
+                return handler(request, context, oldAeforeFilterHandler);
+            };
+        }
         /* function constructor */ {
             if (typeof(uri) === s_string) {
                 useService(uri, functions);
@@ -808,7 +825,10 @@
             endBatch: { value: endBatch },
             ready: { value: ready },
             subscribe: { value: subscribe },
-            unsubscribe: { value: unsubscribe }
+            unsubscribe: { value: unsubscribe },
+            addInvokeHandler: { value: addInvokeHandler },
+            addBeforeFilterHandler: { value: addBeforeFilterHandler },
+            addAfterFilterHandler: { value: addAfterFilterHandler }
         });
     }
 
