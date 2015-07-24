@@ -382,26 +382,23 @@
                         try {
                             if (item.error) {
                                 if (item.env.onerror) {
-                                    item.result = item.env.onerror(item.func, item.error);
-                                    item.future.resolve(item.result);
+                                    item.env.onerror(item.func, item.error);
                                 }
                                 else {
                                     _onerror(item.func, item.error);
-                                    item.future.reject(item.error);
                                 }
+                                item.future.reject(item.error);
                             }
                             else {
                                 if (item.env.onsuccess) {
                                     try {
-                                        item.result = item.env.onsuccess(item.result, item.args);
+                                        item.env.onsuccess(item.result, item.args);
                                     }
                                     catch (e) {
                                         if (item.env.onerror) {
-                                            item.result = item.env.onerror(item.func, e);
+                                            item.env.onerror(item.func, e);
                                         }
-                                        else {
-                                            item.future.reject(e);
-                                        }
+                                        item.future.reject(e);
                                     }
                                 }
                                 item.future.resolve(item.result);
@@ -415,13 +412,12 @@
                 var onerror = function(error) {
                     try {
                         if (env.onerror) {
-                            var result = env.onerror(func, error);
-                            future.resolve(result);
+                            env.onerror(func, error);
                         }
                         else {
                             _onerror(func, error);
-                            future.reject(error);
                         }
+                        future.reject(error);
                     }
                     catch (e) {
                         future.reject(e);
@@ -612,7 +608,7 @@
                 timeout = callback;
                 callback = id;
                 if (_id === null) {
-                    _id = invoke('#', pass, { sync: true });
+                    _id = invoke('#', noop, { sync: true });
                 }
                 _id.then(function(id) {
                     subscribe(name, id, callback, timeout);
