@@ -434,7 +434,8 @@
             var batches = _batches;
             _batches = [];
             var request = batches.reduce(function(stream, item) {
-                return stream.write(encode(item.func, item.args, item.context));
+                stream.write(encode(item.func, item.args, item.context));
+                return stream;
             }, new BytesIO());
             request.writeByte(Tags.TagEnd);
             sendAndReceive(request.bytes, context, function(response) {
