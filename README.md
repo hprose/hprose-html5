@@ -6,7 +6,7 @@
 [![License](https://img.shields.io/github/license/hprose/hprose-html5.svg)](http://opensource.org/licenses/MIT)
 
 >---
-<img align="right" height="260" src="http://hprose.com/logo.png" >
+<img align="right" height="260" src="http://hprose.com/logo.png" />
 - **[Introduction](#introduction)**
     - **[Browser support](#browser-support)**
 - **[Usage](#usage)**
