@@ -154,9 +154,9 @@
             sendAndReceive(GETFUNCTIONS, context, onsuccess, _ready.reject);
         }
 
-        function setFunction(stub, func) {
+        function setFunction(stub, name) {
             return Future.wrap(function() {
-                return _invoke(stub, func, slice(arguments));
+                return _invoke(stub, name, slice(arguments));
             });
         }
 
@@ -220,10 +220,10 @@
             };
         }
 
-        function getContext(stub, func, args) {
+        function getContext(stub, name, args) {
             var context = initContext();
-            if (func in stub) {
-                var method = stub[func];
+            if (name in stub) {
+                var method = stub[name];
                 for (var key in method) {
                     if (key in context) {
                         context[key] = method[key];
@@ -259,11 +259,11 @@
             return context;
         }
 
-        function encode(func, args, context) {
+        function encode(name, args, context) {
             var stream = new BytesIO();
             stream.writeByte(Tags.TagCall);
             var writer = new Writer(stream, context.simple);
-            writer.writeString(func);
+            writer.writeString(name);
             if (args.length > 0 || context.byref) {
                 writer.reset();
                 writer.writeList(args);
@@ -274,12 +274,12 @@
             return stream;
         }
 
-        function _invoke(stub, func, args) {
-            var context = getContext(stub, func, args);
+        function _invoke(stub, name, args) {
+            var context = getContext(stub, name, args);
             if (_lock) {
                 return Future.promise(function(resolve, reject) {
                     _tasks.push({
-                        func: func,
+                        name: name,
                         args: args,
                         context: context,
                         resolve: resolve,
@@ -288,18 +288,18 @@
                 });
             }
             if (_batch) {
-                return multicall(func, args, context);
+                return multicall(name, args, context);
             }
-            return call(func, args, context);
+            return call(name, args, context);
         }
 
-        function errorHandling(func, error, context, reject) {
+        function errorHandling(name, error, context, reject) {
             try {
                 if (context.onerror) {
-                    context.onerror(func, error);
+                    context.onerror(name, error);
                 }
                 else {
-                    _onerror(func, error);
+                    _onerror(name, error);
                 }
                 reject(error);
             }
@@ -308,8 +308,8 @@
             }
         }
 
-        var invokeHandler = function(func, args, context) {
-            var request = encode(func, args, context);
+        var invokeHandler = function(name, args, context) {
+            var request = encode(name, args, context);
             request.writeByte(Tags.TagEnd);
             return Future.promise(function(resolve, reject) {
                 sendAndReceive(request.bytes, context, function(response) {
@@ -367,10 +367,10 @@
             });
         };
 
-        function call(func, args, context) {
+        function call(name, args, context) {
             if (context.sync) _lock = true;
             var promise = Future.promise(function(resolve, reject) {
-                invokeHandler(func, args, context).then(function(result) {
+                invokeHandler(name, args, context).then(function(result) {
                     try {
                         if (context.onsuccess) {
                             try {
@@ -378,7 +378,7 @@
                             }
                             catch (e) {
                                 if (context.onerror) {
-                                    context.onerror(func, e);
+                                    context.onerror(name, e);
                                 }
                                 reject(e);
                             }
@@ -389,7 +389,7 @@
                         reject(e);
                     }
                 }, function(error) {
-                    errorHandling(func, error, context, reject);
+                    errorHandling(name, error, context, reject);
                 });
             });
             promise.whenComplete(function() {
@@ -397,7 +397,7 @@
                     _lock = false;
                     setImmediate(function(tasks) {
                         tasks.forEach(function(task) {
-                            call(task.func, task.args, task.context)
+                            call(task.name, task.args, task.context)
                                 .then(task.resolve, task.reject);
                         });
                     }, _tasks);
@@ -407,7 +407,7 @@
             return promise;
         }
 
-        function multicall(func, args, context) {
+        function multicall(name, args, context) {
             if (context.mode === ResultMode.RawWithEndTag) {
                 throw new Error("ResultMode.RawWithEndTag doesn't support in batch mode.");
             }
@@ -417,7 +417,7 @@
             return Future.promise(function(resolve, reject) {
                 _batches.push({
                     args: args,
-                    func: func,
+                    name: name,
                     context: context,
                     resolve: resolve,
                     reject: reject
@@ -437,7 +437,7 @@
             var batches = _batches;
             _batches = [];
             var request = batches.reduce(function(stream, item) {
-                stream.write(encode(item.func, item.args, item.context));
+                stream.write(encode(item.name, item.args, item.context));
                 return stream;
             }, new BytesIO());
             request.writeByte(Tags.TagEnd);
@@ -485,7 +485,7 @@
                 }
                 batches.forEach(function(i) {
                     if (i.error) {
-                        errorHandling(i.func, i.error, i.context, i.reject);
+                        errorHandling(i.name, i.error, i.context, i.reject);
                     }
                     else {
                         try {
@@ -495,7 +495,7 @@
                                 }
                                 catch (e) {
                                     if (i.context.onerror) {
-                                        i.context.onerror(i.func, e);
+                                        i.context.onerror(i.name, e);
                                     }
                                     i.reject(e);
                                 }
@@ -509,7 +509,7 @@
                 });
             }, function(error) {
                 batches.forEach(function(i) {
-                    errorHandling(i.func, error, i.context, i.reject);
+                    errorHandling(i.name, error, i.context, i.reject);
                 });
             });
         }
@@ -642,8 +642,8 @@
         }
         function invoke() {
             var args = slice(arguments);
-            var func = args.shift();
-            return _invoke(self, func, args);
+            var name = args.shift();
+            return _invoke(self, name, args);
         }
         function ready(onComplete, onError) {
             return _ready.then(onComplete, onError);
@@ -798,9 +798,9 @@
         autoId.sync = true;
         function addInvokeHandler(handler) {
             var oldInvokeHandler = invokeHandler;
-            invokeHandler = function(func, args, context) {
+            invokeHandler = function(name, args, context) {
                 try {
-                    var result = handler(func, args, context, oldInvokeHandler);
+                    var result = handler(name, args, context, oldInvokeHandler);
                     if (Future.isFuture(result)) return result;
                     return Future.value(result);
                 }
@@ -823,10 +823,10 @@
             };
         }
         function addAfterFilterHandler(handler) {
-            var oldAeforeFilterHandler = afterFilterHandler;
+            var oldAfterFilterHandler = afterFilterHandler;
             afterFilterHandler = function(request, context) {
                 try {
-                    var response = handler(request, context, oldAeforeFilterHandler);
+                    var response = handler(request, context, oldAfterFilterHandler);
                     if (Future.isFuture(response)) return response;
                     return Future.value(response);
                 }
