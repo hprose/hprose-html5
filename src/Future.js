@@ -13,7 +13,7 @@
  *                                                        *
  * hprose Future for HTML5.                               *
  *                                                        *
- * LastModified: Jul 20, 2015                             *
+ * LastModified: Jul 26, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -33,44 +33,20 @@
     var foreach = Function.prototype.call.bind(Array.prototype.forEach);
     var slice = Function.prototype.call.bind(Array.prototype.slice);
 
-    function syncCall(callback, next, x) {
-        try {
-            var r = callback(x);
-            next.resolve(r);
-        }
-        catch(e) {
-            next.reject(e);
-        }
-    }
-
-    function asyncCall(callback, next, x) {
-        setImmediate(function() {
-            try {
-                var r = callback(x);
-                next.resolve(r);
-            }
-            catch(e) {
-                next.reject(e);
-            }
-        });
-    }
-
     function Future(computation) {
-        var sync = !!computation;
         Object.defineProperties(this, {
             _subscribers: { value: [] },
-            _sync: { value: sync },
-            _call: { value: sync ? syncCall : asyncCall },
             resolve: { value: this.resolve.bind(this) },
             reject: { value: this.reject.bind(this) },
         });
+        var self = this;
         if (typeof computation === 'function') {
             setImmediate(function() {
                 try {
-                    this.resolve(computation());
+                    self.resolve(computation());
                 }
                 catch(e) {
-                    this.reject(e);
+                    self.reject(e);
                 }
             });
         }
@@ -106,21 +82,20 @@
         return future;
     }
 
-    function sync(computation) {
-        var future = new Future(true);
-        try {
-            future.resolve(computation());
-        }
-        catch(e) {
-            future.reject(e);
-        }
+    function value(v) {
+        var future = new Future();
+        future.resolve(v);
         return future;
     }
 
-    function value(v) {
-        var future = new Future(true);
-        future.resolve(v);
-        return future;
+    function sync(computation) {
+        try {
+            var result = computation();
+            return value(result);
+        }
+        catch(e) {
+            return error(e);
+        }
     }
 
     function promise(executor) {
@@ -135,14 +110,14 @@
         return size;
     }
 
-    function all(array, sync) {
+    function all(array) {
         array = isPromise(array) ? array : value(array);
         return array.then(function(array) {
             var n = array.length;
             var count = arraysize(array);
             var result = new Array(n);
             if (count === 0) return value(result);
-            var future = new Future(sync);
+            var future = new Future();
             foreach(array, function(element, index) {
                 var f = (isPromise(element) ? element : value(element));
                 f.then(function(value) {
@@ -161,10 +136,10 @@
         return all(arguments);
     }
 
-    function race(array, sync) {
+    function race(array) {
         array = isPromise(array) ? array : value(array);
         return array.then(function(array) {
-            var future = new Future(sync);
+            var future = new Future();
             foreach(array, function(element) {
                 var f = (isPromise(element) ? element : value(element));
                 f.then(future.resolve, future.reject);
@@ -173,7 +148,7 @@
         });
     }
 
-    function any(array, sync) {
+    function any(array) {
         array = isPromise(array) ? array : value(array);
         return array.then(function(array) {
             var n = array.length;
@@ -182,7 +157,7 @@
                 throw new RangeError('any(): array must not be empty');
             }
             var reasons = new Array(n);
-            var future = new Future(sync);
+            var future = new Future();
             foreach(array, function(element, index) {
                 var f = (isPromise(element) ? element : value(element));
                 f.then(future.resolve, function(e) {
@@ -196,14 +171,14 @@
         });
     }
 
-    function settle(array, sync) {
+    function settle(array) {
         array = isPromise(array) ? array : value(array);
         return array.then(function(array) {
             var n = array.length;
             var count = arraysize(array);
             var result = new Array(n);
             if (count === 0) return value(result);
-            var future = new Future(sync);
+            var future = new Future();
             foreach(array, function(element, index) {
                 var f = (isPromise(element) ? element : value(element));
                 f.whenComplete(function() {
@@ -312,53 +287,91 @@
         reduceRight: { value: reduceRight }
     });
 
+    function _call(callback, next, x) {
+        setImmediate(function() {
+            try {
+                var r = callback(x);
+                next.resolve(r);
+            }
+            catch(e) {
+                next.reject(e);
+            }
+        });
+    }
+
+    function _reject(onreject, next, e) {
+        if (onreject) {
+            _call(onreject, next, e);
+        }
+        else {
+            next.reject(e);
+        }
+    }
+
+
+    function _resolve(onfulfill, onreject, self, next, x) {
+        function resolvePromise(y) {
+            _resolve(onfulfill, onreject, self, next, y);
+        }
+        function rejectPromise(r) {
+            _reject(onreject, next, r);
+        }
+        if (isPromise(x)) {
+            if (x === self) {
+                rejectPromise(new TypeError('Self resolution'));
+                return;
+            }
+            x.then(resolvePromise, rejectPromise);
+            return;
+        }
+        if ((x !== null) &&
+            (typeof x === 'object') ||
+            (typeof x === 'function')) {
+            var then;
+            try {
+                then = x.then;
+            }
+            catch (e) {
+                rejectPromise(e);
+                return;
+            }
+            if (typeof then === 'function') {
+                var notrun = true;
+                try {
+                    then.call(x, function(y) {
+                        if (notrun) {
+                            notrun = false;
+                            resolvePromise(y);
+                        }
+                    }, function(r) {
+                        if (notrun) {
+                            notrun = false;
+                            rejectPromise(r);
+                        }
+                    });
+                    return;
+                }
+                catch (e) {
+                    if (notrun) {
+                        notrun = false;
+                        rejectPromise(e);
+                    }
+                }
+                return;
+            }
+        }
+        if (onfulfill) {
+            _call(onfulfill, next, x);
+        }
+        else {
+            next.resolve(x);
+        }
+    }
+
     Object.defineProperties(Future.prototype, {
         _value: { writable: true },
         _reason: { writable: true },
         _state: { value: PENDING, writable: true },
-        _resolve: { value: function(onfulfill, onreject, next, x) {
-            if (isPromise(x)) {
-                if (x === this) {
-                    throw new TypeError('Self resolution');
-                }
-                x.then(onfulfill, onreject)
-                 .then(next.resolve, next.reject);
-                return;
-            }
-            if ((x !== null) &&
-                (typeof x === 'object') ||
-                (typeof x === 'function')) {
-                var then;
-                try {
-                    then = x.then;
-                }
-                catch (e) {
-                    if (onreject) {
-                        this._call(onreject, next, e);
-                    }
-                    else {
-                        next.reject(e);
-                    }
-                    return;
-                }
-                if (typeof then === 'function') {
-                    try {
-                        var f = then.call(x, onfulfill, onreject);
-                        f.then(next.resolve, next.reject);
-                    }
-                    catch (e) {
-                        next.reject(e);
-                    }
-                    return;
-                }
-            }
-            if (onfulfill) {
-                this._call(onfulfill, next, x);
-            }
-            else {
-                next.resolve(x);
-            }
-        } },
         // Calling complete must not be done more than once.
         resolve: { value: function(value) {
             if (this._state === PENDING) {
@@ -367,10 +380,11 @@
                 var subscribers = this._subscribers;
                 while (subscribers.length > 0) {
                     var subscriber = subscribers.shift();
-                    this._resolve(subscriber.onfulfill,
-                                  subscriber.onreject,
-                                  subscriber.next,
-                                  value);
+                    _resolve(subscriber.onfulfill,
+                             subscriber.onreject,
+                             this,
+                             subscriber.next,
+                             value);
                 }
             }
         } },
@@ -383,9 +397,9 @@
                 while (subscribers.length > 0) {
                     var subscriber = subscribers.shift();
                     if (subscriber.onreject) {
-                        this._call(subscriber.onreject,
-                                   subscriber.next,
-                                   reason);
+                        _call(subscriber.onreject,
+                              subscriber.next,
+                              reason);
                     }
                     else {
                         subscriber.next.reject(reason);
@@ -397,10 +411,10 @@
             if (typeof onfulfill !== 'function') onfulfill = null;
             if (typeof onreject !== 'function') onreject = null;
             if (onfulfill || onreject) {
-                var next = new Future(this._sync);
+                var next = new Future();
                 if (this._state === FULFILLED) {
                     if (onfulfill) {
-                        this._resolve(onfulfill, onreject, next, this._value);
+                        _resolve(onfulfill, onreject, this, next, this._value);
                     }
                     else {
                         next.resolve(this._value);
@@ -408,7 +422,7 @@
                 }
                 else if (this._state === REJECTED) {
                     if (onreject) {
-                        this._call(onreject, next, this._reason);
+                        _call(onreject, next, this._reason);
                     }
                     else {
                         next.reject(this._reason);
@@ -562,13 +576,11 @@
 
     global.hprose.Future = Future;
 
-    function Completer(sync) {
-        var future = new Future(sync);
+    function Completer() {
+        var future = new Future();
         Object.defineProperties(this, {
             future: { value: future },
-            // Calling complete must not be done more than once.
             complete: { value: future.resolve },
-            // Calling complete must not be done more than once.
             completeError: { value: future.reject },
             isCompleted: { get: function() {
                 return ( future._state !== PENDING );
@@ -576,12 +588,20 @@
         });
     }
 
-
-    Object.defineProperties(Completer, {
-        sync: { value : function() { return new Completer(true); } }
-    });
-
     global.hprose.Completer = Completer;
+
+    global.hprose.resolved = value;
+
+    global.hprose.rejected = error;
+
+    global.hprose.deferred = function() {
+        var self = new Future();
+        return Object.create(null, {
+            promise: { value: self },
+            resolve: { value: self.resolve },
+            reject: { value: self.reject },
+        });
+    };
 
     if (hasPromise) return;
 
