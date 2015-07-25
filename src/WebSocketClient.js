@@ -143,14 +143,27 @@
         });
     }
 
-    function create(uri, functions) {
+    function checkuri(uri) {
         var parser = document.createElement('a');
         parser.href = uri;
         if (parser.protocol === 'ws:' ||
             parser.protocol === 'wss:') {
-            return new WebSocketClient(uri, functions);
+            return;
         }
         throw new Error('This client desn\'t support ' + parser.protocol + ' scheme.');
+    }
+
+    function create(uri, functions) {
+        if (typeof uri === 'string') {
+            checkuri(uri);
+        }
+        else if (Array.isArray(uri)) {
+            uri.forEach(function(uri) { checkuri(uri); });
+        }
+        else {
+            return new Error('You should set server uri first!');
+        }
+        return new WebSocketClient(uri, functions);
     }
 
     Object.defineProperty(WebSocketClient, 'create', { value: create });

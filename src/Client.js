@@ -46,11 +46,14 @@
 
         // private members
         var _uri;
+        var _uris               = [];
+        var _index              = -1;
         var _byref              = false;
         var _simple             = false;
         var _timeout            = 30000;
         var _retry              = 10;
         var _idempotent         = false;
+        var _failswitch         = false;
         var _lock               = false;
         var _tasks              = [];
         var _useHarmonyMap      = false;
@@ -100,6 +103,12 @@
         }
 
         function retry(data, context, onsuccess, onerror) {
+            if (context.failswitch) {
+                if (++_index >= _uris.length) {
+                    _index = 0;
+                    _uri = _uris[_index];
+                }
+            }
             if (context.idempotent) {
                 if (--context.retry >= 0) {
                     var interval = (10 - context.retry) * 500;
@@ -117,6 +126,7 @@
             var context = {
                 retry: _retry,
                 idempotent: true,
+                failswitch: true,
                 timeout: _timeout,
                 client: self,
                 userdata: {}
@@ -210,6 +220,7 @@
                 timeout: _timeout,
                 retry: _retry,
                 idempotent: _idempotent,
+                failswitch: _failswitch,
                 oneway: false,
                 sync: false,
                 onsuccess: undefined,
@@ -525,6 +536,12 @@
         function getUri() {
             return _uri;
         }
+        function getFailswitch() {
+            return _failswitch;
+        }
+        function setFailswitch(value) {
+            _failswitch = !!value;
+        }
         function getTimeout() {
             return _timeout;
         }
@@ -699,7 +716,11 @@
             var topic = getTopic(name, id, true);
             if (topic === null) {
                 var cb = function() {
-                    invoke(name, id, topic.handler, cb, { timeout: timeout });
+                    invoke(name, id, topic.handler, cb, {
+                        idempotent: true,
+                        failswitch: false,
+                        timeout: timeout
+                    });
                 };
                 topic = {
                     handler: function(result) {
@@ -796,6 +817,8 @@
             return _invoke(self, '#', []);
         }
         autoId.sync = true;
+        autoId.idempotent = true;
+        autoId.failswitch = true;
         function addInvokeHandler(handler) {
             var oldInvokeHandler = invokeHandler;
             invokeHandler = function(name, args, context) {
@@ -837,7 +860,14 @@
         }
         /* function constructor */ {
             if (typeof(uri) === s_string) {
+                _uris = [uri];
+                _index = 0;
                 useService(uri, functions);
+            }
+            else if (Array.isArray(uri)) {
+                _uris = uri;
+                _index = Math.floor(Math.random() * _uris.length);
+                useService(_uris[_index], functions);
             }
         }
         Object.defineProperties(this, {
@@ -846,6 +876,7 @@
             onerror: { get: getOnError, set: setOnError },
             uri: { get: getUri },
             id: { get: getId },
+            failswitch: { get: getFailswitch, set: setFailswitch },
             timeout: { get: getTimeout, set: setTimeout },
             retry: { get: getRetry, set: setRetry },
             idempotent: { get: getIdempotent, set: setIdempotent },
@@ -868,18 +899,35 @@
         });
     }
 
-    function create(uri, functions) {
+    function checkuri(uri) {
         var parser = document.createElement('a');
         parser.href = uri;
         if (parser.protocol === 'http:' ||
-            parser.protocol === 'https:') {
-            return new global.hprose.HttpClient(uri, functions);
-        }
-        if (parser.protocol === 'ws:' ||
+            parser.protocol === 'https:' ||
+            parser.protocol === 'ws:' ||
             parser.protocol === 'wss:') {
-            return new global.hprose.WebSocketClient(uri, functions);
+            return;
         }
         throw new Error('The ' + parser.protocol + ' client isn\'t implemented.');
+    }
+
+    function create(uri, functions) {
+        try {
+            return global.hprose.HttpClient.create(uri, functions);
+        }
+        catch(e) {}
+        try {
+            return global.hprose.WebSocketClient.create(uri, functions);
+        }
+        catch(e) {}
+        if (typeof uri === 'string') {
+            checkuri(uri);
+        }
+        else if (Array.isArray(uri)) {
+            uri.forEach(function(uri) { checkuri(uri); });
+            throw new Error('Not support multiple protocol.');
+        }
+        throw new Error('You should set server uri first!');
     }
 
     Object.defineProperty(Client, 'create', { value: create });
