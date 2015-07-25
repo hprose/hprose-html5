@@ -50,6 +50,7 @@
         var _simple             = false;
         var _timeout            = 30000;
         var _retry              = 10;
+        var _idempotent         = false;
         var _lock               = false;
         var _tasks              = [];
         var _useHarmonyMap      = false;
@@ -213,7 +214,7 @@
                 simple: _simple,
                 timeout: _timeout,
                 retry: _retry,
-                idempotent: false,
+                idempotent: _idempotent,
                 oneway: false,
                 sync: false,
                 onsuccess: undefined,
@@ -544,6 +545,12 @@
                 _retry = 0;
             }
         }
+        function getIdempotent() {
+            return _idempotent;
+        }
+        function setIdempotent(value) {
+            _idempotent = !!value;
+        }
         function getByRef() {
             return _byref;
         }
@@ -670,7 +677,7 @@
                 timeout = callback;
                 callback = id;
                 if (_id === null) {
-                    _id = invoke('#', noop, { sync: true });
+                    _id = autoId();
                 }
                 _id.then(function(id) {
                     subscribe(name, id, callback, timeout);
@@ -783,6 +790,10 @@
         function getId() {
             return _id;
         }
+        function autoId() {
+            return _invoke(self, '#', []);
+        }
+        autoId.sync = true;
         function addInvokeHandler(handler) {
             var oldInvokeHandler = invokeHandler;
             invokeHandler = function(func, args, context) {
@@ -828,12 +839,14 @@
             }
         }
         Object.defineProperties(this, {
+            '#': { value: autoId },
             onError: { get: getOnError, set: setOnError },
             onerror: { get: getOnError, set: setOnError },
             uri: { get: getUri },
             id: { get: getId },
             timeout: { get: getTimeout, set: setTimeout },
             retry: { get: getRetry, set: setRetry },
+            idempotent: { get: getIdempotent, set: setIdempotent },
             byref: { get: getByRef, set: setByRef },
             simple: { get: getSimpleMode, set: setSimpleMode },
             useHarmonyMap: { get: getUseHarmonyMap, set: setUseHarmonyMap },
