@@ -12,7 +12,7 @@
  *                                                        *
  * hprose client for HTML5.                               *
  *                                                        *
- * LastModified: Jul 24, 2015                             *
+ * LastModified: Jul 25, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -94,25 +94,18 @@
         function sendAndReceive(request, context, onsuccess, onerror) {
             beforeFilterHandler(request, context)
             .then(onsuccess, function(e) {
-                if (retry(sendAndReceive, request, context, onsuccess, onerror)) return;
+                if (retry(request, context, onsuccess, onerror)) return;
                 onerror(e);
             });
         }
 
-        function sendAndReceive2(request, context, onsuccess, onerror) {
-            self.sendAndReceive(request, context).then(onsuccess, function(e) {
-                if (retry(sendAndReceive2, request, context, onsuccess, onerror)) return;
-                onerror(e);
-            });
-        }
-
-        function retry(send, data, context, onsuccess, onerror) {
+        function retry(data, context, onsuccess, onerror) {
             if (context.idempotent) {
                 if (--context.retry >= 0) {
                     var interval = (10 - context.retry) * 500;
                     if (context.retry > 10) interval = 500;
                     global.setTimeout(function() {
-                        send(data, context, onsuccess, onerror);
+                        sendAndReceive(data, context, onsuccess, onerror);
                     }, interval);
                     return true;
                 }
@@ -125,6 +118,8 @@
                 retry: _retry,
                 idempotent: true,
                 timeout: _timeout,
+                client: self,
+                userdata: {}
             };
             var onsuccess = function(data) {
                 var error = null;
@@ -156,7 +151,7 @@
                     _ready.resolve(stub);
                 }
             };
-            sendAndReceive2(GETFUNCTIONS, context, onsuccess, _ready.reject);
+            sendAndReceive(GETFUNCTIONS, context, onsuccess, _ready.reject);
         }
 
         function setFunction(stub, func) {
