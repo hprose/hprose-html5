@@ -277,15 +277,15 @@
         function _invoke(stub, func, args) {
             var context = getContext(stub, func, args);
             if (_lock) {
-                var result = new Future();
-                _tasks.push({
-                    func: func,
-                    args: args,
-                    context: context,
-                    resolve: result.resolve,
-                    reject: result.reject
+                return Future.promise(function(resolve, reject) {
+                    _tasks.push({
+                        func: func,
+                        args: args,
+                        context: context,
+                        resolve: resolve,
+                        reject: reject
+                    });
                 });
-                return result;
             }
             if (_batch) {
                 return multicall(func, args, context);
@@ -293,7 +293,7 @@
             return call(func, args, context);
         }
 
-        function errorHandling(func, error, context, future) {
+        function errorHandling(func, error, context, reject) {
             try {
                 if (context.onerror) {
                     context.onerror(func, error);
@@ -301,97 +301,98 @@
                 else {
                     _onerror(func, error);
                 }
-                future.reject(error);
+                reject(error);
             }
             catch (e) {
-                future.reject(e);
+                reject(e);
             }
         }
 
         var invokeHandler = function(func, args, context) {
             var request = encode(func, args, context);
             request.writeByte(Tags.TagEnd);
-            var future = new Future();
-            sendAndReceive(request.bytes, context, function(response) {
-                if (context.oneway) {
-                    future.resolve();
-                    return;
-                }
-                var result = null;
-                var error = null;
-                try {
-                    if (context.mode === ResultMode.RawWithEndTag) {
-                        result = response;
+            return Future.promise(function(resolve, reject) {
+                sendAndReceive(request.bytes, context, function(response) {
+                    if (context.oneway) {
+                        resolve();
+                        return;
                     }
-                    else if (context.mode === ResultMode.Raw) {
-                        result = response.subarray(0, response.byteLength - 1);
-                    }
-                    else {
-                        var stream = new BytesIO(response);
-                        var reader = new Reader(stream, false, context.useHarmonyMap);
-                        var tag = stream.readByte();
-                        if (tag === Tags.TagResult) {
-                            if (context.mode === ResultMode.Serialized) {
-                                result = reader.readRaw();
+                    var result = null;
+                    var error = null;
+                    try {
+                        if (context.mode === ResultMode.RawWithEndTag) {
+                            result = response;
+                        }
+                        else if (context.mode === ResultMode.Raw) {
+                            result = response.subarray(0, response.byteLength - 1);
+                        }
+                        else {
+                            var stream = new BytesIO(response);
+                            var reader = new Reader(stream, false, context.useHarmonyMap);
+                            var tag = stream.readByte();
+                            if (tag === Tags.TagResult) {
+                                if (context.mode === ResultMode.Serialized) {
+                                    result = reader.readRaw();
+                                }
+                                else {
+                                    result = reader.unserialize();
+                                }
+                                tag = stream.readByte();
+                                if (tag === Tags.TagArgument) {
+                                    reader.reset();
+                                    var _args = reader.readList();
+                                    copyargs(_args, args);
+                                    tag = stream.readByte();
+                                }
                             }
-                            else {
-                                result = reader.unserialize();
-                            }
-                            tag = stream.readByte();
-                            if (tag === Tags.TagArgument) {
-                                reader.reset();
-                                var _args = reader.readList();
-                                copyargs(_args, args);
+                            else if (tag === Tags.TagError) {
+                                error = new Error(reader.readString());
                                 tag = stream.readByte();
                             }
-                        }
-                        else if (tag === Tags.TagError) {
-                            error = new Error(reader.readString());
-                            tag = stream.readByte();
-                        }
-                        if (tag !== Tags.TagEnd) {
-                            error = new Error('Wrong Response:\r\n' + BytesIO.toString(response));
+                            if (tag !== Tags.TagEnd) {
+                                error = new Error('Wrong Response:\r\n' + BytesIO.toString(response));
+                            }
                         }
                     }
-                }
-                catch (e) {
-                    error = e;
-                }
-                if (error) {
-                    future.reject(error);
-                }
-                else {
-                    future.resolve(result);
-                }
-            }, future.reject);
-            return future;
+                    catch (e) {
+                        error = e;
+                    }
+                    if (error) {
+                        reject(error);
+                    }
+                    else {
+                        resolve(result);
+                    }
+                }, reject);
+            });
         };
 
         function call(func, args, context) {
             if (context.sync) _lock = true;
-            var future = new Future();
-            invokeHandler(func, args, context).then(function(result) {
-                try {
-                    if (context.onsuccess) {
-                        try {
-                            context.onsuccess(result, args);
-                        }
-                        catch (e) {
-                            if (context.onerror) {
-                                context.onerror(func, e);
+            var promise = Future.promise(function(resolve, reject) {
+                invokeHandler(func, args, context).then(function(result) {
+                    try {
+                        if (context.onsuccess) {
+                            try {
+                                context.onsuccess(result, args);
                             }
-                            future.reject(e);
+                            catch (e) {
+                                if (context.onerror) {
+                                    context.onerror(func, e);
+                                }
+                                reject(e);
+                            }
                         }
+                        resolve(result);
                     }
-                    future.resolve(result);
-                }
-                catch (e) {
-                    future.reject(e);
-                }
-            }, function(error) {
-                errorHandling(func, error, context, future);
+                    catch (e) {
+                        reject(e);
+                    }
+                }, function(error) {
+                    errorHandling(func, error, context, reject);
+                });
             });
-            future.whenComplete(function() {
+            promise.whenComplete(function() {
                 if (context.sync) {
                     _lock = false;
                     setImmediate(function(tasks) {
@@ -403,7 +404,7 @@
                     _tasks = [];
                 }
             });
-            return future;
+            return promise;
         }
 
         function multicall(func, args, context) {
@@ -413,9 +414,15 @@
             else if (context.mode === ResultMode.Raw) {
                 throw new Error("ResultMode.Raw doesn't support in batch mode.");
             }
-            var future = new Future();
-            _batches.push({args: args, func: func, context: context, future: future});
-            return future;
+            return Future.promise(function(resolve, reject) {
+                _batches.push({
+                    args: args,
+                    func: func,
+                    context: context,
+                    resolve: resolve,
+                    reject: reject
+                });
+            });
         }
 
         function beginBatch() {
@@ -478,7 +485,7 @@
                 }
                 batches.forEach(function(i) {
                     if (i.error) {
-                        errorHandling(i.func, i.error, i.context, i.future);
+                        errorHandling(i.func, i.error, i.context, i.reject);
                     }
                     else {
                         try {
@@ -490,19 +497,19 @@
                                     if (i.context.onerror) {
                                         i.context.onerror(i.func, e);
                                     }
-                                    i.future.reject(e);
+                                    i.reject(e);
                                 }
                             }
-                            i.future.resolve(i.result);
+                            i.resolve(i.result);
                         }
                         catch (e) {
-                            i.future.reject(e);
+                            i.reject(e);
                         }
                     }
                 });
             }, function(error) {
                 batches.forEach(function(i) {
-                    errorHandling(i.func, error, i.context, i.future);
+                    errorHandling(i.func, error, i.context, i.reject);
                 });
             });
         }
