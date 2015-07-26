@@ -372,7 +372,6 @@
         _value: { writable: true },
         _reason: { writable: true },
         _state: { value: PENDING, writable: true },
-        // Calling complete must not be done more than once.
         resolve: { value: function(value) {
             if (this._state === PENDING) {
                 this._state = FULFILLED;
@@ -388,7 +387,6 @@
                 }
             }
         } },
-        // Calling complete must not be done more than once.
         reject: { value: function(reason) {
             if (this._state === PENDING) {
                 this._state = REJECTED;
