@@ -12,7 +12,7 @@
  *                                                        *
  * hprose client for HTML5.                               *
  *                                                        *
- * LastModified: Jul 25, 2015                             *
+ * LastModified: Jul 27, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -165,9 +165,16 @@
         }
 
         function setFunction(stub, name) {
-            return Future.wrap(function() {
-                return _invoke(stub, name, slice(arguments));
-            });
+            return function() {
+                if (_batch) {
+                    return _invoke(stub, name, slice(arguments), true);
+                }
+                else {
+                    return Future.all(arguments).then(function(args) {
+                        return _invoke(stub, name, args, false);
+                    });
+                }
+            };
         }
 
         function setMethods(stub, obj, namespace, name, methods) {
@@ -285,11 +292,11 @@
             return stream;
         }
 
-        function _invoke(stub, name, args) {
-            var context = getContext(stub, name, args);
+        function __invoke(name, args, context, batch) {
             if (_lock) {
                 return Future.promise(function(resolve, reject) {
                     _tasks.push({
+                        batch: batch,
                         name: name,
                         args: args,
                         context: context,
@@ -298,10 +305,14 @@
                     });
                 });
             }
-            if (_batch) {
+            if (batch) {
                 return multicall(name, args, context);
             }
             return call(name, args, context);
+        }
+
+        function _invoke(stub, name, args, batch) {
+            return __invoke(name, args, getContext(stub, name, args), batch);
         }
 
         function errorHandling(name, error, context, reject) {
@@ -378,6 +389,26 @@
             });
         };
 
+        function unlock(sync) {
+            return function() {
+                if (sync) {
+                    _lock = false;
+                    setImmediate(function(tasks) {
+                        tasks.forEach(function(task) {
+                            if ('settings' in task) {
+                                endBatch(task.settings)
+                                .then(task.resolve, task.reject);
+                            }
+                            else {
+                                __invoke(task.name, task.args, task.context, task.batch).then(task.resolve, task.reject);
+                            }
+                        });
+                    }, _tasks);
+                    _tasks = [];
+                }
+            };
+        }
+
         function call(name, args, context) {
             if (context.sync) _lock = true;
             var promise = Future.promise(function(resolve, reject) {
@@ -403,18 +434,7 @@
                     errorHandling(name, error, context, reject);
                 });
             });
-            promise.whenComplete(function() {
-                if (context.sync) {
-                    _lock = false;
-                    setImmediate(function(tasks) {
-                        tasks.forEach(function(task) {
-                            call(task.name, task.args, task.context)
-                                .then(task.resolve, task.reject);
-                        });
-                    }, _tasks);
-                    _tasks = [];
-                }
-            });
+            promise.whenComplete(unlock(context.sync));
             return promise;
         }
 
@@ -436,93 +456,149 @@
             });
         }
 
-        function beginBatch() {
-            _batch = true;
+        function getBatchContext(settings) {
+            var context = {
+                timeout: _timeout,
+                retry: _retry,
+                idempotent: _idempotent,
+                failswitch: _failswitch,
+                oneway: false,
+                sync: false,
+                useHarmonyMap: _useHarmonyMap,
+                client: self,
+                userdata: {}
+            };
+            for (var k in settings) {
+                if (k in context) {
+                    context[k] = settings[k];
+                }
+            }
+            return context;
         }
 
-        function endBatch() {
-            _batch = false;
-            var batchSize = _batches.length;
-            if (batchSize === 0) return;
-            var context = initContext();
-            var batches = _batches;
-            _batches = [];
+        var batchInvokeHandler = function(batches, context) {
             var request = batches.reduce(function(stream, item) {
                 stream.write(encode(item.name, item.args, item.context));
                 return stream;
             }, new BytesIO());
             request.writeByte(Tags.TagEnd);
-            sendAndReceive(request.bytes, context, function(response) {
-                var result = null;
-                var error = null;
-                var i = -1;
-                var stream = new BytesIO(response);
-                var reader = new Reader(stream, false, context.useHarmonyMap);
-                var tag;
-                try {
-                    while ((tag = stream.readByte()) !== Tags.TagEnd) {
-                        switch (tag) {
-                        case Tags.TagResult:
-                            var mode = batches[i + 1].context.mode;
-                            if (mode === ResultMode.Serialized) {
-                                result = reader.readRaw();
-                            }
-                            else {
+            return Future.promise(function(resolve, reject) {
+                sendAndReceive(request.bytes, context, function(response) {
+                    if (context.oneway) {
+                        resolve(batches);
+                        return;
+                    }
+                    var result = null;
+                    var error = null;
+                    var i = -1;
+                    var stream = new BytesIO(response);
+                    var reader = new Reader(stream, false, context.useHarmonyMap);
+                    var tag;
+                    try {
+                        while ((tag = stream.readByte()) !== Tags.TagEnd) {
+                            switch (tag) {
+                            case Tags.TagResult:
+                                var mode = batches[i + 1].context.mode;
+                                if (mode === ResultMode.Serialized) {
+                                    result = reader.readRaw();
+                                }
+                                else {
+                                    reader.reset();
+                                    result = reader.unserialize();
+                                }
+                                batches[++i].result = result;
+                                batches[i].error = null;
+                                break;
+                            case Tags.TagArgument:
                                 reader.reset();
-                                result = reader.unserialize();
+                                var _args = reader.readList();
+                                copyargs(_args, batches[i].args);
+                                break;
+                            case Tags.TagError:
+                                reader.reset();
+                                error = new Error(reader.readString());
+                                batches[++i].error = error;
+                                break;
+                            default:
+                                error = new Error('Wrong Response:\r\n' + BytesIO.toString(response));
+                                batches[++i].error = error;
+                                break;
                             }
-                            batches[++i].result = result;
-                            batches[i].error = null;
-                            break;
-                        case Tags.TagArgument:
-                            reader.reset();
-                            var _args = reader.readList();
-                            copyargs(_args, batches[i].args);
-                            break;
-                        case Tags.TagError:
-                            reader.reset();
-                            error = new Error(reader.readString());
-                            batches[++i].error = error;
-                            break;
-                        default:
-                            error = new Error('Wrong Response:\r\n' + BytesIO.toString(response));
-                            batches[++i].error = error;
-                            break;
                         }
                     }
-                }
-                catch (e) {
-                    batches[i < 0 ? 0 : i >= batchSize ? i - 1 : i].error = e;
-                }
-                batches.forEach(function(i) {
-                    if (i.error) {
-                        errorHandling(i.name, i.error, i.context, i.reject);
+                    catch (e) {
+                        var n = batches.length;
+                        batches[i < 0 ? 0 : i >= n ? n - 1 : i].error = e;
                     }
-                    else {
-                        try {
-                            if (i.context.onsuccess) {
-                                try {
-                                    i.context.onsuccess(i.result, i.args);
-                                }
-                                catch (e) {
-                                    if (i.context.onerror) {
-                                        i.context.onerror(i.name, e);
-                                    }
-                                    i.reject(e);
-                                }
-                            }
-                            i.resolve(i.result);
-                        }
-                        catch (e) {
-                            i.reject(e);
-                        }
-                    }
+                    resolve(batches);
+                }, reject);
+            });
+        };
+
+        function beginBatch() {
+            _batch = true;
+        }
+
+        function endBatch(settings) {
+            settings = settings || {};
+            _batch = false;
+            if (_lock) {
+                return Future.promise(function(resolve, reject) {
+                    _tasks.push({
+                        batch: true,
+                        settings: settings,
+                        resolve: resolve,
+                        reject: reject
+                    });
                 });
-            }, function(error) {
-                batches.forEach(function(i) {
-                    errorHandling(i.name, error, i.context, i.reject);
+            }
+            var batchSize = _batches.length;
+            if (batchSize === 0) return;
+            var context = getBatchContext(settings);
+            if (context.sync) _lock = true;
+            var batches = _batches;
+            _batches = [];
+            var promise = Future.promise(function(resolve, reject) {
+                batchInvokeHandler(batches, context).then(function(batches) {
+                    batches.forEach(function(i) {
+                        if (i.error) {
+                            errorHandling(i.name, i.error, i.context, i.reject);
+                        }
+                        else {
+                            try {
+                                if (i.context.onsuccess) {
+                                    try {
+                                        i.context.onsuccess(i.result, i.args);
+                                    }
+                                    catch (e) {
+                                        if (i.context.onerror) {
+                                            i.context.onerror(i.name, e);
+                                        }
+                                        i.reject(e);
+                                    }
+                                }
+                                i.resolve(i.result);
+                            }
+                            catch (e) {
+                                i.reject(e);
+                            }
+                        }
+                        delete i.context;
+                        delete i.resolve;
+                        delete i.reject;
+                    });
+                    resolve(batches);
+                }, function(error) {
+                    batches.forEach(function(i) {
+                        if ('reject' in i) {
+                            errorHandling(i.name, error, i.context, i.reject);
+                        }
+                    });
+                    reject(error);
                 });
             });
+            promise.whenComplete(unlock(context.sync));
+            return promise;
         }
 
         function getOnError() {
@@ -660,7 +736,7 @@
         function invoke() {
             var args = slice(arguments);
             var name = args.shift();
-            return _invoke(self, name, args);
+            return _invoke(self, name, args, _batch);
         }
         function ready(onComplete, onError) {
             return _ready.then(onComplete, onError);
@@ -716,11 +792,11 @@
             var topic = getTopic(name, id, true);
             if (topic === null) {
                 var cb = function() {
-                    invoke(name, id, topic.handler, cb, {
+                    _invoke(self, name, [id, topic.handler, cb, {
                         idempotent: true,
                         failswitch: false,
                         timeout: timeout
-                    });
+                    }], false);
                 };
                 topic = {
                     handler: function(result) {
@@ -814,7 +890,7 @@
             return _id;
         }
         function autoId() {
-            return _invoke(self, '#', []);
+            return _invoke(self, '#', [], false);
         }
         autoId.sync = true;
         autoId.idempotent = true;
@@ -824,6 +900,19 @@
             invokeHandler = function(name, args, context) {
                 try {
                     var result = handler(name, args, context, oldInvokeHandler);
+                    if (Future.isFuture(result)) return result;
+                    return Future.value(result);
+                }
+                catch (e) {
+                    return Future.error(e);
+                }
+            };
+        }
+        function addBatchInvokeHandler(handler) {
+            var oldBatchInvokeHandler = batchInvokeHandler;
+            batchInvokeHandler = function(batches, context) {
+                try {
+                    var result = handler(batches, context, oldBatchInvokeHandler);
                     if (Future.isFuture(result)) return result;
                     return Future.value(result);
                 }
@@ -894,6 +983,7 @@
             subscribe: { value: subscribe },
             unsubscribe: { value: unsubscribe },
             addInvokeHandler: { value: addInvokeHandler },
+            addBatchInvokeHandler: { value: addBatchInvokeHandler },
             addBeforeFilterHandler: { value: addBeforeFilterHandler },
             addAfterFilterHandler: { value: addAfterFilterHandler }
         });
