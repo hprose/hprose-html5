@@ -561,6 +561,7 @@
                     bindargs[0] = method[i];
                     this.bind.apply(this, bindargs);
                 }
+                return;
             }
             bindargs.shift();
             var self = this;
