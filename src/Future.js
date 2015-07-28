@@ -13,7 +13,7 @@
  *                                                        *
  * hprose Future for HTML5.                               *
  *                                                        *
- * LastModified: Jul 27, 2015                             *
+ * LastModified: Jul 28, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -245,14 +245,34 @@
     }
 
     function reduce(array, callback, initialValue) {
+        if (arguments.length > 2) {
+            return all(array).then(function(array) {
+                if (!isPromise(initialValue)) {
+                    initialValue = value(initialValue);
+                }
+                return initialValue.then(function(value) {
+                    return array.reduce(callback, value);
+                });
+            });
+        }
         return all(array).then(function(array) {
-            return array.reduce(callback, initialValue);
+            return array.reduce(callback);
         });
     }
 
     function reduceRight(array, callback, initialValue) {
+        if (arguments.length > 2) {
+            return all(array).then(function(array) {
+                if (!isPromise(initialValue)) {
+                    initialValue = value(initialValue);
+                }
+                return initialValue.then(function(value) {
+                    return array.reduceRight(callback, value);
+                });
+            });
+        }
         return all(array).then(function(array) {
-            return array.reduceRight(callback, initialValue);
+            return array.reduceRight(callback);
         });
     }
 
@@ -570,10 +590,16 @@
             return map(this, callback, thisArg);
         } },
         reduce: { value: function(callback, initialValue) {
-            return reduce(this, callback, initialValue);
+            if (arguments.length > 1) {
+                return reduce(this, callback, initialValue);
+            }
+            return reduce(this, callback);
         } },
         reduceRight: { value: function(callback, initialValue) {
-            return reduceRight(this, callback, initialValue);
+            if (arguments.length > 1) {
+                return reduceRight(this, callback, initialValue);
+            }
+            return reduceRight(this, callback);
         } }
     });
 
