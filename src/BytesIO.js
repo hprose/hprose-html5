@@ -13,7 +13,7 @@
  *                                                        *
  * hprose BytesIO for HTML5.                              *
  *                                                        *
- * LastModified: Jul 19, 2015                             *
+ * LastModified: Jul 29, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -262,7 +262,7 @@
                 bytes.set(data, length);
                 break;
             case BytesIO:
-                bytes.set(data.toBytes(), length);
+                bytes.set(data.bytes, length);
                 break;
             default:
                 for (var i = 0; i < n; i++) {
@@ -322,7 +322,7 @@
                 n = this._length - this._off;
             }
             if (n === 0) return _EMPTY_BYTES;
-            return new Uint8Array(this._bytes.subarray(this._off, this._off += n));
+            return new this._bytes.subarray(this._off, this._off += n);
         } },
         skip: { value: function(n) {
             if (this._off + n > this._length) {
