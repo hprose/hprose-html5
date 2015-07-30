@@ -325,7 +325,7 @@
                 n = this._length - this._off;
             }
             if (n === 0) return _EMPTY_BYTES;
-            return new this._bytes.subarray(this._off, this._off += n);
+            return this._bytes.subarray(this._off, this._off += n);
         } },
         skip: { value: function(n) {
             if (this._off + n > this._length) {
