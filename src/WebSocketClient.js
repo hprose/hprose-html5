@@ -30,7 +30,6 @@
         if (this.constructor !== WebSocketClient) return new WebSocketClient(uri, functions);
 
         Client.call(this, uri, functions);
-        this.timeout = 0;
 
         var _id = 0;
         var _count = 0;
