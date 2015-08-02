@@ -12,7 +12,7 @@
  *                                                        *
  * hprose http client for HTML5.                          *
  *                                                        *
- * LastModified: Jul 20, 2015                             *
+ * LastModified: Aug 2, 2015                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -26,9 +26,9 @@
 
     function noop(){}
 
-    function HttpClient(uri, functions) {
-        if (this.constructor !== HttpClient) return new HttpClient(uri, functions);
-        Client.call(this, uri, functions);
+    function HttpClient(uri, functions, settings) {
+        if (this.constructor !== HttpClient) return new HttpClient(uri, functions, settings);
+        Client.call(this, uri, functions, settings);
         var _header = Object.create(null);
         var _onreqprogress = noop;
         var _onresprogress = noop;
@@ -139,7 +139,7 @@
         throw new Error('This client desn\'t support ' + parser.protocol + ' scheme.');
     }
 
-    function create(uri, functions) {
+    function create(uri, functions, settings) {
         if (typeof uri === 'string') {
             checkuri(uri);
         }
@@ -149,7 +149,7 @@
         else {
             return new Error('You should set server uri first!');
         }
-        return new HttpClient(uri, functions);
+        return new HttpClient(uri, functions, settings);
     }
 
     Object.defineProperty(HttpClient, 'create', { value: create });

@@ -12,7 +12,7 @@
  *                                                        *
  * hprose websocket client for HTML5.                     *
  *                                                        *
- * LastModified: Jul 20, 2015                             *
+ * LastModified: Aug 2, 2015                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -26,10 +26,10 @@
     var Future = global.hprose.Future;
 
     function noop(){}
-    function WebSocketClient(uri, functions) {
-        if (this.constructor !== WebSocketClient) return new WebSocketClient(uri, functions);
+    function WebSocketClient(uri, functions, settings) {
+        if (this.constructor !== WebSocketClient) return new WebSocketClient(uri, functions, settings);
 
-        Client.call(this, uri, functions);
+        Client.call(this, uri, functions, settings);
 
         var _id = 0;
         var _count = 0;
@@ -152,7 +152,7 @@
         throw new Error('This client desn\'t support ' + parser.protocol + ' scheme.');
     }
 
-    function create(uri, functions) {
+    function create(uri, functions, settings) {
         if (typeof uri === 'string') {
             checkuri(uri);
         }
@@ -162,7 +162,7 @@
         else {
             return new Error('You should set server uri first!');
         }
-        return new WebSocketClient(uri, functions);
+        return new WebSocketClient(uri, functions, settings);
     }
 
     Object.defineProperty(WebSocketClient, 'create', { value: create });

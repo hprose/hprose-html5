@@ -12,7 +12,7 @@
  *                                                        *
  * hprose client for HTML5.                               *
  *                                                        *
- * LastModified: Jul 27, 2015                             *
+ * LastModified: Aug 2, 2015                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -42,7 +42,7 @@
     var s_object = 'object';
     var s_undefined = 'undefined';
 
-    function Client(uri, functions) {
+    function Client(uri, functions, settings) {
 
         // private members
         var _uri;
@@ -950,18 +950,6 @@
                 }
             };
         }
-        /* function constructor */ {
-            if (typeof(uri) === s_string) {
-                _uris = [uri];
-                _index = 0;
-                useService(uri, functions);
-            }
-            else if (Array.isArray(uri)) {
-                _uris = uri;
-                _index = Math.floor(Math.random() * _uris.length);
-                useService(_uris[_index], functions);
-            }
-        }
         Object.defineProperties(this, {
             '#': { value: autoId },
             onError: { get: getOnError, set: setOnError },
@@ -990,6 +978,37 @@
             addBeforeFilterHandler: { value: addBeforeFilterHandler },
             addAfterFilterHandler: { value: addAfterFilterHandler }
         });
+        /* function constructor */ {
+            if ((settings) && (typeof settings === s_object)) {
+                ['failswitch', 'timeout', 'retry',
+                 'idempotent', 'keepAlive', 'byref',
+                 'simple','useHarmonyMap'].forEach(function(key) {
+                     if (key in settings) {
+                         self[key] = settings[key];
+                     }
+                });
+                if ('filter' in settings) {
+                    if (Array.isArray(settings.filter)) {
+                        settings.filter.forEach(function(filter) {
+                            self.addFilter(filter);
+                        });
+                    }
+                    else {
+                        self.filter = settings.filter;
+                    }
+                }
+            }
+            if (typeof(uri) === s_string) {
+                _uris = [uri];
+                _index = 0;
+                useService(uri, functions);
+            }
+            else if (Array.isArray(uri)) {
+                _uris = uri;
+                _index = Math.floor(Math.random() * _uris.length);
+                useService(_uris[_index], functions);
+            }
+        }
     }
 
     function checkuri(uri) {
@@ -1004,13 +1023,13 @@
         throw new Error('The ' + parser.protocol + ' client isn\'t implemented.');
     }
 
-    function create(uri, functions) {
+    function create(uri, functions, settings) {
         try {
-            return global.hprose.HttpClient.create(uri, functions);
+            return global.hprose.HttpClient.create(uri, functions, settings);
         }
         catch(e) {}
         try {
-            return global.hprose.WebSocketClient.create(uri, functions);
+            return global.hprose.WebSocketClient.create(uri, functions, settings);
         }
         catch(e) {}
         if (typeof uri === 'string') {
