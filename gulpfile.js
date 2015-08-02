@@ -2,6 +2,7 @@ var gulp = require('gulp'),
     uglify = require('gulp-uglify'),
     concat = require('gulp-concat'),
     jshint = require("gulp-jshint"),
+    lzmajs = require("gulp-lzmajs"),
     del = require('del');
 
 gulp.task('clear', function(){
@@ -29,6 +30,8 @@ gulp.task('compress', ['clear'], function() {
         .pipe(jshint())
         .pipe(jshint.reporter())
         .pipe(concat('hprose-html5.js'))
+        .pipe(uglify())
+        .pipe(lzmajs())
         .pipe(uglify())
         .pipe(gulp.dest('dist'));
 });
