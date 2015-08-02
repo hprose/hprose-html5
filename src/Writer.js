@@ -13,7 +13,7 @@
  *                                                        *
  * hprose Writer for HTML5.                               *
  *                                                        *
- * LastModified: Jul 19, 2015                             *
+ * LastModified: Aug 2, 2015                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -126,7 +126,7 @@
             writer.writeDateWithRef(value);
             return;
         case Map:
-            writer.writeHarmonyMapWithRef(value);
+            writer.writeMapWithRef(value);
             return;
         case ArrayBuffer:
         case Uint8Array:
@@ -383,9 +383,9 @@
     function writeObject(writer, obj) {
         var stream = writer.stream;
         var classname = getClassName(obj);
-        var fields;
-        var index = writer._classref[classname];
-        if (index >= 0) {
+        var fields, index;
+        if (classname in writer._classref) {
+            index = writer._classref[classname];
             fields = writer._fieldsref[index];
         }
         else {
