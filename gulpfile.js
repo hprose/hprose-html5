@@ -32,7 +32,6 @@ gulp.task('compress', ['clear'], function() {
         .pipe(concat('hprose-html5.js'))
         .pipe(uglify())
         .pipe(lzmajs())
-        .pipe(uglify())
         .pipe(gulp.dest('dist'));
 });
 
