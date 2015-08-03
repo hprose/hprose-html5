@@ -52,7 +52,7 @@
             }
             else {
                 if (i + 1 < n) {
-                    var nextCodeUnit = str.codeUnitAt(i + 1);
+                    var nextCodeUnit = str.charCodeAt(i + 1);
                     if (codeUnit < 0xDC00 && 0xDC00 <= nextCodeUnit && nextCodeUnit <= 0xDFFF) {
                         var rune = (((codeUnit & 0xDC00) << 10) | (nextCodeUnit & 0x03FF)) + 0x010000;
                         bytes[p++] = 0xF0 | ((rune >> 18) & 0x3F);
@@ -72,7 +72,7 @@
     function readString(bytes, n) {
         if (n === undefined) n = bytes.length;
         if (n === 0) return ['', 0];
-        var charCodes = new Uint16Array(n);
+        var str = '';
         var i = 0, off = 0;
         for (var len = bytes.length; i < n && off < len; i++) {
             var unit = bytes[off++];
@@ -85,13 +85,13 @@
             case 5:
             case 6:
             case 7:
-                charCodes[i] = unit;
+                str += String.fromCharCode(unit);
                 break;
             case 12:
             case 13:
                 if (off < len) {
-                    charCodes[i] = ((unit & 0x1F) << 6) |
-                                    (bytes[off++] & 0x3F);
+                    str += String.fromCharCode(((unit & 0x1F) << 6) |
+                                                (bytes[off++] & 0x3F));
                 }
                 else {
                     throw new Error('Unfinished UTF-8 octet sequence');
@@ -99,9 +99,9 @@
                 break;
             case 14:
                 if (off + 1 < len) {
-                    charCodes[i] = ((unit & 0x0F) << 12) |
-                                   ((bytes[off++] & 0x3F) << 6) |
-                                   (bytes[off++] & 0x3F);
+                   str += String.fromCharCode(((unit & 0x0F) << 12) |
+                                              ((bytes[off++] & 0x3F) << 6) |
+                                              (bytes[off++] & 0x3F));
                 }
                 else {
                     throw new Error('Unfinished UTF-8 octet sequence');
@@ -114,8 +114,9 @@
                                 ((bytes[off++] & 0x3F) << 6) |
                                 (bytes[off++] & 0x3F) - 0x10000;
                     if (0 <= rune && rune <= 0xFFFFF) {
-                        charCodes[i++] = (((rune >> 10) & 0x03FF) | 0xD800);
-                        charCodes[i] = ((rune & 0x03FF) | 0xDC00);
+                        str += String.fromCharCode((((rune >> 10) & 0x03FF) | 0xD800));
+                        str += String.fromCharCode(((rune & 0x03FF) | 0xDC00));
+                        i++;
                     }
                     else {
                         throw new Error('Character outside valid Unicode range: 0x' + rune.toString(16));
@@ -129,10 +130,7 @@
                 throw new Error('Bad UTF-8 encoding 0x' + unit.toString(16));
             }
         }
-        if (i < n) {
-            charCodes = charCodes.subarray(0, i);
-        }
-        return [String.fromCharCode.apply(String, charCodes), off];
+        return [str, off];
     }
 
     function pow2roundup(x) {
