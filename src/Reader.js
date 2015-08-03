@@ -13,7 +13,7 @@
  *                                                        *
  * hprose Reader for HTML5.                               *
  *                                                        *
- * LastModified: Jul 19, 2015                             *
+ * LastModified: Aug 3, 2015                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -153,7 +153,7 @@
             tag = stream.readByte();
             ostream.writeByte(tag);
         } while (tag !== Tags.TagQuote);
-        ostream.writeString(stream.readString(count + 1));
+        ostream.write(stream.readStringAsBytes(count + 1));
     }
     function readGuidRaw(stream, ostream) {
         ostream.write(stream.read(38));
@@ -501,7 +501,8 @@
     }
     function _readString(reader) {
         var stream = reader.stream;
-        var s = stream.readString(readInt(stream, Tags.TagQuote));
+        var n = readInt(stream, Tags.TagQuote);
+        var s = stream.readString(n, n > 65535);
         stream.skip(1);
         return s;
     }
