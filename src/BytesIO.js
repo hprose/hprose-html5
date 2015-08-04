@@ -13,7 +13,7 @@
  *                                                        *
  * hprose BytesIO for HTML5.                              *
  *                                                        *
- * LastModified: Aug 3, 2015                              *
+ * LastModified: Aug 4, 2015                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -71,10 +71,8 @@
         return p;
     }
 
-    function readString(bytes, n) {
-        if (n === undefined) n = bytes.length;
-        if (n === 0) return ['', 0];
-        var str = '';
+    function fastReadString(bytes, n) {
+        var charCodes = new Uint16Array(n);
         var i = 0, off = 0;
         for (var len = bytes.length; i < n && off < len; i++) {
             var unit = bytes[off++];
@@ -87,13 +85,13 @@
             case 5:
             case 6:
             case 7:
-                str += String.fromCharCode(unit);
+                charCodes[i] = unit;
                 break;
             case 12:
             case 13:
                 if (off < len) {
-                    str += String.fromCharCode(((unit & 0x1F) << 6) |
-                                                (bytes[off++] & 0x3F));
+                    charCodes[i] = ((unit & 0x1F) << 6) |
+                                    (bytes[off++] & 0x3F);
                 }
                 else {
                     throw new Error('Unfinished UTF-8 octet sequence');
@@ -101,9 +99,9 @@
                 break;
             case 14:
                 if (off + 1 < len) {
-                   str += String.fromCharCode(((unit & 0x0F) << 12) |
-                                              ((bytes[off++] & 0x3F) << 6) |
-                                              (bytes[off++] & 0x3F));
+                    charCodes[i] = ((unit & 0x0F) << 12) |
+                                   ((bytes[off++] & 0x3F) << 6) |
+                                   (bytes[off++] & 0x3F);
                 }
                 else {
                     throw new Error('Unfinished UTF-8 octet sequence');
@@ -116,8 +114,8 @@
                                 ((bytes[off++] & 0x3F) << 6) |
                                 (bytes[off++] & 0x3F) - 0x10000;
                     if (0 <= rune && rune <= 0xFFFFF) {
-                        str += String.fromCharCode((((rune >> 10) & 0x03FF) | 0xD800), ((rune & 0x03FF) | 0xDC00));
-                        i++;
+                        charCodes[i++] = (((rune >> 10) & 0x03FF) | 0xD800);
+                        charCodes[i] = ((rune & 0x03FF) | 0xDC00);
                     }
                     else {
                         throw new Error('Character outside valid Unicode range: 0x' + rune.toString(16));
@@ -131,7 +129,33 @@
                 throw new Error('Bad UTF-8 encoding 0x' + unit.toString(16));
             }
         }
-        return [str, off];
+        if (i < n) {
+            charCodes = charCodes.subarray(0, i);
+        }
+        return [String.fromCharCode.apply(String, charCodes), off];
+    }
+
+    function readString(bytes, n) {
+        if (n === undefined || n === null || (n < 0)) n = bytes.length;
+        if (n === 0) return ['', 0];
+        if (n < 100000) return fastReadString(bytes, n);
+        var remain = n & 0xffff;
+        var count = n >> 16;
+        var a = new Array(remain ? count + 1 : count);
+        var off = 0;
+        var r;
+        for (var i = 0; i < count; ++i) {
+            r = fastReadString(bytes, 65536);
+            a[i] = r[0];
+            off += r[1];
+            bytes = bytes.subarray(r[1], bytes.length);
+        }
+        if (remain) {
+            r = fastReadString(bytes, remain);
+            a[count] = r[0];
+            off += r[1];
+        }
+        return [a.join(''), off];
     }
 
     function readStringAsBytes(bytes, n) {
@@ -189,34 +213,6 @@
             }
         }
         return bytes.subarray(0, off);
-    }
-    function asyncReadString(bytes, n) {
-        if (n === undefined) n = bytes.length;
-        if (n === 0) return [Future.value(''), 0];
-        var buf = readStringAsBytes(bytes, n);
-        var off = buf.length;
-        var str = new Future();
-        var blob;
-        var BlobBuilder = global.MozBlobBuilder ||
-                          global.WebKitBlobBuilder ||
-                          global.BlobBuilder;
-        if (typeof(BlobBuilder) !== 'undefined') {
-            var bb = new BlobBuilder();
-            bb.append(buf);
-            blob = bb.getBlob();
-        }
-        else {
-            blob = new Blob([buf]);
-        }
-        var f = new FileReader();
-        f.onload = function(e) {
-            str.resolve(e.target.result);
-        };
-        f.onerror = function (e) {
-            str.reject(e.target.error);
-          };
-        f.readAsText(blob);
-        return [str, off];
     }
 
     function pow2roundup(x) {
@@ -459,21 +455,27 @@
             }
             if (n === 0) return '';
             var bytes = this._bytes.subarray(this._off, this._off += n);
-            return String.fromCharCode.apply(String, bytes);
+            if (n < 100000) {
+                return String.fromCharCode.apply(String, bytes);
+            }
+            var remain = n & 0xffff;
+            var count = n >> 16;
+            var a = new Array(remain ? count + 1 : count);
+            for (var i = 0; i < count; ++i) {
+                a[i] = String.fromCharCode.apply(String, bytes.subarray(i << 16, (i + 1) << 16));
+            }
+            if (remain) {
+                a[count] = String.fromCharCode.apply(String, bytes.subarray(count << 16, n));
+            }
+            return a.join('');
         } },
         // n is the UTF16 length
         readStringAsBytes: { value: function(n) {
             return readStringAsBytes(this._bytes.subarray(this._off, this._length), n);
         } },
         // n is the UTF16 length
-        readString: { value: function(n, async) {
-            var r;
-            if (async) {
-                r = asyncReadString(this._bytes.subarray(this._off, this._length), n);
-            }
-            else {
-                r = readString(this._bytes.subarray(this._off, this._length), n);
-            }
+        readString: { value: function(n) {
+            var r = readString(this._bytes.subarray(this._off, this._length), n);
             this._off += r[1];
             return r[0];
         } },

@@ -501,8 +501,7 @@
     }
     function _readString(reader) {
         var stream = reader.stream;
-        var n = readInt(stream, Tags.TagQuote);
-        var s = stream.readString(n, n > 65535);
+        var s = stream.readString(readInt(stream, Tags.TagQuote));
         stream.skip(1);
         return s;
     }
