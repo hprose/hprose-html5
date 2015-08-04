@@ -12,7 +12,7 @@
  *                                                        *
  * hprose client for HTML5.                               *
  *                                                        *
- * LastModified: Aug 2, 2015                              *
+ * LastModified: Aug 4, 2015                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -668,14 +668,20 @@
             if (_filters.length === 0) {
                 return null;
             }
-            return _filters[0];
+            if (_filters.length === 1) {
+                return _filters[0];
+            }
+            return _filters.slice();
         }
         function setFilter(filter) {
             _filters.length = 0;
-            if (filter &&
-                typeof filter.inputFilter === 'function' &&
-                typeof filter.outputFilter === 'function') {
-                _filters.push(filter);
+            if (Array.isArray(filter)) {
+                filter.forEach(function(filter) {
+                    addFilter(filter);
+                });
+            }
+            else {
+                addFilter(filter);
             }
         }
         function addFilter(filter) {
@@ -980,23 +986,13 @@
         });
         /* function constructor */ {
             if ((settings) && (typeof settings === s_object)) {
-                ['failswitch', 'timeout', 'retry',
-                 'idempotent', 'keepAlive', 'byref',
-                 'simple','useHarmonyMap'].forEach(function(key) {
+                ['failswitch', 'timeout', 'retry', 'idempotent',
+                 'keepAlive', 'byref', 'simple','useHarmonyMap',
+                 'filter'].forEach(function(key) {
                      if (key in settings) {
                          self[key] = settings[key];
                      }
                 });
-                if ('filter' in settings) {
-                    if (Array.isArray(settings.filter)) {
-                        settings.filter.forEach(function(filter) {
-                            self.addFilter(filter);
-                        });
-                    }
-                    else {
-                        self.filter = settings.filter;
-                    }
-                }
             }
             if (typeof(uri) === s_string) {
                 _uris = [uri];
