@@ -64,6 +64,7 @@
         var _ready              = new Future();
         var _topics             = Object.create(null);
         var _id                 = null;
+        var _keepAlive          = true;
 
         var self = this;
 
@@ -646,6 +647,12 @@
         function setIdempotent(value) {
             _idempotent = !!value;
         }
+        function setKeepAlive(value) {
+            _keepAlive = !!value;
+        }
+        function getKeepAlive() {
+            return _keepAlive;
+        }
         function getByRef() {
             return _byref;
         }
@@ -966,6 +973,7 @@
             timeout: { get: getTimeout, set: setTimeout },
             retry: { get: getRetry, set: setRetry },
             idempotent: { get: getIdempotent, set: setIdempotent },
+            keepAlive: { get: getKeepAlive, set: setKeepAlive },
             byref: { get: getByRef, set: setByRef },
             simple: { get: getSimpleMode, set: setSimpleMode },
             useHarmonyMap: { get: getUseHarmonyMap, set: setUseHarmonyMap },

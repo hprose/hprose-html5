@@ -34,7 +34,6 @@
         var _id = 0;
         var _count = 0;
         var _futures = [];
-        var _keepAlive = true;
         var ready = null;
         var ws = null;
 
@@ -76,7 +75,7 @@
                 future.resolve(bytes.read(bytes.length - 4));
             }
             if (_count === 0) {
-                if (!_keepAlive) close();
+                if (!self.keepAlive) close();
             }
         }
         function onclose(e) {
@@ -128,16 +127,9 @@
                 ws.close();
             }
         }
-        function setKeepAlive(value) {
-            _keepAlive = !!value;
-        }
-        function getKeepAlive() {
-            return _keepAlive;
-        }
 
         Object.defineProperties(this, {
             sendAndReceive: { value: sendAndReceive },
-            keepAlive: { get: getKeepAlive, set: setKeepAlive },
             close: { value: close }
         });
     }
