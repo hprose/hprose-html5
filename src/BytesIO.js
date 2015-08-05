@@ -13,7 +13,7 @@
  *                                                        *
  * hprose BytesIO for HTML5.                              *
  *                                                        *
- * LastModified: Aug 4, 2015                              *
+ * LastModified: Aug 5, 2015                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -268,7 +268,7 @@
                 throw new Error('Bad UTF-8 encoding 0x' + unit.toString(16));
             }
         }
-        return bytes.subarray(0, off);
+        return [bytes.subarray(0, off), off];
     }
 
     function pow2roundup(x) {
@@ -527,7 +527,9 @@
         } },
         // n is the UTF16 length
         readStringAsBytes: { value: function(n) {
-            return readStringAsBytes(this._bytes.subarray(this._off, this._length), n);
+            var r = readStringAsBytes(this._bytes.subarray(this._off, this._length), n);
+            this._off += r[1];
+            return r[0];
         } },
         // n is the UTF16 length
         readString: { value: function(n) {
