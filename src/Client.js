@@ -220,7 +220,19 @@
             for (var i = 0; i < n; ++i) dest[i] = src[i];
         }
 
-        function initContext() {
+        function initContext(batch) {
+            if (batch) {
+                return {
+                    mode: ResultMode.Normal,
+                    byref: _byref,
+                    simple: _simple,
+                    onsuccess: undefined,
+                    onerror: undefined,
+                    useHarmonyMap: _useHarmonyMap,
+                    client: self,
+                    userdata: {}
+                };
+            }
             return {
                 mode: ResultMode.Normal,
                 byref: _byref,
@@ -239,8 +251,8 @@
             };
         }
 
-        function getContext(stub, name, args) {
-            var context = initContext();
+        function getContext(stub, name, args, batch) {
+            var context = initContext(batch);
             if (name in stub) {
                 var method = stub[name];
                 for (var key in method) {
@@ -313,7 +325,7 @@
         }
 
         function _invoke(stub, name, args, batch) {
-            return __invoke(name, args, getContext(stub, name, args), batch);
+            return __invoke(name, args, getContext(stub, name, args, batch), batch);
         }
 
         function errorHandling(name, error, context, reject) {
@@ -459,7 +471,6 @@
                 failswitch: _failswitch,
                 oneway: false,
                 sync: false,
-                useHarmonyMap: _useHarmonyMap,
                 client: self,
                 userdata: {}
             };
@@ -485,7 +496,7 @@
                     }
                     var i = -1;
                     var stream = new BytesIO(response);
-                    var reader = new Reader(stream, false, context.useHarmonyMap);
+                    var reader = new Reader(stream, false);
                     var tag = stream.readByte();
                     try {
                         while (tag !== Tags.TagEnd) {
@@ -504,6 +515,7 @@
                                     result.write(reader.readRaw());
                                 }
                                 else {
+                                    reader.useHarmonyMap = batches[i].context.useHarmonyMap;
                                     reader.reset();
                                     result = reader.unserialize();
                                 }
