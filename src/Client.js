@@ -440,9 +440,6 @@
         }
 
         function multicall(name, args, context) {
-            if (context.mode === ResultMode.RawWithEndTag) {
-                throw new Error("ResultMode.RawWithEndTag doesn't support in batch mode.");
-            }
             return Future.promise(function(resolve, reject) {
                 _batches.push({
                     args: args,
@@ -495,14 +492,14 @@
                             var result = null;
                             var error = null;
                             var mode = batches[++i].context.mode;
-                            if (mode === ResultMode.Raw) {
+                            if (mode >= ResultMode.Raw) {
                                 result = new BytesIO();
                             }
                             if (tag === Tags.TagResult) {
                                 if (mode === ResultMode.Serialized) {
                                     result = reader.readRaw();
                                 }
-                                else if (mode === ResultMode.Raw) {
+                                else if (mode >= ResultMode.Raw) {
                                     result.writeByte(Tags.TagResult);
                                     result.write(reader.readRaw());
                                 }
@@ -512,7 +509,7 @@
                                 }
                                 tag = stream.readByte();
                                 if (tag === Tags.TagArgument) {
-                                    if (mode === ResultMode.Raw) {
+                                    if (mode >= ResultMode.Raw) {
                                         result.writeByte(Tags.TagArgument);
                                         result.write(reader.readRaw());
                                     }
@@ -525,7 +522,7 @@
                                 }
                             }
                             else if (tag === Tags.TagError) {
-                                if (mode === ResultMode.Raw) {
+                                if (mode >= ResultMode.Raw) {
                                     result.writeByte(Tags.TagError);
                                     result.write(reader.readRaw());
                                 }
@@ -541,7 +538,10 @@
                                 reject(new Error('Wrong Response:\r\n' + BytesIO.toString(response)));
                                 return;
                             }
-                            if (mode === ResultMode.Raw) {
+                            if (mode >= ResultMode.Raw) {
+                                if (mode === ResultMode.RawWithEndTag) {
+                                    result.writeByte(Tags.TagEnd);
+                                }
                                 batches[i].result = result.bytes;
                             }
                             else {
