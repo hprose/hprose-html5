@@ -58,7 +58,7 @@
         };
         console.info(stub.swapKeyAndValue(weeks));
         console.info(stub.getUserList());
-        client.beginBatch();
+        client.batch.begin();
         console.info(stub.hello('World'));
         console.info(stub.sum(1,2,3,4,5));
         stub.swapKeyAndValue.byref = true;
@@ -68,7 +68,7 @@
             console.info(args[0]);
         });
         console.info(stub.getUserList());
-        client.endBatch();
+        client.batch.end();
         stub.hello('World', function(result) {
             console.assert(result === undefined);
         }, { oneway: true });

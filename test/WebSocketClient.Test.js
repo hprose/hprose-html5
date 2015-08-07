@@ -32,7 +32,7 @@
         },function(e) {
             console.error(e);
         });
-        client.beginBatch();
+        client.batch.begin();
         stub.hello('World 1')
         .then(function(result) {
             console.info(result);
@@ -45,7 +45,7 @@
         .then(function(result) {
             console.info(result);
         });
-        client.endBatch();
+        client.batch.end();
     },
     function(e) {
         console.error(e);
