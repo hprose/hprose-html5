@@ -12,7 +12,7 @@
  *                                                        *
  * hprose client for HTML5.                               *
  *                                                        *
- * LastModified: Aug 7, 2015                              *
+ * LastModified: Aug 8, 2015                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -789,9 +789,30 @@
             _ready.resolve(stub);
             return stub;
         }
-        function invoke() {
-            var args = slice(arguments);
-            var name = args.shift();
+        function invoke(name, args, onsuccess/*, onerror, settings*/) {
+            var argc = arguments.length;
+            if ((argc < 1) || (typeof name !== s_string)) {
+                throw new Error('name must be a string');
+            }
+            if (argc === 1) args = [];
+            if (argc === 2) {
+                if (!Array.isArray(args)) {
+                    var _args = [];
+                    if (typeof args !== s_function) {
+                        _args.push(noop);
+                    }
+                    _args.push(args);
+                    args = _args;
+                }
+            }
+            if (argc > 2) {
+                if (typeof onsuccess !== s_function) {
+                    args.push(noop);
+                }
+                for (var i = 2; i < argc; i++) {
+                    args[i] = arguments[i];
+                }
+            }
             return _invoke(self, name, args, _batch);
         }
         function ready(onComplete, onError) {
