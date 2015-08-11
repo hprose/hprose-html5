@@ -2,6 +2,10 @@
     <img src="https://promisesaplus.com/assets/logo-small.png" alt="Promises/A+ logo"
          title="Promises/A+ 1.1 compliant" align="right" />
 </a>
+<a href="http://hprose.com/">
+<img align="right" src="http://hprose.com/favicon-96x96.png" />
+</a>
+
 # Hprose for HTML5
 
 [![Join the chat at https://gitter.im/hprose/hprose-html5](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/hprose/hprose-html5?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
@@ -10,7 +14,6 @@
 [![License](https://img.shields.io/github/license/hprose/hprose-html5.svg)](http://opensource.org/licenses/MIT)
 
 >---
-<img align="right" height="260" src="http://hprose.com/logo.png" />
 - **[简介](#简介)**
     - **[浏览器支持](#浏览器支持)**
 - **[使用](#使用)**
@@ -94,3 +97,5 @@
 </script>
 </body>
 ```
+
+更多详细文档请参见：[Hprose for HTML5 用户手册](https://github.com/hprose/hprose-html5/wiki)
