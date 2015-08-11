@@ -13,7 +13,7 @@
  *                                                        *
  * hprose BytesIO for HTML5.                              *
  *                                                        *
- * LastModified: Aug 5, 2015                              *
+ * LastModified: Aug 11, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -33,6 +33,14 @@
         bytes[p++] = i >>> 16 & 0xff;
         bytes[p++] = i >>> 8  & 0xff;
         bytes[p++] = i        & 0xff;
+        return p;
+    }
+
+    function writeInt32LE(bytes, p, i) {
+        bytes[p++] = i        & 0xff;
+        bytes[p++] = i >>> 8  & 0xff;
+        bytes[p++] = i >>> 16 & 0xff;
+        bytes[p++] = i >>> 24 & 0xff;
         return p;
     }
 
@@ -387,6 +395,22 @@
             }
             throw new TypeError('value is out of bounds');
         } },
+        writeInt32LE: { value: function(i) {
+            if ((i === (i | 0)) && (i <= 2147483647)) {
+                this._grow(4);
+                this._length = writeInt32LE(this._bytes, this._length, i);
+                return;
+            }
+            throw new TypeError('value is out of bounds');
+        } },
+        writeUInt32LE: { value: function(i) {
+            if ((i === (i | 0)) && (i >= 0)) {
+                this._grow(4);
+                this._length = writeInt32LE(this._bytes, this._length, i);
+                return;
+            }
+            throw new TypeError('value is out of bounds');
+        } },
         write: { value: function(data) {
             var n = data.byteLength || data.length;
             if (n === 0) return;
@@ -451,6 +475,26 @@
         } },
         readUInt32BE: { value: function() {
             var value = this.readInt32BE();
+            if (value < 0) {
+                return (value & 0x7fffffff) + 0x80000000;
+            }
+            return value;
+        } },
+        readInt32LE: { value: function() {
+            var bytes = this._bytes;
+            var off = this._off;
+            if (off + 3 < this._length) {
+                var result = bytes[off++]       |
+                             bytes[off++] << 8  |
+                             bytes[off++] << 16 |
+                             bytes[off++] << 24;
+                this._off = off;
+                return result;
+            }
+            throw new Error('EOF');
+        } },
+        readUInt32LE: { value: function() {
+            var value = this.readInt32LE();
             if (value < 0) {
                 return (value & 0x7fffffff) + 0x80000000;
             }
