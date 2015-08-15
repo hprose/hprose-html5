@@ -12,7 +12,7 @@
  *                                                        *
  * hprose websocket client for HTML5.                     *
  *                                                        *
- * LastModified: Aug 2, 2015                              *
+ * LastModified: Aug 15, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -34,7 +34,8 @@
         var _id = 0;
         var _count = 0;
         var _futures = [];
-        var ready = null;
+        var _requests = [];
+        var _ready = null;
         var ws = null;
 
         var self = this;
@@ -63,7 +64,7 @@
             }
         }
         function onopen(e) {
-            ready.resolve(e);
+            _ready.resolve(e);
         }
         function onmessage(e) {
             var bytes = new BytesIO(e.data);
@@ -73,6 +74,11 @@
             if (future !== undefined) {
                 --_count;
                 future.resolve(bytes.read(bytes.length - 4));
+            }
+            if ((_count < 100) && (_requests.length > 0)) {
+                ++_count;
+                var request = _requests.shift();
+                _ready.then(function() { send(request[0], request[1]); });
             }
             if (_count === 0) {
                 if (!self.keepAlive) close();
@@ -87,7 +93,7 @@
             ws = null;
         }
         function connect() {
-            ready = new Future();
+            _ready = new Future();
             ws = new WebSocket(self.uri);
             ws.binaryType = 'arraybuffer';
             ws.onopen = onopen;
@@ -101,11 +107,9 @@
                 ws.readyState === WebSocket.CLOSED) {
                 connect();
             }
-            ++_count;
             var id = getNextId();
             var future = new Future();
             _futures[id] = future;
-            ready.then(function() { send(id, request); });
             if (self.timeout > 0) {
                 future = future.timeout(self.timeout).catchError(function(e) {
                     delete _futures[id];
@@ -115,6 +119,13 @@
                 function(e) {
                     return e instanceof TimeoutError;
                 });
+            }
+            if (_count < 100) {
+                ++_count;
+                _ready.then(function() { send(id, request); });
+            }
+            else {
+                _requests.push([id, request]);
             }
             if (env.oneway) future.resolve();
             return future;
