@@ -12,7 +12,7 @@
  *                                                        *
  * hprose client for HTML5.                               *
  *                                                        *
- * LastModified: Aug 8, 2015                              *
+ * LastModified: Aug 18, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -810,7 +810,7 @@
                     args.push(noop);
                 }
                 for (var i = 2; i < argc; i++) {
-                    args[i] = arguments[i];
+                    args.push(arguments[i]);
                 }
             }
             return _invoke(self, name, args, _batch);
