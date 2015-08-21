@@ -13,7 +13,7 @@
  *                                                        *
  * hprose BytesIO for HTML5.                              *
  *                                                        *
- * LastModified: Aug 11, 2015                             *
+ * LastModified: Aug 21, 2015                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -64,8 +64,8 @@
                 if (i + 1 < n) {
                     var nextCodeUnit = str.charCodeAt(i + 1);
                     if (codeUnit < 0xDC00 && 0xDC00 <= nextCodeUnit && nextCodeUnit <= 0xDFFF) {
-                        var rune = (((codeUnit & 0xDC00) << 10) | (nextCodeUnit & 0x03FF)) + 0x010000;
-                        bytes[p++] = 0xF0 | ((rune >> 18) & 0x3F);
+                        var rune = (((codeUnit & 0x03FF) << 10) | (nextCodeUnit & 0x03FF)) + 0x010000;
+                        bytes[p++] = 0xF0 | (rune >> 18);
                         bytes[p++] = 0x80 | ((rune >> 12) & 0x3F);
                         bytes[p++] = 0x80 | ((rune >> 6) & 0x3F);
                         bytes[p++] = 0x80 | (rune & 0x3F);
@@ -117,10 +117,10 @@
                 break;
             case 15:
                 if (off + 2 < len) {
-                    var rune = ((unit & 0x07) << 18) |
+                    var rune = (((unit & 0x07) << 18) |
                                 ((bytes[off++] & 0x3F) << 12) |
                                 ((bytes[off++] & 0x3F) << 6) |
-                                (bytes[off++] & 0x3F) - 0x10000;
+                                (bytes[off++] & 0x3F)) - 0x10000;
                     if (0 <= rune && rune <= 0xFFFFF) {
                         charCodes[i++] = (((rune >> 10) & 0x03FF) | 0xD800);
                         charCodes[i] = ((rune & 0x03FF) | 0xDC00);
@@ -182,10 +182,10 @@
                 break;
             case 15:
                 if (off + 2 < len) {
-                    var rune = ((unit & 0x07) << 18) |
+                    var rune = (((unit & 0x07) << 18) |
                                 ((bytes[off++] & 0x3F) << 12) |
                                 ((bytes[off++] & 0x3F) << 6) |
-                                (bytes[off++] & 0x3F) - 0x10000;
+                                (bytes[off++] & 0x3F)) - 0x10000;
                     if (0 <= rune && rune <= 0xFFFFF) {
                         charCodes[i++] = (((rune >> 10) & 0x03FF) | 0xD800);
                         charCodes[i] = ((rune & 0x03FF) | 0xDC00);
@@ -257,10 +257,10 @@
                 break;
             case 15:
                 if (off + 2 < len) {
-                    var rune = ((unit & 0x07) << 18) |
+                    var rune = (((unit & 0x07) << 18) |
                                 ((bytes[off++] & 0x3F) << 12) |
                                 ((bytes[off++] & 0x3F) << 6) |
-                                (bytes[off++] & 0x3F) - 0x10000;
+                                (bytes[off++] & 0x3F)) - 0x10000;
                     if (0 <= rune && rune <= 0xFFFFF) {
                         i++;
                     }
