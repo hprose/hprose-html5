@@ -24,6 +24,7 @@ gulp.task('compress', ['clear'], function() {
                      'src/ResultMode.js',
                      'src/Client.js',
                      'src/HttpClient.js',
+                     'src/TcpClient.js',
                      'src/WebSocketClient.js',
                      'src/JSONRPCClientFilter.js',
                      'src/Loader.js'])

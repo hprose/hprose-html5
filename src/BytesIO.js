@@ -13,7 +13,7 @@
  *                                                        *
  * hprose BytesIO for HTML5.                              *
  *                                                        *
- * LastModified: Aug 21, 2015                             *
+ * LastModified: Feb 5, 2016                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -21,6 +21,16 @@
 /* jshint -W067 */
 (function (global, undefined) {
     'use strict';
+
+    var arrayLikeObjectArgumentsEnabled = true;
+
+    try {
+        String.fromCharCode.apply(String, new Uint8Array([1, 2]));
+    }
+    catch (e) {
+        arrayLikeObjectArgumentsEnabled = false;
+        Object.defineProperty(Array.prototype, 'subarray', { value: Array.prototype.slice });
+    }
 
     var Future = global.hprose.Future;
 
@@ -80,7 +90,7 @@
     }
 
     function readShortString(bytes, n) {
-        var charCodes = new Uint16Array(n);
+        var charCodes = new Array(n);
         var i = 0, off = 0;
         for (var len = bytes.length; i < n && off < len; i++) {
             var unit = bytes[off++];
@@ -138,14 +148,14 @@
             }
         }
         if (i < n) {
-            charCodes = charCodes.subarray(0, i);
+            charCodes.length = i;
         }
         return [String.fromCharCode.apply(String, charCodes), off];
     }
 
     function readLongString(bytes, n) {
         var buf = [];
-        var charCodes = new Uint16Array(0xffff);
+        var charCodes = new Array(0xffff);
         var i = 0, off = 0;
         for (var len = bytes.length; i < n && off < len; i++) {
             var unit = bytes[off++];
@@ -203,13 +213,15 @@
             }
             if (i >= 65534) {
                 var size = i + 1;
-                buf.push(String.fromCharCode.apply(String, charCodes.subarray(0, size)));
+                charCodes.length = size;
+                buf.push(String.fromCharCode.apply(String, charCodes));
                 n -= size;
                 i = -1;
             }
         }
         if (i > 0) {
-            buf.push(String.fromCharCode.apply(String, charCodes.subarray(0, i)));
+            charCodes.length = i;
+            buf.push(String.fromCharCode.apply(String, charCodes));
         }
         return [buf.join(''), off];
     }
@@ -277,6 +289,15 @@
             }
         }
         return [bytes.subarray(0, off), off];
+    }
+
+    function toArray(bytes) {
+        var n = bytes.length;
+        var a = new Array(bytes.length);
+        for (var i = 0; i < n; ++i) {
+            a[i] = bytes[i];
+        }
+        return a;
     }
 
     function pow2roundup(x) {
@@ -359,6 +380,17 @@
             return (this._bytes === null) ?
                     _EMPTY_BYTES :
                     this._bytes.subarray(0, this._length);
+        } },
+        buffer: { get : function() {
+            if (this._bytes === null) {
+                return _EMPTY_BYTES.buffer;
+            }
+            if (this._bytes.buffer.slice) {
+                return this._bytes.buffer.slice(0, this._length);
+            }
+            var buf = new Uint8Array(this._length);
+            buf.set(this._bytes.subarray(0, this._length));
+            return buf.buffer;
         } },
         mark: { value: function() {
             this._wmark = this._length;
@@ -555,17 +587,18 @@
             }
             if (n === 0) return '';
             var bytes = this._bytes.subarray(this._off, this._off += n);
+            var charCodes = (arrayLikeObjectArgumentsEnabled ? bytes : toArray(bytes));
             if (n < 100000) {
-                return String.fromCharCode.apply(String, bytes);
+                return String.fromCharCode.apply(String, charCodes);
             }
             var remain = n & 0xffff;
             var count = n >> 16;
             var a = new Array(remain ? count + 1 : count);
             for (var i = 0; i < count; ++i) {
-                a[i] = String.fromCharCode.apply(String, bytes.subarray(i << 16, (i + 1) << 16));
+                a[i] = String.fromCharCode.apply(String, charCodes.subarray(i << 16, (i + 1) << 16));
             }
             if (remain) {
-                a[count] = String.fromCharCode.apply(String, bytes.subarray(count << 16, n));
+                a[count] = String.fromCharCode.apply(String, charCodes.subarray(count << 16, n));
             }
             return a.join('');
         } },
