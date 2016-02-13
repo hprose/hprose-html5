@@ -37,18 +37,18 @@
     var indexof = Function.prototype.call.bind(Array.prototype.indexOf);
 
     function writeInt32BE(bytes, p, i) {
-        bytes[p++] = i >>> 24 & 0xff;
-        bytes[p++] = i >>> 16 & 0xff;
-        bytes[p++] = i >>> 8  & 0xff;
-        bytes[p++] = i        & 0xff;
+        bytes[p++] = i >>> 24 & 0xFF;
+        bytes[p++] = i >>> 16 & 0xFF;
+        bytes[p++] = i >>> 8  & 0xFF;
+        bytes[p++] = i        & 0xFF;
         return p;
     }
 
     function writeInt32LE(bytes, p, i) {
-        bytes[p++] = i        & 0xff;
-        bytes[p++] = i >>> 8  & 0xff;
-        bytes[p++] = i >>> 16 & 0xff;
-        bytes[p++] = i >>> 24 & 0xff;
+        bytes[p++] = i        & 0xFF;
+        bytes[p++] = i >>> 8  & 0xFF;
+        bytes[p++] = i >>> 16 & 0xFF;
+        bytes[p++] = i >>> 24 & 0xFF;
         return p;
     }
 
@@ -153,7 +153,7 @@
 
     function readLongString(bytes, n) {
         var buf = [];
-        var charCodes = new Array(0xffff);
+        var charCodes = new Array(0xFFFF);
         var i = 0, off = 0;
         for (var len = bytes.length; i < n && off < len; i++) {
             var unit = bytes[off++];
@@ -506,7 +506,7 @@
         readUInt32BE: { value: function() {
             var value = this.readInt32BE();
             if (value < 0) {
-                return (value & 0x7fffffff) + 0x80000000;
+                return (value & 0x7FFFFFFF) + 0x80000000;
             }
             return value;
         } },
@@ -526,7 +526,7 @@
         readUInt32LE: { value: function() {
             var value = this.readInt32LE();
             if (value < 0) {
-                return (value & 0x7fffffff) + 0x80000000;
+                return (value & 0x7FFFFFFF) + 0x80000000;
             }
             return value;
         } },
@@ -589,7 +589,7 @@
             if (n < 100000) {
                 return String.fromCharCode.apply(String, charCodes);
             }
-            var remain = n & 0xffff;
+            var remain = n & 0xFFFF;
             var count = n >> 16;
             var a = new Array(remain ? count + 1 : count);
             for (var i = 0; i < count; ++i) {
