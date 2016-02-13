@@ -13,7 +13,7 @@
  *                                                        *
  * hprose BytesIO for HTML5.                              *
  *                                                        *
- * LastModified: Feb 5, 2016                              *
+ * LastModified: Feb 13, 2016                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -31,8 +31,6 @@
         arrayLikeObjectArgumentsEnabled = false;
         Object.defineProperty(Array.prototype, 'subarray', { value: Array.prototype.slice });
     }
-
-    var Future = global.hprose.Future;
 
     var _EMPTY_BYTES = new Uint8Array(0);
     var _INIT_SIZE = 1024;
@@ -65,7 +63,7 @@
                 bytes[p++] = 0xC0 | (codeUnit >> 6);
                 bytes[p++] = 0x80 | (codeUnit & 0x3F);
             }
-            else if (codeUnit < 0xD800 || codeUnit > 0xDfff) {
+            else if (codeUnit < 0xD800 || codeUnit > 0xDFFF) {
                 bytes[p++] = 0xE0 | (codeUnit >> 12);
                 bytes[p++] = 0x80 | ((codeUnit >> 6) & 0x3F);
                 bytes[p++] = 0x80 | (codeUnit & 0x3F);
@@ -236,7 +234,7 @@
 
     function readStringAsBytes(bytes, n) {
         if (n === undefined) n = bytes.length;
-        if (n === 0) return _EMPTY_BYTES;
+        if (n === 0) return [_EMPTY_BYTES, 0];
         var i = 0, off = 0;
         for (var len = bytes.length; i < n && off < len; i++) {
             var unit = bytes[off++];
