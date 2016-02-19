@@ -9,11 +9,11 @@
 
 /**********************************************************\
  *                                                        *
- * hprose/common/setImmediate.js                          *
+ * setImmediate.js                                        *
  *                                                        *
  * setImmediate for HTML5.                                *
  *                                                        *
- * LastModified: Jul 19, 2015                             *
+ * LastModified: Feb 19, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -34,18 +34,20 @@
     }
 
     var doc = global.document;
-    var slice = Function.prototype.call.bind(Array.prototype.slice);
-    var toString = Function.prototype.call.bind(Object.prototype.toString);
     var polifill = {};
     var nextId = 1;
     var tasks = {};
     var lock = false;
 
     function wrap(handler) {
-        var args = slice(arguments, 1);
+        var args = [].slice.call(arguments, 1);
         return function() {
             handler.apply(undefined, args);
         };
+    }
+
+    function clear(handleId) {
+        delete tasks[handleId];
     }
 
     function run(handleId) {
@@ -70,10 +72,6 @@
     function create(args) {
         tasks[nextId] = wrap.apply(undefined, args);
         return nextId++;
-    }
-
-    function clear(handleId) {
-        delete tasks[handleId];
     }
 
     polifill.messageChannel = function() {
@@ -174,7 +172,7 @@
 
     // Don't get fooled by e.g. browserify environments.
     // For Node.js before 0.9
-    } else if (toString(global.process) === '[object process]') {
+    } else if ({}.toString.call(global.process) === '[object process]') {
         attachTo.setImmediate = polifill.nextTick();
 
     // For non-IE10 modern browsers
