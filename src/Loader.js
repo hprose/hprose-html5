@@ -13,7 +13,7 @@
  *                                                        *
  * hprose CommonJS/AMD/CMD loader for HTML5.              *
  *                                                        *
- * LastModified: Jul 15, 2015                             *
+ * LastModified: Feb 19, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -41,6 +41,7 @@
     global.hprose.client = {
         Client: global.hprose.Client,
         HttpClient: global.hprose.HttpClient,
+        TcpClient: global.hprose.TcpClient,
         WebSocketClient: global.hprose.WebSocketClient
     };
 
