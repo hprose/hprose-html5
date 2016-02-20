@@ -21,23 +21,13 @@
 /* jshint -W067 */
 (function(global, undefined) {
     'use strict';
-
-    // @see http://codeforhire.com/2013/09/21/setimmediate-and-messagechannel-broken-on-internet-explorer-10/
-    var notUseNative = (global.navigator && /Trident/.test(global.navigator.userAgent));
-
-    if (!notUseNative && (global.msSetImmediate || global.setImmediate)) {
-        if (!global.setImmediate) {
-            global.setImmediate = global.msSetImmediate;
-            global.clearImmediate = global.msClearImmediate;
-        }
-        return;
-    }
+    if (global.setImmediate) return;
 
     var doc = global.document;
+    var MutationObserver = global.MutationObserver || global.WebKitMutationObserver || global.MozMutationOvserver;
     var polifill = {};
     var nextId = 1;
     var tasks = {};
-    var lock = false;
 
     function wrap(handler) {
         var args = [].slice.call(arguments, 1);
@@ -51,20 +41,13 @@
     }
 
     function run(handleId) {
-        if (lock) {
-            // Delay by doing a setTimeout. setImmediate was tried instead, but in Firefox 7 it generated a "too much recursion" error.
-            global.setTimeout(wrap(run, handleId), 0);
-        } else {
-            var task = tasks[handleId];
-            if (task) {
-                lock = true;
-                try {
-                    task();
-                }
-                finally {
-                    clear(handleId);
-                    lock = false;
-                }
+        var task = tasks[handleId];
+        if (task) {
+            try {
+                task();
+            }
+            finally {
+                clear(handleId);
             }
         }
     }
@@ -73,6 +56,25 @@
         tasks[nextId] = wrap.apply(undefined, args);
         return nextId++;
     }
+
+    polifill.mutationObserver = function() {
+        var queue = [],
+            node = doc.createTextNode(''),
+            observer = new MutationObserver(function (mutations) {
+                while (queue.length > 0) {
+                    run(queue.shift());
+                }
+            });
+
+        observer.observe(node, {"characterData": true});
+
+        return function() {
+            var handleId = create(arguments);
+            queue.push(handleId);
+            node.data = handleId & 1;
+            return handleId;
+        };
+    };
 
     polifill.messageChannel = function() {
         var channel = new global.MessageChannel();
@@ -97,27 +99,22 @@
     };
 
     polifill.postMessage = function() {
-        var messagePrefix = 'setImmediate$' + Math.random() + '$';
-
-        var onGlobalMessage = function(event) {
-            if (event.source === global &&
-                typeof(event.data) === 'string' &&
-                event.data.indexOf(messagePrefix) === 0) {
-
-                run(Number(event.data.slice(messagePrefix.length)));
+        var iframe = doc.createElement('iframe');
+        iframe.style.display = 'none';
+        doc.documentElement.appendChild(iframe);
+        var iwin = iframe.contentWindow;
+        iwin.document.write('<script>window.onmessage=function(){parent.postMessage(1, "*");};</script>');
+        iwin.document.close();
+        var queue = [];
+        window.addEventListener('message', function () {
+            while (queue.length > 0) {
+                run(queue.shift());
             }
-        };
-
-        if (global.addEventListener) {
-            global.addEventListener('message', onGlobalMessage, false);
-
-        } else {
-            global.attachEvent('onmessage', onGlobalMessage);
-        }
-
+        });
         return function() {
             var handleId = create(arguments);
-            global.postMessage(messagePrefix + handleId, '*');
+            queue.push(handleId);
+            iwin.postMessage(1, "*");
             return handleId;
         };
     };
@@ -150,53 +147,39 @@
         };
     };
 
-    function canUsePostMessage() {
-        if (global.postMessage && !global.importScripts) {
-            var asynch = true;
-            var oldOnMessage = global.onmessage;
-            global.onmessage = function() {
-                asynch = false;
-            };
-            global.postMessage('', '*');
-            global.onmessage = oldOnMessage;
-            return asynch;
-        }
-    }
-
     // If supported, we should attach to the prototype of global, since that is where setTimeout et al. live.
     var attachTo = Object.getPrototypeOf && Object.getPrototypeOf(global);
     attachTo = (attachTo && attachTo.setTimeout ? attachTo : global);
 
-    if (notUseNative) {
-        attachTo.setImmediate = polifill.setTimeout();
-
     // Don't get fooled by e.g. browserify environments.
     // For Node.js before 0.9
-    } else if ({}.toString.call(global.process) === '[object process]') {
+    if (typeof(global.process) !== 'undefined' &&
+        {}.toString.call(global.process) === '[object process]' &&
+        !global.process.browser) {
         attachTo.setImmediate = polifill.nextTick();
-
-    // For non-IE10 modern browsers
-    } else if (canUsePostMessage()) {
-        attachTo.setImmediate = polifill.postMessage();
-
-    // For web workers, where supported
-    } else if (global.MessageChannel) {
-        attachTo.setImmediate = polifill.messageChannel();
-
-    // For IE 6–8
-    } else if (doc && ('onreadystatechange' in doc.createElement('script'))) {
+    }
+    // For IE 6–9
+    else if (doc && ('onreadystatechange' in doc.createElement('script'))) {
         attachTo.setImmediate = polifill.readyStateChange();
-
+    }
+    // For MutationObserver, where supported
+    else if (doc && MutationObserver) {
+        attachTo.setImmediate = polifill.mutationObserver();
+    }
+    // For web workers, where supported
+    else if (global.MessageChannel) {
+        attachTo.setImmediate = polifill.messageChannel();
+    }
+    // For non-IE modern browsers
+    else if (doc && 'postMessage' in global && 'addEventListener' in global) {
+        attachTo.setImmediate = polifill.postMessage();
+    }
     // For older browsers
-    } else {
+    else {
         attachTo.setImmediate = polifill.setTimeout();
     }
 
-    attachTo.msSetImmediate = attachTo.setImmediate;
-
     attachTo.clearImmediate = clear;
-    attachTo.msClearImmediate = clear;
-
 }(function() {
     return this || (1, eval)('this');
 }()));
