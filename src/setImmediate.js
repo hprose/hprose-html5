@@ -13,7 +13,7 @@
  *                                                        *
  * setImmediate for HTML5.                                *
  *                                                        *
- * LastModified: Feb 19, 2016                             *
+ * LastModified: Feb 20, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -60,7 +60,7 @@
     polifill.mutationObserver = function() {
         var queue = [],
             node = doc.createTextNode(''),
-            observer = new MutationObserver(function (mutations) {
+            observer = new MutationObserver(function() {
                 while (queue.length > 0) {
                     run(queue.shift());
                 }
@@ -106,7 +106,7 @@
         iwin.document.write('<script>window.onmessage=function(){parent.postMessage(1, "*");};</script>');
         iwin.document.close();
         var queue = [];
-        window.addEventListener('message', function () {
+        window.addEventListener('message', function() {
             while (queue.length > 0) {
                 run(queue.shift());
             }
