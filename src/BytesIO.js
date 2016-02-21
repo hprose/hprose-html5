@@ -13,7 +13,7 @@
  *                                                        *
  * hprose BytesIO for HTML5.                              *
  *                                                        *
- * LastModified: Feb 13, 2016                              *
+ * LastModified: Feb 22, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -418,9 +418,9 @@
             throw new TypeError('value is out of bounds');
         } },
         writeUInt32BE: { value: function(i) {
-            if ((i === (i | 0)) && (i >= 0)) {
+            if (((i & 0x7FFFFFFF) + 0x80000000 === i) && (i >= 0)) {
                 this._grow(4);
-                this._length = writeInt32BE(this._bytes, this._length, i);
+                this._length = writeInt32BE(this._bytes, this._length, i | 0);
                 return;
             }
             throw new TypeError('value is out of bounds');
@@ -434,9 +434,9 @@
             throw new TypeError('value is out of bounds');
         } },
         writeUInt32LE: { value: function(i) {
-            if ((i === (i | 0)) && (i >= 0)) {
+            if (((i & 0x7FFFFFFF) + 0x80000000 === i) && (i >= 0)) {
                 this._grow(4);
-                this._length = writeInt32LE(this._bytes, this._length, i);
+                this._length = writeInt32LE(this._bytes, this._length, i | 0);
                 return;
             }
             throw new TypeError('value is out of bounds');

@@ -12,7 +12,7 @@
  *                                                        *
  * hprose tcp client for HTML5.                           *
  *                                                        *
- * LastModified: Feb 5, 2016                              *
+ * LastModified: Feb 22, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -447,7 +447,7 @@
 
             var len = request.length;
             var buf = new BytesIO(4 + len);
-            buf.writeUInt32BE(len, 0);
+            buf.writeInt32BE(len, 0);
             buf.write(request);
             conn.send(buf.buffer);
         } },
