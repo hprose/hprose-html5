@@ -9,7 +9,7 @@ gulp.task('clear', function(){
     del(['dist/hprose-html5.js']);
 });
 
-gulp.task('compress', ['clear'], function() {
+gulp.task('uglify', ['clear'], function() {
     return gulp.src(['src/Init.js',
                      'src/HarmonyMaps.js',
                      'src/TimeoutError.js',
@@ -32,9 +32,16 @@ gulp.task('compress', ['clear'], function() {
         .pipe(jshint.reporter())
         .pipe(concat('hprose-html5.js'))
         .pipe(uglify())
-        .pipe(lzmajs())
         .pipe(gulp.dest('dist'));
 });
+
+gulp.task('compress', ['uglify'], function() {
+    return gulp.src(['dist/hprose-html5.js'])
+           .pipe(concat('hprose-html5.min.js'))
+           .pipe(lzmajs())
+           .pipe(gulp.dest('dist'));
+});
+
 
 gulp.task('default', ['compress'], function() {
     return gulp.src(['src/CopyRight.js', 'dist/hprose-html5.js'])
