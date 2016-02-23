@@ -12,12 +12,11 @@
  *                                                        *
  * hprose client for HTML5.                               *
  *                                                        *
- * LastModified: Aug 18, 2015                             *
+ * LastModified: Feb 23, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
 
-/* jshint -W067 */
 (function (global, undefined) {
     'use strict';
 
@@ -1148,6 +1147,4 @@
 
     global.hprose.Client = Client;
 
-}(function() {
-    return this || (1, eval)('this');
-}()));
+})(this);

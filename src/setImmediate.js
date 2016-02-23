@@ -13,12 +13,11 @@
  *                                                        *
  * setImmediate for HTML5.                                *
  *                                                        *
- * LastModified: Feb 20, 2016                             *
+ * LastModified: Feb 23, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
 
-/* jshint -W067 */
 (function(global, undefined) {
     'use strict';
     if (global.setImmediate) return;
@@ -30,7 +29,7 @@
     var tasks = {};
 
     function wrap(handler) {
-        var args = [].slice.call(arguments, 1);
+        var args = Array.prototype.slice.call(arguments, 1);
         return function() {
             handler.apply(undefined, args);
         };
@@ -154,7 +153,7 @@
     // Don't get fooled by e.g. browserify environments.
     // For Node.js before 0.9
     if (typeof(global.process) !== 'undefined' &&
-        {}.toString.call(global.process) === '[object process]' &&
+        Object.prototype.toString.call(global.process) === '[object process]' &&
         !global.process.browser) {
         attachTo.setImmediate = polifill.nextTick();
     }
@@ -180,6 +179,4 @@
     }
 
     attachTo.clearImmediate = clear;
-}(function() {
-    return this || (1, eval)('this');
-}()));
+})(this);
