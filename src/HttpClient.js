@@ -12,7 +12,7 @@
  *                                                        *
  * hprose http client for HTML5.                          *
  *                                                        *
- * LastModified: Feb 23, 2016                             *
+ * LastModified: Feb 25, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -121,7 +121,6 @@
             }
         }
         Object.defineProperties(this, {
-            onProgress: { get: getOnRequestProgress, set: setOnRequestProgress },
             onprogress: { get: getOnRequestProgress, set: setOnRequestProgress },
             onRequestProgress: { get: getOnRequestProgress, set: setOnRequestProgress },
             onResponseProgress: { get: getOnResponseProgress, set: setOnResponseProgress },

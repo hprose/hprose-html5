@@ -1,4 +1,4 @@
-// Hprose for HTML5 v2.0.7
+// Hprose for HTML5 v2.0.8
 // Copyright (c) 2008-2016 http://hprose.com
 // Hprose is freely distributable under the MIT license.
 // For all details and documentation:

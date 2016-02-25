@@ -1063,7 +1063,6 @@
         });
         Object.defineProperties(this, {
             '#': { value: autoId },
-            onError: { get: getOnError, set: setOnError },
             onerror: { get: getOnError, set: setOnError },
             uri: { get: getUri },
             id: { get: getId },
