@@ -119,8 +119,7 @@
             }
             if (context.idempotent) {
                 if (--context.retry >= 0) {
-                    var interval = (10 - context.retry) * 500;
-                    if (context.retry > 10) interval = 500;
+                    var interval = (context.retry >= 10) ? 500 : (10 - context.retry) * 500;
                     global.setTimeout(function() {
                         sendAndReceive(data, context, onsuccess, onerror);
                     }, interval);
