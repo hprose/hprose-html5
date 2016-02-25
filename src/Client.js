@@ -1114,18 +1114,30 @@
     function checkuri(uri) {
         var parser = document.createElement('a');
         parser.href = uri;
-        if (parser.protocol === 'http:' ||
-            parser.protocol === 'https:' ||
-            parser.protocol === 'ws:' ||
-            parser.protocol === 'wss:') {
+        var protocol = parser.protocol;
+        if (protocol === 'http:' ||
+            protocol === 'https:' ||
+            protocol === 'tcp:' ||
+            protocol === 'tcp4:'||
+            protocol === 'tcp6:' ||
+            protocol === 'tcps:' ||
+            protocol === 'tcp4s:' ||
+            protocol === 'tcp6s:' ||
+            protocol === 'tls:' ||
+            protocol === 'ws:' ||
+            protocol === 'wss:') {
             return;
         }
-        throw new Error('The ' + parser.protocol + ' client isn\'t implemented.');
+        throw new Error('The ' + protocol + ' client isn\'t implemented.');
     }
 
     function create(uri, functions, settings) {
         try {
             return global.hprose.HttpClient.create(uri, functions, settings);
+        }
+        catch(e) {}
+        try {
+            return global.hprose.TcpClient.create(uri, functions, settings);
         }
         catch(e) {}
         try {
