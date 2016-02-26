@@ -13,7 +13,7 @@
  *                                                        *
  * hprose Future for HTML5.                               *
  *                                                        *
- * LastModified: Feb 23, 2016                             *
+ * LastModified: Feb 25, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -36,7 +36,7 @@
         Object.defineProperties(this, {
             _subscribers: { value: [] },
             resolve: { value: this.resolve.bind(this) },
-            reject: { value: this.reject.bind(this) },
+            reject: { value: this.reject.bind(this) }
         });
         var self = this;
         if (typeof computation === 'function') {
@@ -628,7 +628,7 @@
         return Object.create(null, {
             promise: { value: self },
             resolve: { value: self.resolve },
-            reject: { value: self.reject },
+            reject: { value: self.reject }
         });
     };
 
