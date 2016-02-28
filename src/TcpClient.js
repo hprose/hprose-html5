@@ -346,8 +346,8 @@
 
             var len = request.length;
             var buf = new BytesIO(8 + len);
-            buf.writeInt32BE(len | 0x80000000, 0);
-            buf.writeInt32BE(id, 4);
+            buf.writeInt32BE(len | 0x80000000);
+            buf.writeInt32BE(id);
             buf.write(request);
             conn.send(buf.buffer).then(function(result) {
                 self.sendNext(conn);
@@ -446,7 +446,7 @@
 
             var len = request.length;
             var buf = new BytesIO(4 + len);
-            buf.writeInt32BE(len, 0);
+            buf.writeInt32BE(len);
             buf.write(request);
             conn.send(buf.buffer);
         } },
