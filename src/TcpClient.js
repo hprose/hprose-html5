@@ -251,7 +251,11 @@
             }
             var conn = new TCPSocket();
             var self = this;
-            conn.connect(address, port, tls, this.client.options);
+            conn.connect(address, port, tls, {
+                persistent: true,
+                noDelay: this.client.noDelay,
+                keepAlive: this.client.keepAlive
+            });
             conn.onclose = function() { --self.size; };
             ++this.size;
             return conn;
