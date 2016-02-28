@@ -12,7 +12,7 @@
  *                                                        *
  * hprose websocket client for HTML5.                     *
  *                                                        *
- * LastModified: Feb 23, 2016                             *
+ * LastModified: Feb 28, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -23,9 +23,13 @@
     var Client = global.hprose.Client;
     var BytesIO = global.hprose.BytesIO;
     var Future = global.hprose.Future;
+    var WebSocket = global.WebSocket || global.MozWebSocket;
 
     function noop(){}
     function WebSocketClient(uri, functions, settings) {
+        if (typeof(WebSocket) === "undefined") {
+            throw new Error('WebSocket is not supported by this browser.');
+        }
         if (this.constructor !== WebSocketClient) return new WebSocketClient(uri, functions, settings);
 
         Client.call(this, uri, functions, settings);
@@ -109,8 +113,8 @@
             var id = getNextId();
             var future = new Future();
             _futures[id] = future;
-            if (self.timeout > 0) {
-                future = future.timeout(self.timeout).catchError(function(e) {
+            if (env.timeout > 0) {
+                future = future.timeout(env.timeout).catchError(function(e) {
                     delete _futures[id];
                     --_count;
                     throw e;
@@ -162,7 +166,7 @@
             uri.forEach(function(uri) { checkuri(uri); });
         }
         else {
-            return new Error('You should set server uri first!');
+            throw new Error('You should set server uri first!');
         }
         return new WebSocketClient(uri, functions, settings);
     }

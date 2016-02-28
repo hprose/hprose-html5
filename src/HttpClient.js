@@ -12,7 +12,7 @@
  *                                                        *
  * hprose http client for HTML5.                          *
  *                                                        *
- * LastModified: Feb 25, 2016                             *
+ * LastModified: Feb 28, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -147,7 +147,7 @@
             uri.forEach(function(uri) { checkuri(uri); });
         }
         else {
-            return new Error('You should set server uri first!');
+            throw new Error('You should set server uri first!');
         }
         return new HttpClient(uri, functions, settings);
     }
