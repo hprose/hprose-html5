@@ -13,7 +13,7 @@
  *                                                        *
  * Harmony Maps for HTML5.                                *
  *                                                        *
- * LastModified: Feb 23, 2016                             *
+ * LastModified: Mar 2, 2016                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -29,7 +29,7 @@
         hasForEach = 'forEach' in new global.Map();
     }
 
-    if (hasWeakMap && hasMap && hasForEach) return;
+    if (hasWeakMap && hasMap && hasForEach) { return; }
 
     var namespaces = Object.create(null);
     var count = 0;
@@ -41,7 +41,9 @@
                     if ((this === obj) &&
                         (n in namespaces) &&
                         (namespaces[n] === namespace)) {
-                        if (!(n in privates)) privates[n] = Object.create(null);
+                        if (!(n in privates)) {
+                            privates[n] = Object.create(null);
+                        }
                         return privates[n];
                     }
                     else {
@@ -60,9 +62,13 @@
             var n = count++;
             namespaces[n] = namespace;
             var map = function (key) {
-                if (key !== Object(key)) throw new Error('value is not a non-null object');
+                if (key !== Object(key)) {
+                    throw new Error('value is not a non-null object');
+                }
                 var privates = key.valueOf(namespace, n);
-                if (privates !== key.valueOf()) return privates;
+                if (privates !== key.valueOf()) {
+                    return privates;
+                }
                 reDefineValueOf(key);
                 return key.valueOf(namespace, n);
             };
@@ -112,9 +118,9 @@
             var nullMap = Object.create(null);
             namespaces[n] = namespace;
             var map = function (key) {
-                if (key === null) return nullMap;
+                if (key === null) { return nullMap; }
                 var privates = key.valueOf(namespace, n);
-                if (privates !== key.valueOf()) return privates;
+                if (privates !== key.valueOf()) { return privates; }
                 reDefineValueOf(key);
                 return key.valueOf(namespace, n);
             };
@@ -199,7 +205,7 @@
                 clear: {
                     value: function () {
                         keys.length = 0;
-                        for (var key in map) map[key].clear();
+                        for (var key in map) { map[key].clear(); }
                         size = 0;
                     }
                 },

@@ -12,7 +12,7 @@
  *                                                        *
  * hprose tcp client for HTML5.                           *
  *                                                        *
- * LastModified: Feb 28, 2016                             *
+ * LastModified: Mar 2, 2016                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -20,198 +20,58 @@
 (function (global, undefined) {
     'use strict';
 
+    var ChromeTcpSocket = global.hprose.ChromeTcpSocket;
+    var APICloudTcpSocket = global.hprose.APICloudTcpSocket;
     var Client = global.hprose.Client;
     var BytesIO = global.hprose.BytesIO;
     var Future = global.hprose.Future;
-    var tcpInit = false;
+    var TimeoutError = global.TimeoutError;
 
     function noop(){}
 
-    var socketPool = {};
-    var receivePool = {};
-
-    function TCPSocket() {
-        this.socketId = new Future();
-        this.connected = false;
-        this.timeid = undefined;
-        this.onclose = noop;
-        this.onconnect = noop;
-        this.onreceive = noop;
-        this.onerror = noop;
-    }
-
-    Object.defineProperties(TCPSocket.prototype, {
-        connect: { value: function(address, port, tls, options) {
-            var self = this;
-            chrome.sockets.tcp.create({ persistent: options && options.persistent }, function(createInfo) {
-                if (options) {
-                    if ('noDelay' in options) {
-                        chrome.sockets.tcp.setNoDelay(createInfo.socketId, options.noDelay, function(result) {
-                            if (result < 0) {
-                                self.socketId.reject(result);
-                                chrome.sockets.tcp.disconnect(createInfo.socketId);
-                                chrome.sockets.tcp.close(createInfo.socketId);
-                                self.onclose();
-                            }
-                        });
-                    }
-                    if ('keepAlive' in options) {
-                        chrome.sockets.tcp.setKeepAlive(createInfo.socketId, options.keepAlive, function(result) {
-                            if (result < 0) {
-                                self.socketId.reject(result);
-                                chrome.sockets.tcp.disconnect(createInfo.socketId);
-                                chrome.sockets.tcp.close(createInfo.socketId);
-                                self.onclose();
-                            }
-                        });
+    function setReceiveHandler(socket, onreceive) {
+        socket.onreceive = function(data) {
+            if (!('receiveEntry' in socket)) {
+                socket.receiveEntry = {
+                    stream: new BytesIO(),
+                    headerLength: 4,
+                    dataLength: -1,
+                    id: null
+                };
+            }
+            var entry = socket.receiveEntry;
+            var stream = entry.stream;
+            var headerLength = entry.headerLength;
+            var dataLength = entry.dataLength;
+            var id = entry.id;
+            stream.write(data);
+            while (true) {
+                if ((dataLength < 0) && (stream.length() >= headerLength)) {
+                    dataLength = stream.readInt32BE();
+                    if ((dataLength & 0x80000000) !== 0) {
+                        dataLength &= 0x7fffffff;
+                        headerLength = 8;
                     }
                 }
-                if (tls) {
-                    chrome.sockets.tcp.setPaused(createInfo.socketId, true, function() {
-                        chrome.sockets.tcp.connect(createInfo.socketId, address, port, function(result) {
-                            if (result < 0) {
-                                self.socketId.reject(result);
-                                chrome.sockets.tcp.disconnect(createInfo.socketId);
-                                chrome.sockets.tcp.close(createInfo.socketId);
-                                self.onclose();
-                            }
-                            else {
-                                chrome.sockets.tcp.secure(createInfo.socketId, function(secureResult) {
-                                    if (secureResult !== 0) {
-                                        self.socketId.reject(result);
-                                        chrome.sockets.tcp.disconnect(createInfo.socketId);
-                                        chrome.sockets.tcp.close(createInfo.socketId);
-                                        self.onclose();
-                                    }
-                                    else {
-                                        chrome.sockets.tcp.setPaused(createInfo.socketId, false, function() {
-                                            self.socketId.resolve(createInfo.socketId);
-                                        });
-                                    }
-                                });
-                            }
-                        });
-                    });
+                if ((headerLength === 8) && (id === null) && (stream.length() >= headerLength)) {
+                    id = stream.readInt32BE();
+                }
+                if ((dataLength >= 0) && ((stream.length() - headerLength) >= dataLength)) {
+                    onreceive(stream.read(dataLength), id);
+                    headerLength = 4;
+                    id = null;
+                    stream.trunc();
+                    dataLength = -1;
                 }
                 else {
-                    chrome.sockets.tcp.connect(createInfo.socketId, address, port, function(result) {
-                        if (result < 0) {
-                            self.socketId.reject(result);
-                            chrome.sockets.tcp.disconnect(createInfo.socketId);
-                            chrome.sockets.tcp.close(createInfo.socketId);
-                            self.onclose();
-                        }
-                        else {
-                            self.socketId.resolve(createInfo.socketId);
-                        }
-                    });
-                }
-            });
-            this.socketId.then(function(socketId) {
-                socketPool[socketId] = self;
-                self.connected = true;
-                self.onconnect(socketId);
-            }, function(reason) {
-                self.onerror(reason);
-            });
-        } },
-        send: { value: function(data) {
-            var self = this;
-            var promise = new Future();
-            this.socketId.then(function(socketId) {
-                chrome.sockets.tcp.send(socketId, data, function(sendInfo) {
-                    if (sendInfo.resultCode < 0) {
-                        self.onerror(sendInfo.resultCode);
-                        promise.reject(sendInfo.resultCode);
-                        self.destroy();
-                    }
-                    else {
-                        promise.resolve(sendInfo.bytesSent);
-                    }
-                });
-            });
-            return promise;
-        } },
-        destroy: { value: function() {
-            var self = this;
-            this.connected = false;
-            this.socketId.then(function(socketId) {
-                chrome.sockets.tcp.disconnect(socketId);
-                chrome.sockets.tcp.close(socketId);
-                delete socketPool[socketId];
-                delete receivePool[socketId];
-                self.onclose();
-            });
-        } },
-        ref: { value: function() {
-            this.socketId.then(function(socketId) {
-                chrome.sockets.tcp.setPaused(socketId, false);
-            });
-        } },
-        unref: { value: function() {
-            this.socketId.then(function(socketId) {
-                chrome.sockets.tcp.setPaused(socketId, true);
-            });
-        } },
-        clearTimeout: { value: function() {
-            if (this.timeid !== undefined) {
-                global.clearTimeout(this.timeid);
-            }
-        } },
-        setTimeout: { value: function(timeout, fn) {
-            this.clearTimeout();
-            this.timeid = global.setTimeout(fn, timeout);
-        } }
-    });
-
-    function receiveListener(info) {
-        if (!(info.socketId in receivePool)) {
-            receivePool[info.socketId] = {
-                bytes: new BytesIO(),
-                headerLength: 4,
-                dataLength: -1,
-                id: null
-            };
-        }
-        var socket = socketPool[info.socketId];
-        var entry = receivePool[info.socketId];
-        var bytes = entry.bytes;
-        var headerLength = entry.headerLength;
-        var dataLength = entry.dataLength;
-        var id = entry.id;
-        bytes.write(info.data);
-        while (true) {
-            if ((dataLength < 0) && (bytes.length >= headerLength)) {
-                dataLength = bytes.readInt32BE();
-                if ((dataLength & 0x80000000) !== 0) {
-                    dataLength &= 0x7fffffff;
-                    headerLength = 8;
+                    break;
                 }
             }
-            if ((headerLength === 8) && (id === null) && (bytes.length >= headerLength)) {
-                id = bytes.readInt32BE();
-            }
-            if ((dataLength >= 0) && ((bytes.length - headerLength) >= dataLength)) {
-                socket.onreceive(bytes.read(dataLength), id);
-                headerLength = 4;
-                id = null;
-                bytes.trunc();
-                dataLength = -1;
-            }
-            else {
-                break;
-            }
-        }
-        entry.bytes = bytes;
-        entry.headerLength = headerLength;
-        entry.dataLength = dataLength;
-        entry.id = id;
-    }
-
-    function receiveErrorListener(info) {
-        var socket = socketPool[info.socketId];
-        socket.onerror(info.resultCode);
-        socket.destroy();
+            entry.stream = stream;
+            entry.headerLength = headerLength;
+            entry.dataLength = dataLength;
+            entry.id = id;
+        };
     }
 
     function TcpTransporter(client) {
@@ -233,7 +93,7 @@
             // replace to HTTP can be correctly resolved.
             parser.protocol = "http:";
             var address = parser.hostname;
-            var port = parseInt(parser.port);
+            var port = parseInt(parser.port, 10);
             var tls;
             if (protocol === 'tcp:' ||
                 protocol === 'tcp4:' ||
@@ -249,10 +109,21 @@
             else {
                 throw new Error('Unsupported ' + protocol + ' protocol!');
             }
-            var conn = new TCPSocket();
+            var conn;
+            if (global.chrome && global.chrome.sockets && global.chrome.sockets.tcp) {
+                conn = new ChromeTcpSocket();
+            }
+            else if (global.api && global.api.require) {
+                conn = new APICloudTcpSocket();
+            }
+            else {
+                throw new Error('TCP Socket is not supported by this browser or platform.');
+            }
             var self = this;
-            conn.connect(address, port, tls, {
+            conn.connect(address, port, {
                 persistent: true,
+                tls: tls,
+                timeout: this.client.timeout,
                 noDelay: this.client.noDelay,
                 keepAlive: this.client.keepAlive
             });
@@ -287,6 +158,16 @@
             conn.count = 0;
             conn.futures = {};
             conn.timeoutIds = {};
+            setReceiveHandler(conn, function(data, id) {
+                var future = conn.futures[id];
+                if (future) {
+                    self.clean(conn, id);
+                    if (conn.count === 0) {
+                        self.recycle(conn);
+                    }
+                    future.resolve(data);
+                }
+            });
             conn.onreceive = function (data, id) {
                 var future = conn.futures[id];
                 if (future) {
@@ -353,7 +234,7 @@
             buf.writeInt32BE(len | 0x80000000);
             buf.writeInt32BE(id);
             buf.write(request);
-            conn.send(buf.buffer).then(function(result) {
+            conn.send(buf.buffer).then(function() {
                 self.sendNext(conn);
             });
         } },
@@ -438,11 +319,11 @@
                     future.reject(new TimeoutError('timeout'));
                 }, timeout);
             }
-            conn.onreceive = function(data) {
+            setReceiveHandler(conn, function(data) {
                 self.clean(conn);
                 self.sendNext(conn);
                 future.resolve(data);
-            };
+            });
             conn.onerror = function(e) {
                 self.clean(conn);
                 future.reject(e);
@@ -478,11 +359,6 @@
     HalfDuplexTcpTransporter.prototype.constructor = TcpTransporter;
 
     function TcpClient(uri, functions, settings) {
-        if (!tcpInit) {
-            tcpInit = true;
-            chrome.sockets.tcp.onReceive.addListener(receiveListener);
-            chrome.sockets.tcp.onReceiveError.addListener(receiveErrorListener);
-        }
         if (this.constructor !== TcpClient) {
             return new TcpClient(uri, functions, settings);
         }
@@ -555,7 +431,7 @@
                 }
                 hdtrans.sendAndReceive(request, future, env);
             }
-            if (env.oneway) future.resolve();
+            if (env.oneway) { future.resolve(); }
             return future;
         }
 

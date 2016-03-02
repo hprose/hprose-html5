@@ -13,7 +13,7 @@
  *                                                        *
  * hprose Reader for HTML5.                               *
  *                                                        *
- * LastModified: Feb 23, 2016                             *
+ * LastModified: Mar 2, 2016                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -269,7 +269,7 @@
 
     function readInt(stream, tag) {
         var s = stream.readUntil(tag);
-        if (s.length === 0) return 0;
+        if (s.length === 0) { return 0; }
         return parseInt(s, 10);
     }
     function unserialize(reader) {
@@ -333,7 +333,7 @@
     function readLongWithoutTag(stream) {
         var s = stream.readUntil(Tags.TagSemicolon);
         var l = parseInt(s, 10);
-        if (l.toString() === s) return l;
+        if (l.toString() === s) { return l; }
         return s;
     }
     function readLong(stream) {
@@ -657,12 +657,12 @@
     Object.defineProperties(Reader.prototype, {
         useHarmonyMap: { value: false, writable: true },
         checkTag: { value: function(expectTag, tag) {
-            if (tag === undefined) tag = this.stream.readByte();
-            if (tag !== expectTag) unexpectedTag(tag, expectTag);
+            if (tag === undefined) { tag = this.stream.readByte(); }
+            if (tag !== expectTag) { unexpectedTag(tag, expectTag); }
         } },
         checkTags: { value: function(expectTags, tag) {
-            if (tag === undefined) tag = this.stream.readByte();
-            if (expectTags.indexOf(tag) >= 0) return tag;
+            if (tag === undefined) { tag = this.stream.readByte(); }
+            if (expectTags.indexOf(tag) >= 0) { return tag; }
             unexpectedTag(tag, expectTags);
         } },
         unserialize: { value: function() {

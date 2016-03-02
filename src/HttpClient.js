@@ -23,10 +23,14 @@
     var Client = global.hprose.Client;
     var Future = global.hprose.Future;
     var BytesIO = global.hprose.BytesIO;
+    var TimeoutError = global.TimeoutError;
+
     function noop(){}
 
     function HttpClient(uri, functions, settings) {
-        if (this.constructor !== HttpClient) return new HttpClient(uri, functions, settings);
+        if (this.constructor !== HttpClient) {
+            return new HttpClient(uri, functions, settings);
+        }
         Client.call(this, uri, functions, settings);
         var _header = Object.create(null);
         var _onreqprogress = noop;
@@ -90,7 +94,7 @@
 
         function apiPost(request, env) {
             var future = new Future();
-            api.ajax({
+            global.api.ajax({
                 url: self.uri(),
                 method: 'post',
                 data: { body: BytesIO.toString(request) },
@@ -114,7 +118,7 @@
                            typeof(global.api.ajax) !== "undefined");
             var future = apicloud ? apiPost(request, env) :
                                     xhrPost(request, env);
-            if (env.oneway) future.resolve();
+            if (env.oneway) { future.resolve(); }
             return future;
         }
 

@@ -12,7 +12,7 @@
  *                                                        *
  * chrome tcp socket for JavaScript.                      *
  *                                                        *
- * LastModified: Mar 1, 2016                              *
+ * LastModified: Mar 2, 2016                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -21,10 +21,6 @@
     'use strict';
 
     var Future = global.hprose.Future;
-    var createObject = global.hprose.createObject;
-    var defineProperties = global.hprose.defineProperties;
-    var toUint8Array = global.hprose.toUint8Array;
-    var toBinaryString = global.hprose.toBinaryString;
 
     function noop(){}
 
@@ -33,7 +29,7 @@
 
     function receiveListener(info) {
         var socket = socketPool[info.socketId];
-        socket.onreceive(toBinaryString(info.data));
+        socket.onreceive(info.data);
     }
 
     function receiveErrorListener(info) {
@@ -44,7 +40,7 @@
 
     function ChromeTcpSocket() {
         if (socketManager === null) {
-            socketManager = chrome.sockets.tcp;
+            socketManager = global.chrome.sockets.tcp;
             socketManager.onReceive.addListener(receiveListener);
             socketManager.onReceiveError.addListener(receiveErrorListener);
         }
@@ -57,7 +53,7 @@
         this.onerror = noop;
     }
 
-    defineProperties(ChromeTcpSocket.prototype, {
+    Object.defineProperties(ChromeTcpSocket.prototype, {
         connect: { value: function(address, port, options) {
             var self = this;
             socketManager.create({ persistent: options && options.persistent }, function(createInfo) {
@@ -133,7 +129,6 @@
             });
         } },
         send: { value: function(data) {
-            data = toUint8Array(data).buffer;
             var self = this;
             var promise = new Future();
             this.socketId.then(function(socketId) {

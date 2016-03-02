@@ -13,14 +13,14 @@
  *                                                        *
  * setImmediate for HTML5.                                *
  *                                                        *
- * LastModified: Feb 23, 2016                             *
+ * LastModified: Mar 2, 2016                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
 
 (function(global, undefined) {
     'use strict';
-    if (global.setImmediate) return;
+    if (global.setImmediate) { return; }
 
     var doc = global.document;
     var MutationObserver = global.MutationObserver || global.WebKitMutationObserver || global.MozMutationOvserver;

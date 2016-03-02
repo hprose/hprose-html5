@@ -38,7 +38,6 @@
     var s_number = 'number';
     var s_function = 'function';
     var s_object = 'object';
-    var s_undefined = 'undefined';
 
     function Client(uri, functions, settings) {
 
@@ -92,7 +91,7 @@
             request = outputFilter(request, context);
             return _afterFilterHandler(request, context)
             .then(function(response) {
-                if (context.oneway) return;
+                if (context.oneway) { return; }
                 return inputFilter(response, context);
             });
         }
@@ -104,7 +103,7 @@
         function sendAndReceive(request, context, onsuccess, onerror) {
             _beforeFilterHandler(request, context)
             .then(onsuccess, function(e) {
-                if (retry(request, context, onsuccess, onerror)) return;
+                if (retry(request, context, onsuccess, onerror)) { return; }
                 onerror(e);
             });
         }
@@ -184,7 +183,7 @@
         }
 
         function setMethods(stub, obj, namespace, name, methods) {
-            if (obj[name] !== undefined) return;
+            if (obj[name] !== undefined) { return; }
             obj[name] = {};
             if (typeof(methods) === s_string || methods.constructor === Object) {
                 methods = [methods];
@@ -222,7 +221,7 @@
 
         function copyargs(src, dest) {
             var n = Math.min(src.length, dest.length);
-            for (var i = 0; i < n; ++i) dest[i] = src[i];
+            for (var i = 0; i < n; ++i) { dest[i] = src[i]; }
         }
 
         function initContext(batch) {
@@ -268,9 +267,9 @@
             }
             var i = 0, n = args.length;
             for (; i < n; ++i) {
-                if (typeof args[i] === s_function) break;
+                if (typeof args[i] === s_function) { break; }
             }
-            if (i === n) return context;
+            if (i === n) { return context; }
             var extra = args.splice(i, n - i);
             context.onsuccess = extra[0];
             n = extra.length;
@@ -428,7 +427,7 @@
         }
 
         function call(name, args, context) {
-            if (context.sync) _lock = true;
+            if (context.sync) { _lock = true; }
             var promise = Future.promise(function(resolve, reject) {
                 _invokeHandler(name, args, context).then(function(result) {
                     try {
@@ -594,9 +593,9 @@
                 });
             }
             var batchSize = _batches.length;
-            if (batchSize === 0) return;
+            if (batchSize === 0) { return Future.value([]); }
             var context = getBatchContext(settings);
-            if (context.sync) _lock = true;
+            if (context.sync) { _lock = true; }
             var batches = _batches;
             _batches = [];
             var promise = Future.promise(function(resolve, reject) {
@@ -794,7 +793,7 @@
             if ((argc < 1) || (typeof name !== s_string)) {
                 throw new Error('name must be a string');
             }
-            if (argc === 1) args = [];
+            if (argc === 1) { args = []; }
             if (argc === 2) {
                 if (!Array.isArray(args)) {
                     var _args = [];
@@ -865,7 +864,7 @@
                 });
                 return;
             }
-            if (timeout === undefined) timeout = _timeout;
+            if (timeout === undefined) { timeout = _timeout; }
             var topic = getTopic(name, id, true);
             if (topic === null) {
                 var cb = function() {
@@ -888,7 +887,7 @@
                                     catch (e) {}
                                 }
                             }
-                            if (getTopic(name, id, false) !== null) cb();
+                            if (getTopic(name, id, false) !== null) { cb(); }
                         }
                     },
                     callbacks: [callback]
@@ -982,7 +981,7 @@
                 return function(name, args, context) {
                     try {
                         var result = handler(name, args, context, next);
-                        if (Future.isFuture(result)) return result;
+                        if (Future.isFuture(result)) { return result; }
                         return Future.value(result);
                     }
                     catch (e) {
@@ -998,7 +997,7 @@
                 return function(batches, context) {
                     try {
                         var result = handler(batches, context, next);
-                        if (Future.isFuture(result)) return result;
+                        if (Future.isFuture(result)) { return result; }
                         return Future.value(result);
                     }
                     catch (e) {
@@ -1014,7 +1013,7 @@
                 return function(request, context) {
                     try {
                         var response = handler(request, context, next);
-                        if (Future.isFuture(response)) return response;
+                        if (Future.isFuture(response)) { return response; }
                         return Future.value(response);
                     }
                     catch (e) {
@@ -1030,7 +1029,7 @@
                 return function(request, context) {
                     try {
                         var response = handler(request, context, next);
-                        if (Future.isFuture(response)) return response;
+                        if (Future.isFuture(response)) { return response; }
                         return Future.value(response);
                     }
                     catch (e) {

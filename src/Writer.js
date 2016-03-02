@@ -13,7 +13,7 @@
  *                                                        *
  * hprose Writer for HTML5.                               *
  *                                                        *
- * LastModified: Feb 23, 2016                             *
+ * LastModified: Mar 2, 2016                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -29,7 +29,7 @@
     function getClassName(obj) {
         var cls = obj.constructor;
         var classname = ClassManager.getClassAlias(cls);
-        if (classname) return classname;
+        if (classname) { return classname; }
         if (cls.name) {
             classname = cls.name;
         }
@@ -302,9 +302,14 @@
         var stream = writer.stream;
         stream.writeByte(Tags.TagBytes);
         var n = bytes.byteLength || bytes.length;
-        if (n > 0) stream.writeAsciiString('' + n);
-        stream.writeByte(Tags.TagQuote);
-        if (n > 0) stream.write(bytes);
+        if (n > 0) {
+            stream.writeAsciiString('' + n);
+            stream.writeByte(Tags.TagQuote);
+            stream.write(bytes);
+        }
+        else {
+            stream.writeByte(Tags.TagQuote);
+        }
         stream.writeByte(Tags.TagQuote);
     }
 
@@ -313,9 +318,14 @@
         var stream = writer.stream;
         var n = str.length;
         stream.writeByte(Tags.TagString);
-        if (n > 0) stream.writeAsciiString('' + n);
-        stream.writeByte(Tags.TagQuote);
-        if (n > 0) stream.writeString(str);
+        if (n > 0) {
+            stream.writeAsciiString('' + n);
+            stream.writeByte(Tags.TagQuote);
+            stream.writeString(str);
+        }
+        else {
+            stream.writeByte(Tags.TagQuote);
+        }
         stream.writeByte(Tags.TagQuote);
     }
 
@@ -324,10 +334,15 @@
         var stream = writer.stream;
         var n = array.length;
         stream.writeByte(Tags.TagList);
-        if (n > 0) stream.writeAsciiString('' + n);
-        stream.writeByte(Tags.TagOpenbrace);
-        for (var i = 0; i < n; i++) {
-            writeElem(writer, array[i]);
+        if (n > 0) {
+            stream.writeAsciiString('' + n);
+            stream.writeByte(Tags.TagOpenbrace);
+            for (var i = 0; i < n; i++) {
+                writeElem(writer, array[i]);
+            }
+        }
+        else {
+            stream.writeByte(Tags.TagOpenbrace);
         }
         stream.writeByte(Tags.TagClosebrace);
     }
@@ -356,11 +371,16 @@
         }
         var n = fields.length;
         stream.writeByte(Tags.TagMap);
-        if (n > 0) stream.writeAsciiString('' + n);
-        stream.writeByte(Tags.TagOpenbrace);
-        for (var i = 0; i < n; i++) {
-            serialize(writer, fields[i]);
-            serialize(writer, map[fields[i]]);
+        if (n > 0) {
+            stream.writeAsciiString('' + n);
+            stream.writeByte(Tags.TagOpenbrace);
+            for (var i = 0; i < n; i++) {
+                serialize(writer, fields[i]);
+                serialize(writer, map[fields[i]]);
+            }
+        }
+        else {
+            stream.writeByte(Tags.TagOpenbrace);
         }
         stream.writeByte(Tags.TagClosebrace);
     }
@@ -370,12 +390,17 @@
         var stream = writer.stream;
         var n = map.size;
         stream.writeByte(Tags.TagMap);
-        if (n > 0) stream.writeAsciiString('' + n);
-        stream.writeByte(Tags.TagOpenbrace);
-        map.forEach(function(value, key) {
-            serialize(writer, key);
-            serialize(writer, value);
-        });
+        if (n > 0) {
+            stream.writeAsciiString('' + n);
+            stream.writeByte(Tags.TagOpenbrace);
+            map.forEach(function(value, key) {
+                serialize(writer, key);
+                serialize(writer, value);
+            });
+        }
+        else {
+            stream.writeByte(Tags.TagOpenbrace);
+        }
         stream.writeByte(Tags.TagClosebrace);
     }
 
@@ -416,10 +441,15 @@
         stream.writeByte(Tags.TagQuote);
         stream.writeString(classname);
         stream.writeByte(Tags.TagQuote);
-        if (n > 0) stream.writeAsciiString('' + n);
-        stream.writeByte(Tags.TagOpenbrace);
-        for (var i = 0; i < n; i++) {
-            writeString(writer, fields[i]);
+        if (n > 0) {
+            stream.writeAsciiString('' + n);
+            stream.writeByte(Tags.TagOpenbrace);
+            for (var i = 0; i < n; i++) {
+                writeString(writer, fields[i]);
+            }
+        }
+        else {
+            stream.writeByte(Tags.TagOpenbrace);
         }
         stream.writeByte(Tags.TagClosebrace);
         var index = writer._fieldsref.length;

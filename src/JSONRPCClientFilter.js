@@ -25,6 +25,7 @@
     var BytesIO = global.hprose.BytesIO;
     var Writer = global.hprose.Writer;
     var Reader = global.hprose.Reader;
+    var JSON = global.JSON;
 
     var s_id = 1;
 
@@ -32,7 +33,7 @@
         this.version = version || '2.0';
     }
 
-    JSONRPCClientFilter.prototype.inputFilter = function inputFilter(data, context) {
+    JSONRPCClientFilter.prototype.inputFilter = function inputFilter(data/*, context*/) {
         var json = BytesIO.toString(data);
         if (json.charAt(0) === '{') {
             json = '[' + json + ']';
@@ -55,7 +56,7 @@
         return stream.bytes;
     };
 
-    JSONRPCClientFilter.prototype.outputFilter = function outputFilter(data, context) {
+    JSONRPCClientFilter.prototype.outputFilter = function outputFilter(data/*, context*/) {
         var requests = [];
         var stream = new BytesIO(data);
         var reader = new Reader(stream, false, false);

@@ -216,16 +216,16 @@
     }
 
     function readString(bytes, n) {
-        if (n === undefined || n === null || (n < 0)) n = bytes.length;
-        if (n === 0) return ['', 0];
+        if (n === undefined || n === null || (n < 0)) { n = bytes.length; }
+        if (n === 0) { return ['', 0]; }
         return ((n < 100000) ?
                 readShortString(bytes, n) :
                 readLongString(bytes, n));
     }
 
     function readStringAsBytes(bytes, n) {
-        if (n === undefined) n = bytes.length;
-        if (n === 0) return [_EMPTY_BYTES, 0];
+        if (n === undefined) { n = bytes.length; }
+        if (n === 0) { return [_EMPTY_BYTES, 0]; }
         var i = 0, off = 0;
         for (var len = bytes.length; i < n && off < len; i++) {
             var unit = bytes[off++];
@@ -425,7 +425,7 @@
         } },
         write: { value: function(data) {
             var n = data.byteLength || data.length;
-            if (n === 0) return;
+            if (n === 0) { return; }
             this._grow(n);
             var bytes = this._bytes;
             var length = this._length;
@@ -449,7 +449,7 @@
         } },
         writeAsciiString: { value: function(str) {
             var n = str.length;
-            if (n === 0) return;
+            if (n === 0) { return; }
             this._grow(n);
             var bytes = this._bytes;
             var l = this._length;
@@ -460,7 +460,7 @@
         } },
         writeString: { value: function(str) {
             var n = str.length;
-            if (n === 0) return;
+            if (n === 0) { return; }
             // A single code unit uses at most 3 bytes.
             // Two code units at most 4.
             this._grow(n * 3);
@@ -516,7 +516,7 @@
             if (this._off + n > this._length) {
                 n = this._length - this._off;
             }
-            if (n === 0) return _EMPTY_BYTES;
+            if (n === 0) { return _EMPTY_BYTES; }
             return this._bytes.subarray(this._off, this._off += n);
         } },
         skip: { value: function(n) {
@@ -565,7 +565,7 @@
             if (this._off + n > this._length) {
                 n = this._length - this._off;
             }
-            if (n === 0) return '';
+            if (n === 0) { return ''; }
             return toBinaryString(this._bytes.subarray(this._off, this._off += n));
         } },
         // n is the UTF16 length
@@ -607,7 +607,7 @@
 
     function toString(data) {
         /* jshint -W086 */
-        if (data.length === 0) return '';
+        if (data.length === 0) { return ''; }
         switch(data.constructor) {
         case String: return data;
         case BytesIO: data = data.bytes;

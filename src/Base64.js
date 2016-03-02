@@ -12,7 +12,7 @@
  *                                                        *
  * Base64 for HTML5.                                      *
  *                                                        *
- * LastModified: Feb 29, 2016                             *
+ * LastModified: Mar 2, 2016                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -21,7 +21,7 @@
     'use strict';
 
     if (typeof(global.btoa) === "undefined") {
-        global.btoa = function() {
+        global.btoa = (function() {
             var base64EncodeChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'.split('');
             return function(str) {
                 var buf, i, j, len, r, l, c;
@@ -60,11 +60,11 @@
                 }
                 return buf.join('');
             };
-        }();
+        })();
     }
 
     if (typeof(global.atob) === "undefined") {
-        global.atob = function() {
+        global.atob = (function() {
             var base64DecodeChars = [
                 -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
                 -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -106,29 +106,29 @@
                 while (i < len) {
                     // c1
                     c1 = base64DecodeChars[str.charCodeAt(i++)];
-                    if (c1 === -1) break;
+                    if (c1 === -1) { break; }
 
                     // c2
                     c2 = base64DecodeChars[str.charCodeAt(i++)];
-                    if (c2 === -1) break;
+                    if (c2 === -1) { break; }
 
                     out[j++] = String.fromCharCode((c1 << 2) | ((c2 & 0x30) >> 4));
 
                     // c3
                     c3 = base64DecodeChars[str.charCodeAt(i++)];
-                    if (c3 === -1) break;
+                    if (c3 === -1) { break; }
 
                     out[j++] = String.fromCharCode(((c2 & 0x0f) << 4) | ((c3 & 0x3c) >> 2));
 
                     // c4
                     c4 = base64DecodeChars[str.charCodeAt(i++)];
-                    if (c4 === -1) break;
+                    if (c4 === -1) { break; }
 
                     out[j++] = String.fromCharCode(((c3 & 0x03) << 6) | c4);
                 }
                 return out.join('');
             };
-        }();
+        })();
     }
 
 })(this);
