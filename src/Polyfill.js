@@ -13,7 +13,7 @@
  *                                                        *
  * Polyfill for JavaScript.                               *
  *                                                        *
- * LastModified: Feb 23, 2016                             *
+ * LastModified: Mar 2, 2016                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -44,18 +44,18 @@
     if (!Array.prototype.includes) {
         Object.defineProperty(Array.prototype, 'includes', { value: function(searchElement /*, fromIndex*/ ) {
             var O = Object(this);
-            var len = parseInt(O.length) || 0;
+            var len = parseInt(O.length, 10) || 0;
             if (len === 0) {
                 return false;
             }
-            var n = parseInt(arguments[1]) || 0;
+            var n = parseInt(arguments[1], 10) || 0;
             var k;
             if (n >= 0) {
                 k = n;
             }
             else {
                 k = len + n;
-                if (k < 0) k = 0;
+                if (k < 0) { k = 0; }
             }
             var currentElement;
             while (k < len) {
@@ -124,9 +124,9 @@
             var k = relativeStart < 0 ? Math.max(len + relativeStart, 0) : Math.min(relativeStart, len);
             var end = arguments[2];
             var relativeEnd = end === undefined ? len : end >> 0;
-            var final = relativeEnd < 0 ? Math.max(len + relativeEnd, 0) : Math.min(relativeEnd, len);
+            var f = relativeEnd < 0 ? Math.max(len + relativeEnd, 0) : Math.min(relativeEnd, len);
 
-            while (k < final) {
+            while (k < f) {
                 O[k] = value;
                 k++;
             }
@@ -146,8 +146,8 @@
             var from = relativeStart < 0 ? Math.max(len + relativeStart, 0) : Math.min(relativeStart, len);
             var end = arguments[2];
             var relativeEnd = end === undefined ? len : end >> 0;
-            var final = relativeEnd < 0 ? Math.max(len + relativeEnd, 0) : Math.min(relativeEnd, len);
-            var count = Math.min(final - from, len - to);
+            var f = relativeEnd < 0 ? Math.max(len + relativeEnd, 0) : Math.min(relativeEnd, len);
+            var count = Math.min(f - from, len - to);
             var direction = 1;
             if (from < to && to < (from + count)) {
                 direction = -1;
@@ -358,7 +358,7 @@
             var property = properties[i];
             var method = proto[property];
             if (typeof method === 'function' && typeof obj[property] === 'undefined') {
-                Object.defineProperty(obj, 'property', { value: generic(method) });
+                Object.defineProperty(obj, property, { value: generic(method) });
             }
         }
     }
@@ -412,4 +412,5 @@
         'concat',
         'slice'
     ]);
+
 })(this);

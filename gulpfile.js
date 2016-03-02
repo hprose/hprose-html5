@@ -1,3 +1,4 @@
+/* jshint node:true */
 var gulp = require('gulp'),
     uglify = require('gulp-uglify'),
     concat = require('gulp-concat'),
@@ -12,6 +13,7 @@ gulp.task('clear', function(){
 gulp.task('uglify', ['clear'], function() {
     return gulp.src(['src/Init.js',
                      'src/Helper.js',
+                     'src/Polyfill.js',
                      'src/HarmonyMaps.js',
                      'src/TimeoutError.js',
                      'src/setImmediate.js',
@@ -25,14 +27,16 @@ gulp.task('uglify', ['clear'], function() {
                      'src/ResultMode.js',
                      'src/Client.js',
                      'src/HttpClient.js',
-                     'src/TcpClient.js',
                      'src/WebSocketClient.js',
+                     'src/ChromeTcpSocket.js',
+                     'src/APICloudTcpSocket.js',
+                     'src/TcpClient.js',
                      'src/JSONRPCClientFilter.js',
                      'src/Loader.js'])
         .pipe(jshint())
         .pipe(jshint.reporter())
         .pipe(concat('hprose-html5.js'))
-        .pipe(uglify())
+//        .pipe(uglify())
         .pipe(gulp.dest('dist'));
 });
 

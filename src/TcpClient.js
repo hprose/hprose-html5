@@ -46,17 +46,17 @@
             var id = entry.id;
             stream.write(data);
             while (true) {
-                if ((dataLength < 0) && (stream.length() >= headerLength)) {
+                if ((dataLength < 0) && (stream.length >= headerLength)) {
                     dataLength = stream.readInt32BE();
                     if ((dataLength & 0x80000000) !== 0) {
                         dataLength &= 0x7fffffff;
                         headerLength = 8;
                     }
                 }
-                if ((headerLength === 8) && (id === null) && (stream.length() >= headerLength)) {
+                if ((headerLength === 8) && (id === null) && (stream.length >= headerLength)) {
                     id = stream.readInt32BE();
                 }
-                if ((dataLength >= 0) && ((stream.length() - headerLength) >= dataLength)) {
+                if ((dataLength >= 0) && ((stream.length - headerLength) >= dataLength)) {
                     onreceive(stream.read(dataLength), id);
                     headerLength = 4;
                     id = null;
@@ -168,16 +168,6 @@
                     future.resolve(data);
                 }
             });
-            conn.onreceive = function (data, id) {
-                var future = conn.futures[id];
-                if (future) {
-                    self.clean(conn, id);
-                    if (conn.count === 0) {
-                        self.recycle(conn);
-                    }
-                    future.resolve(data);
-                }
-            };
             conn.onerror = function (e) {
                 var futures = conn.futures;
                 for (var id in futures) {
