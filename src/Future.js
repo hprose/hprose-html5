@@ -13,7 +13,7 @@
  *                                                        *
  * hprose Future for HTML5.                               *
  *                                                        *
- * LastModified: Feb 25, 2016                             *
+ * LastModified: Mar 2, 2016                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -29,8 +29,6 @@
     var setImmediate = global.setImmediate;
     var setTimeout = global.setTimeout;
     var clearTimeout = global.clearTimeout;
-    var foreach = Function.prototype.call.bind(Array.prototype.forEach);
-    var slice = Function.prototype.call.bind(Array.prototype.slice);
 
     function Future(computation) {
         Object.defineProperties(this, {
@@ -105,7 +103,7 @@
 
     function arraysize(array) {
         var size = 0;
-        foreach(array, function() { ++size; });
+        Array.forEach(array, function() { ++size; });
         return size;
     }
 
@@ -117,7 +115,7 @@
             var result = new Array(n);
             if (count === 0) return value(result);
             var future = new Future();
-            foreach(array, function(element, index) {
+            Array.forEach(array, function(element, index) {
                 var f = (isPromise(element) ? element : value(element));
                 f.then(function(value) {
                     result[index] = value;
@@ -139,7 +137,7 @@
         array = isPromise(array) ? array : value(array);
         return array.then(function(array) {
             var future = new Future();
-            foreach(array, function(element) {
+            Array.forEach(array, function(element) {
                 var f = (isPromise(element) ? element : value(element));
                 f.then(future.resolve, future.reject);
             });
@@ -157,7 +155,7 @@
             }
             var reasons = new Array(n);
             var future = new Future();
-            foreach(array, function(element, index) {
+            Array.forEach(array, function(element, index) {
                 var f = (isPromise(element) ? element : value(element));
                 f.then(future.resolve, function(e) {
                     reasons[index] = e;
@@ -178,7 +176,7 @@
             var result = new Array(n);
             if (count === 0) return value(result);
             var future = new Future();
-            foreach(array, function(element, index) {
+            Array.forEach(array, function(element, index) {
                 var f = (isPromise(element) ? element : value(element));
                 f.whenComplete(function() {
                     result[index] = f.inspect();
@@ -192,14 +190,14 @@
     }
 
     function attempt(handler/*, arg1, arg2, ... */) {
-        var args = slice(arguments, 1);
+        var args = Array.slice(arguments, 1);
         return all(args).then(function(args) {
             return handler.apply(undefined, args);
         });
     }
 
     function run(handler, thisArg/*, arg1, arg2, ... */) {
-        var args = slice(arguments, 2);
+        var args = Array.slice(arguments, 2);
         return all(args).then(function(args) {
             return handler.apply(thisArg, args);
         });
@@ -275,6 +273,51 @@
         });
     }
 
+    function indexOf(array, searchElement, fromIndex) {
+        return all(array).then(function(array) {
+            if (!isPromise(searchElement)) {
+                searchElement = value(searchElement);
+            }
+            return searchElement.then(function(searchElement) {
+                return array.indexOf(searchElement, fromIndex);
+            });
+        });
+    }
+
+    function lastIndexOf(array, searchElement, fromIndex) {
+        return all(array).then(function(array) {
+            if (!isPromise(searchElement)) {
+                searchElement = value(searchElement);
+            }
+            return searchElement.then(function(searchElement) {
+                return array.lastIndexOf(searchElement, fromIndex);
+            });
+        });
+    }
+
+    function includes(array, searchElement, fromIndex) {
+        return all(array).then(function(array) {
+            if (!isPromise(searchElement)) {
+                searchElement = value(searchElement);
+            }
+            return searchElement.then(function(searchElement) {
+                return array.includes(searchElement, fromIndex);
+            });
+        });
+    }
+
+    function find(array, predicate, thisArg) {
+        return all(array).then(function(array) {
+            return array.find(predicate, thisArg);
+        });
+    }
+
+    function findIndex(array, predicate, thisArg) {
+        return all(array).then(function(array) {
+            return array.findIndex(predicate, thisArg);
+        });
+    }
+
     Object.defineProperties(Future, {
         // port from Dart
         delayed: { value: delayed },
@@ -303,7 +346,12 @@
         filter: { value: filter },
         map: { value: map },
         reduce: { value: reduce },
-        reduceRight: { value: reduceRight }
+        reduceRight: { value: reduceRight },
+        indexOf: { value: indexOf },
+        lastIndexOf: { value: lastIndexOf },
+        includes: { value: includes },
+        find: { value: find },
+        findIndex: { value: findIndex }
     });
 
     function _call(callback, next, x) {
@@ -546,7 +594,7 @@
             });
         } },
         call: { value: function(method) {
-            var args = slice(arguments, 1);
+            var args = Array.slice(arguments, 1);
             return this.then(function(result) {
                 return all(args).then(function(args) {
                     return result[method].apply(result, args);
@@ -554,7 +602,7 @@
             });
         } },
         bind: { value: function(method) {
-            var bindargs = slice(arguments);
+            var bindargs = Array.slice(arguments);
             if (Array.isArray(method)) {
                 for (var i = 0, n = method.length; i < n; ++i) {
                     bindargs[0] = method[i];
@@ -565,7 +613,7 @@
             bindargs.shift();
             var self = this;
             Object.defineProperty(this, method, { value: function() {
-                var args = slice(arguments);
+                var args = Array.slice(arguments);
                 return self.then(function(result) {
                     return all(bindargs.concat(args)).then(function(args) {
                         return result[method].apply(result, args);
@@ -600,6 +648,21 @@
                 return reduceRight(this, callback, initialValue);
             }
             return reduceRight(this, callback);
+        } },
+        indexOf: { value: function(searchElement, fromIndex) {
+            return indexOf(this, searchElement, fromIndex);
+        } },
+        lastIndexOf: { value: function(searchElement, fromIndex) {
+            return lastIndexOf(this, searchElement, fromIndex);
+        } },
+        includes: { value: function(searchElement, fromIndex) {
+            return includes(this, searchElement, fromIndex);
+        } },
+        find: { value: function(predicate, thisArg) {
+            return find(this, predicate, thisArg);
+        } },
+        findIndex: { value: function(predicate, thisArg) {
+            return findIndex(this, predicate, thisArg);
         } }
     });
 

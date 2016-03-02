@@ -22,7 +22,7 @@
 
     var Client = global.hprose.Client;
     var Future = global.hprose.Future;
-
+    var BytesIO = global.hprose.BytesIO;
     function noop(){}
 
     function HttpClient(uri, functions, settings) {
@@ -34,7 +34,8 @@
 
         var self = this;
 
-        function send(request, future) {
+        function xhrPost(request, env) {
+            var future = new Future();
             var xhr = new XMLHttpRequest();
             xhr.open('POST', self.uri, true);
             if (global.location !== undefined && global.location.protocol !== 'file:') {
@@ -62,23 +63,6 @@
                 xhr.upload.onprogress = _onreqprogress;
             }
             xhr.onprogress = _onresprogress;
-            if (request.constructor === String || ArrayBuffer.isView) {
-                xhr.send(request);
-            }
-            else if (request.buffer.slice) {
-                xhr.send(request.buffer.slice(0, request.length));
-            }
-            else {
-                var buf = new Uint8Array(request.length);
-                buf.set(request);
-                xhr.send(buf.buffer);
-            }
-            return xhr;
-        }
-
-        function sendAndReceive(request, env) {
-            var future = new Future();
-            var xhr = send(request, future);
             if (env.timeout > 0) {
                 future = future.timeout(env.timeout).catchError(function(e) {
                     xhr.onload = noop;
@@ -90,9 +74,50 @@
                     return e instanceof TimeoutError;
                 });
             }
+            if (request.constructor === String || ArrayBuffer.isView) {
+                xhr.send(request);
+            }
+            else if (request.buffer.slice) {
+                xhr.send(request.buffer.slice(0, request.length));
+            }
+            else {
+                var buf = new Uint8Array(request.length);
+                buf.set(request);
+                xhr.send(buf.buffer);
+            }
+            return future;
+        }
+
+        function apiPost(request, env) {
+            var future = new Future();
+            api.ajax({
+                url: self.uri(),
+                method: 'post',
+                data: { body: BytesIO.toString(request) },
+                timeout: env.timeout,
+                dataType: 'text',
+                headers: _header,
+                certificate: self.certificate
+            }, function(ret, err) {
+                if (ret) {
+                    future.resolve((new BytesIO(ret)).takeBytes());
+                }
+                else {
+                    future.reject(new Error(err.msg));
+                }
+            });
+            return future;
+        }
+
+        function sendAndReceive(request, env) {
+            var apicloud = (typeof(global.api) !== "undefined" &&
+                           typeof(global.api.ajax) !== "undefined");
+            var future = apicloud ? apiPost(request, env) :
+                                    xhrPost(request, env);
             if (env.oneway) future.resolve();
             return future;
         }
+
         function setOnRequestProgress(value) {
             if (typeof(value) === 'function') {
                 _onreqprogress = value;

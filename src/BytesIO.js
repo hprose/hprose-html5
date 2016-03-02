@@ -13,7 +13,7 @@
  *                                                        *
  * hprose BytesIO for HTML5.                              *
  *                                                        *
- * LastModified: Feb 23, 2016                             *
+ * LastModified: Mar 2, 2016                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -21,15 +21,7 @@
 (function (global, undefined) {
     'use strict';
 
-    var arrayLikeObjectArgumentsEnabled = true;
-
-    try {
-        String.fromCharCode.apply(String, new Uint8Array([1, 2]));
-    }
-    catch (e) {
-        arrayLikeObjectArgumentsEnabled = false;
-        Object.defineProperty(Array.prototype, 'subarray', { value: Array.prototype.slice });
-    }
+    var toBinaryString = global.hprose.toBinaryString;
 
     var _EMPTY_BYTES = new Uint8Array(0);
     var _INIT_SIZE = 1024;
@@ -286,15 +278,6 @@
             }
         }
         return [bytes.subarray(0, off), off];
-    }
-
-    function toArray(bytes) {
-        var n = bytes.length;
-        var a = new Array(bytes.length);
-        for (var i = 0; i < n; ++i) {
-            a[i] = bytes[i];
-        }
-        return a;
     }
 
     function pow2roundup(x) {
@@ -583,21 +566,7 @@
                 n = this._length - this._off;
             }
             if (n === 0) return '';
-            var bytes = this._bytes.subarray(this._off, this._off += n);
-            var charCodes = (arrayLikeObjectArgumentsEnabled ? bytes : toArray(bytes));
-            if (n < 100000) {
-                return String.fromCharCode.apply(String, charCodes);
-            }
-            var remain = n & 0xFFFF;
-            var count = n >> 16;
-            var a = new Array(remain ? count + 1 : count);
-            for (var i = 0; i < count; ++i) {
-                a[i] = String.fromCharCode.apply(String, charCodes.subarray(i << 16, (i + 1) << 16));
-            }
-            if (remain) {
-                a[count] = String.fromCharCode.apply(String, charCodes.subarray(count << 16, n));
-            }
-            return a.join('');
+            return toBinaryString(this._bytes.subarray(this._off, this._off += n));
         } },
         // n is the UTF16 length
         readStringAsBytes: { value: function(n) {

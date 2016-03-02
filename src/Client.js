@@ -12,7 +12,7 @@
  *                                                        *
  * hprose client for HTML5.                               *
  *                                                        *
- * LastModified: Feb 23, 2016                             *
+ * LastModified: Mar 2, 2016                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -27,7 +27,6 @@
     var Writer = global.hprose.Writer;
     var Reader = global.hprose.Reader;
     var Future = global.hprose.Future;
-    var slice = Function.prototype.call.bind(Array.prototype.slice);
 
     var GETFUNCTIONS = new Uint8Array(1);
     GETFUNCTIONS[0] = Tags.TagEnd;
@@ -174,7 +173,7 @@
         function setFunction(stub, name) {
             return function() {
                 if (_batch) {
-                    return _invoke(stub, name, slice(arguments), true);
+                    return _invoke(stub, name, Array.slice(arguments), true);
                 }
                 else {
                     return Future.all(arguments).then(function(args) {
@@ -747,6 +746,9 @@
             _filters.splice(i, 1);
             return true;
         }
+        function filters() {
+            return _filters;
+        }
         function useService(uri, functions, create) {
             if (create === undefined) {
                 if (typeof(functions) === s_boolean) {
@@ -1077,6 +1079,7 @@
             filter: { get: getFilter, set: setFilter },
             addFilter: { value: addFilter },
             removeFilter: { value: removeFilter },
+            filters: { get: filters },
             useService: { value: useService },
             invoke: { value: invoke },
             ready: { value: ready },

@@ -11,6 +11,7 @@ gulp.task('clear', function(){
 
 gulp.task('uglify', ['clear'], function() {
     return gulp.src(['src/Init.js',
+                     'src/Helper.js',
                      'src/HarmonyMaps.js',
                      'src/TimeoutError.js',
                      'src/setImmediate.js',
@@ -41,7 +42,6 @@ gulp.task('compress', ['uglify'], function() {
            .pipe(lzmajs())
            .pipe(gulp.dest('dist'));
 });
-
 
 gulp.task('default', ['compress'], function() {
     return gulp.src(['src/CopyRight.js', 'dist/hprose-html5.js'])
