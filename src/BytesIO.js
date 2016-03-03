@@ -25,7 +25,6 @@
 
     var _EMPTY_BYTES = new Uint8Array(0);
     var _INIT_SIZE = 1024;
-    var indexof = Function.prototype.call.bind(Array.prototype.indexOf);
 
     function writeInt32BE(bytes, p, i) {
         bytes[p++] = i >>> 24 & 0xFF;
@@ -531,7 +530,7 @@
         } },
         // the result is an Uint8Array, and includes tag.
         readBytes: { value: function(tag) {
-            var pos = indexof(this._bytes, tag, this._off);
+            var pos = Array.indexOf(this._bytes, tag, this._off);
             var buf;
             if (pos === -1) {
                 buf = this._bytes.subarray(this._off, this._length);
@@ -546,7 +545,7 @@
         // the result is a String, and doesn't include tag.
         // but the position is the same as readBytes
         readUntil: { value: function(tag) {
-            var pos = indexof(this._bytes, tag, this._off);
+            var pos = Array.indexOf(this._bytes, tag, this._off);
             var str = '';
             if (pos === this._off) {
                 this._off++;
