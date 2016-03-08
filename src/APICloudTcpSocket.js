@@ -12,7 +12,7 @@
  *                                                        *
  * APICloud tcp socket for HTML5.                         *
  *                                                        *
- * LastModified: Mar 2, 2016                              *
+ * LastModified: Mar 8, 2016                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -59,7 +59,7 @@
                     switch(ret.state) {
                         case 101: break;
                         case 102: self.socketId.resolve(ret.sid); break;
-                        case 103: self.onreceive(toUint8Array(atob(ret.data))); break;
+                        case 103: self.onreceive(toUint8Array(atob(ret.data.replace(/\s+/g, '')))); break;
                         case 201: self.socketId.reject(new Error('Create TCP socket failed')); break;
                         case 202: self.socketId.reject(new Error('TCP connection failed')); break;
                         case 203: self.onclose(); self.onerror(new Error('Abnormal disconnect connection')); break;
