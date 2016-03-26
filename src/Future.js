@@ -13,7 +13,7 @@
  *                                                        *
  * hprose Future for HTML5.                               *
  *                                                        *
- * LastModified: Mar 2, 2016                              *
+ * LastModified: Mar 26, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -479,12 +479,7 @@
             if (onfulfill || onreject) {
                 var next = new Future();
                 if (this._state === FULFILLED) {
-                    if (onfulfill) {
-                        _resolve(onfulfill, onreject, this, next, this._value);
-                    }
-                    else {
-                        next.resolve(this._value);
-                    }
+                    _resolve(onfulfill, onreject, this, next, this._value);
                 }
                 else if (this._state === REJECTED) {
                     if (onreject) {
