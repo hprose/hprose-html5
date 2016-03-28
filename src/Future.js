@@ -13,7 +13,7 @@
  *                                                        *
  * hprose Future for HTML5.                               *
  *                                                        *
- * LastModified: Mar 26, 2016                             *
+ * LastModified: Mar 28, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -529,6 +529,9 @@
         'catch': { value: function(onreject) {
             return this.then(null, onreject);
         } },
+        fail: { value: function(onreject) {
+            this.done(null, onreject);
+        } },
         whenComplete: { value: function(action) {
             return this.then(
                 function(v) {
@@ -544,6 +547,12 @@
                     return f.then(function() { throw e; });
                 }
             );
+        } },
+        complete: { value: function(oncomplete) {
+           return this.then(oncomplete, oncomplete);
+        } },
+        always: { value: function(oncomplete) {
+           this.done(oncomplete, oncomplete);
         } },
         timeout: { value: function(duration, reason) {
             var future = new Future();
