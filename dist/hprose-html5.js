@@ -1067,7 +1067,7 @@ TimeoutError.prototype.constructor = TimeoutError;
  *                                                        *
  * hprose Future for HTML5.                               *
  *                                                        *
- * LastModified: Mar 2, 2016                              *
+ * LastModified: Mar 28, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -1533,12 +1533,7 @@ TimeoutError.prototype.constructor = TimeoutError;
             if (onfulfill || onreject) {
                 var next = new Future();
                 if (this._state === FULFILLED) {
-                    if (onfulfill) {
-                        _resolve(onfulfill, onreject, this, next, this._value);
-                    }
-                    else {
-                        next.resolve(this._value);
-                    }
+                    _resolve(onfulfill, onreject, this, next, this._value);
                 }
                 else if (this._state === REJECTED) {
                     if (onreject) {
@@ -1558,6 +1553,11 @@ TimeoutError.prototype.constructor = TimeoutError;
                 return next;
             }
             return this;
+        } },
+        done: { value: function(onfulfill, onreject) {
+            this.then(onfulfill, onreject).then(null, function(error) {
+                setImmediate(function() { throw error; });
+            });
         } },
         inspect: { value: function() {
             switch (this._state) {
@@ -1583,6 +1583,9 @@ TimeoutError.prototype.constructor = TimeoutError;
         'catch': { value: function(onreject) {
             return this.then(null, onreject);
         } },
+        fail: { value: function(onreject) {
+            this.done(null, onreject);
+        } },
         whenComplete: { value: function(action) {
             return this.then(
                 function(v) {
@@ -1598,6 +1601,12 @@ TimeoutError.prototype.constructor = TimeoutError;
                     return f.then(function() { throw e; });
                 }
             );
+        } },
+        complete: { value: function(oncomplete) {
+           return this.then(oncomplete, oncomplete);
+        } },
+        always: { value: function(oncomplete) {
+           this.done(oncomplete, oncomplete);
         } },
         timeout: { value: function(duration, reason) {
             var future = new Future();
@@ -3914,7 +3923,7 @@ TimeoutError.prototype.constructor = TimeoutError;
  *                                                        *
  * hprose client for HTML5.                               *
  *                                                        *
- * LastModified: Mar 2, 2016                              *
+ * LastModified: Apr 1, 2016                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -4014,8 +4023,8 @@ TimeoutError.prototype.constructor = TimeoutError;
             if (context.failswitch) {
                 if (++_index >= _uris.length) {
                     _index = 0;
-                    _uri = _uris[_index];
                 }
+                _uri = _uris[_index];
             }
             if (context.idempotent) {
                 if (--context.retry >= 0) {

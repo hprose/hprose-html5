@@ -12,7 +12,7 @@
  *                                                        *
  * hprose client for HTML5.                               *
  *                                                        *
- * LastModified: Mar 2, 2016                              *
+ * LastModified: Apr 1, 2016                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -112,8 +112,8 @@
             if (context.failswitch) {
                 if (++_index >= _uris.length) {
                     _index = 0;
-                    _uri = _uris[_index];
                 }
+                _uri = _uris[_index];
             }
             if (context.idempotent) {
                 if (--context.retry >= 0) {
