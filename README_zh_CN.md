@@ -16,6 +16,7 @@
 >---
 - **[简介](#简介)**
     - **[浏览器支持](#浏览器支持)**
+    - **[混合应用支持](#混合应用支持)**
 - **[使用](#使用)**
     - **[异常处理](#异常处理)**
 
@@ -70,6 +71,17 @@
 * Firefox Mobile
 * Internet Explorer on Windows Phone
 * ...
+
+### 混合应用支持
+
+* ionic + cordova (http, tcp, websocket)
+* Chrome extentions (http, tcp, websocket)
+* APICloud (http, tcp*)
+* DCloud (还不支持)
+* AppCan (还不支持)
+* ... (http, websocket)
+
+在 APICloud 平台上，TCP 只在 iOS 上有效，因为 APICloud 的 Android SDK 有个 bug，但是他们不肯修复，所以我也无能为力。
 
 ## 使用
 
