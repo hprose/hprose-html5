@@ -13,7 +13,7 @@
  *                                                        *
  * hprose Future for HTML5.                               *
  *                                                        *
- * LastModified: Apr 11, 2016                             *
+ * LastModified: Jun 7, 2016                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -292,6 +292,7 @@
                 searchElement = value(searchElement);
             }
             return searchElement.then(function(searchElement) {
+                if (fromIndex === undefined) fromIndex = array.length - 1;
                 return array.lastIndexOf(searchElement, fromIndex);
             });
         });
