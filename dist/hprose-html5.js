@@ -1067,7 +1067,7 @@ TimeoutError.prototype.constructor = TimeoutError;
  *                                                        *
  * hprose Future for HTML5.                               *
  *                                                        *
- * LastModified: Mar 28, 2016                             *
+ * LastModified: Jun 7, 2016                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -1110,6 +1110,10 @@ TimeoutError.prototype.constructor = TimeoutError;
 
     function isPromise(obj) {
         return isFuture(obj) || (hasPromise && (obj instanceof global.Promise) && (typeof (obj.then === 'function')));
+    }
+
+    function toPromise(obj) {
+        return (isPromise(obj) ? obj : value(obj));
     }
 
     function delayed(duration, value) {
@@ -1171,8 +1175,7 @@ TimeoutError.prototype.constructor = TimeoutError;
             if (count === 0) { return value(result); }
             var future = new Future();
             Array.forEach(array, function(element, index) {
-                var f = (isPromise(element) ? element : value(element));
-                f.then(function(value) {
+                toPromise(element).then(function(value) {
                     result[index] = value;
                     if (--count === 0) {
                         future.resolve(result);
@@ -1193,8 +1196,7 @@ TimeoutError.prototype.constructor = TimeoutError;
         return array.then(function(array) {
             var future = new Future();
             Array.forEach(array, function(element) {
-                var f = (isPromise(element) ? element : value(element));
-                f.then(future.resolve, future.reject);
+                toPromise(element).fill(future);
             });
             return future;
         });
@@ -1211,8 +1213,7 @@ TimeoutError.prototype.constructor = TimeoutError;
             var reasons = new Array(n);
             var future = new Future();
             Array.forEach(array, function(element, index) {
-                var f = (isPromise(element) ? element : value(element));
-                f.then(future.resolve, function(e) {
+                toPromise(element).then(future.resolve, function(e) {
                     reasons[index] = e;
                     if (--count === 0) {
                         future.reject(reasons);
@@ -1232,7 +1233,7 @@ TimeoutError.prototype.constructor = TimeoutError;
             if (count === 0) { return value(result); }
             var future = new Future();
             Array.forEach(array, function(element, index) {
-                var f = (isPromise(element) ? element : value(element));
+                var f = toPromise(element);
                 f.whenComplete(function() {
                     result[index] = f.inspect();
                     if (--count === 0) {
@@ -1345,6 +1346,9 @@ TimeoutError.prototype.constructor = TimeoutError;
                 searchElement = value(searchElement);
             }
             return searchElement.then(function(searchElement) {
+                if (fromIndex === undefined) {
+                    fromIndex = array.length - 1;
+                }
                 return array.lastIndexOf(searchElement, fromIndex);
             });
         });
@@ -1388,6 +1392,7 @@ TimeoutError.prototype.constructor = TimeoutError;
         promise: { value: promise },
         isFuture: { value: isFuture },
         isPromise: { value: isPromise },
+        toPromise: { value: toPromise },
         join: { value: join },
         any: { value: any },
         settle: { value: settle },
@@ -1429,7 +1434,6 @@ TimeoutError.prototype.constructor = TimeoutError;
             next.reject(e);
         }
     }
-
 
     function _resolve(onfulfill, onreject, self, next, x) {
         function resolvePromise(y) {
@@ -1608,13 +1612,16 @@ TimeoutError.prototype.constructor = TimeoutError;
         always: { value: function(oncomplete) {
            this.done(oncomplete, oncomplete);
         } },
+        fill: { value: function(future) {
+           this.then(future.resolve, future.reject);
+        } },
         timeout: { value: function(duration, reason) {
             var future = new Future();
             var timeoutId = setTimeout(function() {
                 future.reject(reason || new TimeoutError('timeout'));
             }, duration);
             this.whenComplete(function() { clearTimeout(timeoutId); })
-                .then(future.resolve, future.reject);
+                .fill(future);
             return future;
         } },
         delay: { value: function(duration) {
