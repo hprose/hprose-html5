@@ -36,7 +36,7 @@ gulp.task('uglify', ['clear'], function() {
         .pipe(jshint())
         .pipe(jshint.reporter())
         .pipe(concat('hprose-html5.js'))
-//        .pipe(uglify())
+        .pipe(uglify())
         .pipe(gulp.dest('dist'));
 });
 

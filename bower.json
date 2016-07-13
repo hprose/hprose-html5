@@ -1,8 +1,8 @@
 {
     "author": "Ma Bingyao <andot@hprose.com>",
     "name": "hprose-html5",
-    "version": "2.0.10",
-    "description": "Hprose is a High Performance Remote Object Service Engine. It is a modern, lightweight, cross-language, cross-platform, object-oriented, high performance, remote dynamic communication middleware.",
+    "version": "2.0.11",
+    "description": "Hprose is a High Performance Remote Object Service Engine.",
     "keywords": [
         "hprose",
         "rpc",
