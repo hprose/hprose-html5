@@ -12,7 +12,7 @@
  *                                                        *
  * hprose websocket client for HTML5.                     *
  *                                                        *
- * LastModified: Mar 2, 2016                              *
+ * LastModified: Jul 14, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -84,7 +84,7 @@
             }
             if ((_count < 100) && (_requests.length > 0)) {
                 ++_count;
-                var request = _requests.shift();
+                var request = _requests.pop();
                 _ready.then(function() { send(request[0], request[1]); });
             }
             if (_count === 0 && !self.keepAlive) {
