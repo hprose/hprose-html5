@@ -12,7 +12,7 @@
  *                                                        *
  * hprose client for HTML5.                               *
  *                                                        *
- * LastModified: Jul 4, 2016                              *
+ * LastModified: Jul 26, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -108,12 +108,21 @@
             });
         }
 
+        function failswitch() {
+            var n = _uris.length;
+            if (n > 1) {
+                var i = _index + Math.floor(Math.random() * (n - 1)) + 1;
+                if (i >= n) {
+                    i %= n;
+                }
+                _index = i;
+                _uri = _uris[_index];
+            }
+        }
+
         function retry(data, context, onsuccess, onerror) {
             if (context.failswitch) {
-                if (++_index >= _uris.length) {
-                    _index = 0;
-                }
-                _uri = _uris[_index];
+                failswitch();
             }
             if (context.idempotent) {
                 if (--context.retry >= 0) {
