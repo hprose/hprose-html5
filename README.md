@@ -76,8 +76,8 @@ This project is the implementation of Hprose for HTML5.
 * ionic + cordova (http, tcp, websocket)
 * Chrome extentions (http, tcp, websocket)
 * APICloud (http, tcp*)
-* DCloud (not yet)
-* AppCan (not yet)
+* DCloud (http)
+* AppCan (http)
 * ... (http, websocket)
 
 TCP is only available on iOS for APICloud, because there is a bug of APICloud Android SDK, and they don't want to fix this bug.
