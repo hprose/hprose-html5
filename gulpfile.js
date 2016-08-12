@@ -10,8 +10,9 @@ gulp.task('clear', function(){
     del(['dist/hprose-html5.js']);
 });
 
-gulp.task('uglify', ['clear'], function() {
-    return gulp.src(['src/Init.js',
+gulp.task('concat', ['clear'], function() {
+    return gulp.src(['src/CopyRight.js',
+                     'src/Init.js',
                      'src/Helper.js',
                      'src/Polyfill.js',
                      'src/HarmonyMaps.js',
@@ -35,9 +36,15 @@ gulp.task('uglify', ['clear'], function() {
                      'src/Loader.js'])
         .pipe(jshint())
         .pipe(jshint.reporter())
-        .pipe(concat('hprose-html5.js'))
-        .pipe(uglify())
+        .pipe(concat('hprose-html5.src.js'))
         .pipe(gulp.dest('dist'));
+});
+
+gulp.task('uglify', ['concat'], function() {
+    return gulp.src(['dist/hprose-html5.src.js'])
+           .pipe(concat('hprose-html5.js'))
+           .pipe(uglify())
+           .pipe(gulp.dest('dist'));
 });
 
 gulp.task('compress', ['uglify'], function() {
