@@ -1,4 +1,4 @@
-// Hprose for HTML5 v2.0.13
+// Hprose for HTML5 v2.0.14
 // Copyright (c) 2008-2016 http://hprose.com
 // Hprose is freely distributable under the MIT license.
 // For all details and documentation:
@@ -3896,7 +3896,7 @@ TimeoutError.prototype.constructor = TimeoutError;
  *                                                        *
  * hprose client for HTML5.                               *
  *                                                        *
- * LastModified: Jul 26, 2016                             *
+ * LastModified: Aug 24, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -4723,9 +4723,9 @@ TimeoutError.prototype.constructor = TimeoutError;
             }
             return null;
         }
-        // subscribe(name, callback, timeout)
-        // subscribe(name, id, callback, timeout)
-        function subscribe(name, id, callback, timeout) {
+        // subscribe(name, callback, timeout, failswitch)
+        // subscribe(name, id, callback, timeout, failswitch)
+        function subscribe(name, id, callback, timeout, failswitch) {
             if (typeof name !== s_string) {
                 throw new TypeError('topic name must be a string.');
             }
@@ -4744,7 +4744,7 @@ TimeoutError.prototype.constructor = TimeoutError;
                     _id = autoId();
                 }
                 _id.then(function(id) {
-                    subscribe(name, id, callback, timeout);
+                    subscribe(name, id, callback, timeout, failswitch);
                 });
                 return;
             }
@@ -4753,7 +4753,7 @@ TimeoutError.prototype.constructor = TimeoutError;
             }
             if (Future.isPromise(id)) {
                 id.then(function(id) {
-                    subscribe(name, id, callback, timeout);
+                    subscribe(name, id, callback, timeout, failswitch);
                 });
                 return;
             }
@@ -4763,7 +4763,7 @@ TimeoutError.prototype.constructor = TimeoutError;
                 var cb = function() {
                     _invoke(self, name, [id, topic.handler, cb, {
                         idempotent: true,
-                        failswitch: false,
+                        failswitch: failswitch,
                         timeout: timeout
                     }], false);
                 };
