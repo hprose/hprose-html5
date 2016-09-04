@@ -1,4 +1,4 @@
-// Hprose for HTML5 v2.0.14
+// Hprose for HTML5 v2.0.15
 // Copyright (c) 2008-2016 http://hprose.com
 // Hprose is freely distributable under the MIT license.
 // For all details and documentation:
@@ -3896,7 +3896,7 @@ TimeoutError.prototype.constructor = TimeoutError;
  *                                                        *
  * hprose client for HTML5.                               *
  *                                                        *
- * LastModified: Aug 24, 2016                             *
+ * LastModified: Sep 4, 2016                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -3927,7 +3927,7 @@ TimeoutError.prototype.constructor = TimeoutError;
 
         // private members
         var _uri,
-            _uris                   = [],
+            _uriList                = [],
             _index                  = -1,
             _byref                  = false,
             _simple                 = false,
@@ -3935,10 +3935,12 @@ TimeoutError.prototype.constructor = TimeoutError;
             _retry                  = 10,
             _idempotent             = false,
             _failswitch             = false,
+            _failround              = 0,
             _lock                   = false,
             _tasks                  = [],
             _useHarmonyMap          = false,
             _onerror                = noop,
+            _onfailswitch           = noop,
             _filters                = [],
             _batch                  = false,
             _batches                = [],
@@ -3993,29 +3995,43 @@ TimeoutError.prototype.constructor = TimeoutError;
         }
 
         function failswitch() {
-            var n = _uris.length;
+            var n = _uriList.length;
             if (n > 1) {
-                var i = _index + Math.floor(Math.random() * (n - 1)) + 1;
+                var i = _index + 1;
                 if (i >= n) {
-                    i %= n;
+                    i = 0;
+                    _failround++;
                 }
                 _index = i;
-                _uri = _uris[_index];
+                _uri = _uriList[_index];
             }
+            else {
+                _failround++;
+            }
+            _onfailswitch(self);
         }
 
         function retry(data, context, onsuccess, onerror) {
             if (context.failswitch) {
                 failswitch();
             }
-            if (context.idempotent) {
-                if (--context.retry >= 0) {
-                    var interval = (context.retry >= 10) ? 500 : (10 - context.retry) * 500;
+            if (context.idempotent && (context.retried < context.retry)) {
+                var interval = ++context.retried * 500;
+                if (context.failswitch) {
+                    interval -= (_uriList.length - 1) * 500;
+                }
+                if (interval > 5000) {
+                    interval = 5000;
+                }
+                if (interval > 0) {
                     global.setTimeout(function() {
                         sendAndReceive(data, context, onsuccess, onerror);
                     }, interval);
-                    return true;
                 }
+                else {
+                    sendAndReceive(data, context, onsuccess, onerror);
+                }
+                return true;
             }
             return false;
         }
@@ -4023,6 +4039,7 @@ TimeoutError.prototype.constructor = TimeoutError;
         function initService(stub) {
             var context = {
                 retry: _retry,
+                retried: 0,
                 idempotent: true,
                 failswitch: true,
                 timeout: _timeout,
@@ -4136,6 +4153,7 @@ TimeoutError.prototype.constructor = TimeoutError;
                 simple: _simple,
                 timeout: _timeout,
                 retry: _retry,
+                retried: 0,
                 idempotent: _idempotent,
                 failswitch: _failswitch,
                 oneway: false,
@@ -4364,6 +4382,7 @@ TimeoutError.prototype.constructor = TimeoutError;
             var context = {
                 timeout: _timeout,
                 retry: _retry,
+                retried: 0,
                 idempotent: _idempotent,
                 failswitch: _failswitch,
                 oneway: false,
@@ -4542,14 +4561,42 @@ TimeoutError.prototype.constructor = TimeoutError;
                 _onerror = value;
             }
         }
+        function getOnFailswitch() {
+            return _onfailswitch;
+        }
+        function setOnFailswitch(value) {
+            if (typeof(value) === s_function) {
+                _onfailswitch = value;
+            }
+        }
         function getUri() {
             return _uri;
+        }
+        function getUriList() {
+            return _uriList;
+        }
+        function setUriList(uriList) {
+            if (typeof(uriList) === s_string) {
+                _uriList = [uriList];
+            }
+            else if (Array.isArray(uriList)) {
+                _uriList = uriList.slice(0);
+                _uriList.sort(function() { return Math.random() - 0.5; });
+            }
+            else {
+                return;
+            }
+            _index = 0;
+            _uri = _uriList[_index];
         }
         function getFailswitch() {
             return _failswitch;
         }
         function setFailswitch(value) {
             _failswitch = !!value;
+        }
+        function getFailround() {
+            return _failround;
         }
         function getTimeout() {
             return _timeout;
@@ -4938,9 +4985,12 @@ TimeoutError.prototype.constructor = TimeoutError;
         Object.defineProperties(this, {
             '#': { value: autoId },
             onerror: { get: getOnError, set: setOnError },
+            onfailswitch: { get: getOnFailswitch, set: setOnFailswitch },
             uri: { get: getUri },
+            uriList: { get: getUriList, set: setUriList },
             id: { get: getId },
             failswitch: { get: getFailswitch, set: setFailswitch },
+            failround: { get: getFailround },
             timeout: { get: getTimeout, set: setTimeout },
             retry: { get: getRetry, set: setRetry },
             idempotent: { get: getIdempotent, set: setIdempotent },
@@ -4972,15 +5022,9 @@ TimeoutError.prototype.constructor = TimeoutError;
                      }
                 });
             }
-            if (typeof(uri) === s_string) {
-                _uris = [uri];
-                _index = 0;
-                useService(uri, functions);
-            }
-            else if (Array.isArray(uri)) {
-                _uris = uri;
-                _index = Math.floor(Math.random() * _uris.length);
-                useService(_uris[_index], functions);
+            if (uri) {
+                setUriList(uri);
+                useService(functions);
             }
         }
     }
