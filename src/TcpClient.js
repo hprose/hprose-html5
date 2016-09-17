@@ -12,7 +12,7 @@
  *                                                        *
  * hprose tcp client for HTML5.                           *
  *                                                        *
- * LastModified: Jul 14, 2016                             *
+ * LastModified: Sep 17, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -309,7 +309,7 @@
             if (timeout > 0) {
                 conn.timeoutId = global.setTimeout(function() {
                     self.clean(conn);
-                    self.recycle(conn);
+                    conn.destroy();
                     future.reject(new TimeoutError('timeout'));
                 }, timeout);
             }

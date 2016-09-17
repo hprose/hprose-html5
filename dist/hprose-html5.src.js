@@ -1,4 +1,4 @@
-// Hprose for HTML5 v2.0.15
+// Hprose for HTML5 v2.0.16
 // Copyright (c) 2008-2016 http://hprose.com
 // Hprose is freely distributable under the MIT license.
 // For all details and documentation:
@@ -5781,7 +5781,7 @@ TimeoutError.prototype.constructor = TimeoutError;
  *                                                        *
  * hprose tcp client for HTML5.                           *
  *                                                        *
- * LastModified: Jul 14, 2016                             *
+ * LastModified: Sep 17, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -6078,7 +6078,7 @@ TimeoutError.prototype.constructor = TimeoutError;
             if (timeout > 0) {
                 conn.timeoutId = global.setTimeout(function() {
                     self.clean(conn);
-                    self.recycle(conn);
+                    conn.destroy();
                     future.reject(new TimeoutError('timeout'));
                 }, timeout);
             }
