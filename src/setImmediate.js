@@ -13,7 +13,7 @@
  *                                                        *
  * setImmediate for HTML5.                                *
  *                                                        *
- * LastModified: Mar 2, 2016                              *
+ * LastModified: Sep 28, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -138,17 +138,17 @@
         };
     };
 
-    polifill.setTimeout = function() {
-        return function() {
-            var handleId = create(arguments);
-            global.setTimeout( wrap( run, handleId ), 0 );
-            return handleId;
-        };
-    };
-
     // If supported, we should attach to the prototype of global, since that is where setTimeout et al. live.
     var attachTo = Object.getPrototypeOf && Object.getPrototypeOf(global);
     attachTo = (attachTo && attachTo.setTimeout ? attachTo : global);
+
+    polifill.setTimeout = function() {
+        return function() {
+            var handleId = create(arguments);
+            attachTo.setTimeout( wrap( run, handleId ), 0 );
+            return handleId;
+        };
+    };
 
     // Don't get fooled by e.g. browserify environments.
     // For Node.js before 0.9
