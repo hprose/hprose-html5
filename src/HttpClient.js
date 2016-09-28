@@ -26,6 +26,7 @@
     var TimeoutError = global.TimeoutError;
     var localfile = (global.location !== undefined && global.location.protocol === 'file:');
     var corsSupport = (!localfile && 'withCredentials' in new XMLHttpRequest());
+    var parseuri = global.hprose.parseuri;
 
     function noop(){}
 
@@ -161,8 +162,7 @@
     }
 
     function checkuri(uri) {
-        var parser = document.createElement('a');
-        parser.href = uri;
+        var parser = parseuri(uri);
         if (parser.protocol === 'http:' ||
             parser.protocol === 'https:') {
             return;

@@ -112,10 +112,26 @@
         return data;
     }
 
+    var parseuri = function(url) {
+        var pattern = new RegExp("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
+        var matches =  url.match(pattern);
+        var host = matches[4].split(':', 2);
+        return {
+            protocol: matches[1],
+            host: matches[4],
+            hostname: host[0],
+            port: parseInt(host[1], 10) || 0,
+            path: matches[5],
+            query: matches[7],
+            fragment: matches[9]
+        };
+    }
+
     global.hprose.generic = generic;
     global.hprose.toBinaryString = toBinaryString;
     global.hprose.toUint8Array = toUint8Array;
     global.hprose.toArray = toArray;
+    global.hprose.parseuri = parseuri;
 
 })(this);
 
@@ -852,23 +868,26 @@
  *                                                        *
  * TimeoutError for HTML5.                                *
  *                                                        *
- * LastModified: Jul 17, 2015                             *
+ * LastModified: Mar 29, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
 
-function TimeoutError(message) {
-    Error.call(this);
-    this.message = message;
-    this.name = TimeoutError.name;
-    if (typeof Error.captureStackTrace === 'function') {
-        Error.captureStackTrace(this, TimeoutError);
+(function(global) {
+    if (typeof global.TimeoutError !== 'function') {
+        var TimeoutError = function(message) {
+            Error.call(this);
+            this.message = message;
+            this.name = TimeoutError.name;
+            if (typeof Error.captureStackTrace === 'function') {
+                Error.captureStackTrace(this, TimeoutError);
+            }
+        }
+        TimeoutError.prototype = Object.create(Error.prototype);
+        TimeoutError.prototype.constructor = TimeoutError;
+        global.TimeoutError = TimeoutError;
     }
-}
-
-TimeoutError.prototype = Object.create(Error.prototype);
-TimeoutError.prototype.constructor = TimeoutError;
-
+})(this);
 /**********************************************************\
 |                                                          |
 |                          hprose                          |
@@ -3896,7 +3915,7 @@ TimeoutError.prototype.constructor = TimeoutError;
  *                                                        *
  * hprose client for HTML5.                               *
  *                                                        *
- * LastModified: Sep 4, 2016                              *
+ * LastModified: Sep 28, 2016                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -3911,6 +3930,7 @@ TimeoutError.prototype.constructor = TimeoutError;
     var Writer = global.hprose.Writer;
     var Reader = global.hprose.Reader;
     var Future = global.hprose.Future;
+    var parseuri = global.hprose.parseuri;
 
     var GETFUNCTIONS = new Uint8Array(1);
     GETFUNCTIONS[0] = Tags.TagEnd;
@@ -5030,8 +5050,7 @@ TimeoutError.prototype.constructor = TimeoutError;
     }
 
     function checkuri(uri) {
-        var parser = document.createElement('a');
-        parser.href = uri;
+        var parser = parseuri(uri);
         var protocol = parser.protocol;
         if (protocol === 'http:' ||
             protocol === 'https:' ||
@@ -5106,6 +5125,7 @@ TimeoutError.prototype.constructor = TimeoutError;
     var TimeoutError = global.TimeoutError;
     var localfile = (global.location !== undefined && global.location.protocol === 'file:');
     var corsSupport = (!localfile && 'withCredentials' in new XMLHttpRequest());
+    var parseuri = global.hprose.parseuri;
 
     function noop(){}
 
@@ -5241,8 +5261,7 @@ TimeoutError.prototype.constructor = TimeoutError;
     }
 
     function checkuri(uri) {
-        var parser = document.createElement('a');
-        parser.href = uri;
+        var parser = parseuri(uri);
         if (parser.protocol === 'http:' ||
             parser.protocol === 'https:') {
             return;
@@ -5283,7 +5302,7 @@ TimeoutError.prototype.constructor = TimeoutError;
  *                                                        *
  * hprose websocket client for HTML5.                     *
  *                                                        *
- * LastModified: Jul 14, 2016                             *
+ * LastModified: Sep 28, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -5295,6 +5314,7 @@ TimeoutError.prototype.constructor = TimeoutError;
     var Client = global.hprose.Client;
     var Future = global.hprose.Future;
     var TimeoutError = global.TimeoutError;
+    var parseuri = global.hprose.parseuri;
 
     var WebSocket = global.WebSocket || global.MozWebSocket;
 
@@ -5424,8 +5444,7 @@ TimeoutError.prototype.constructor = TimeoutError;
     }
 
     function checkuri(uri) {
-        var parser = document.createElement('a');
-        parser.href = uri;
+        var parser = parseuri(uri);
         if (parser.protocol === 'ws:' ||
             parser.protocol === 'wss:') {
             return;
@@ -5781,7 +5800,7 @@ TimeoutError.prototype.constructor = TimeoutError;
  *                                                        *
  * hprose tcp client for HTML5.                           *
  *                                                        *
- * LastModified: Sep 17, 2016                             *
+ * LastModified: Sep 28, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -5795,6 +5814,7 @@ TimeoutError.prototype.constructor = TimeoutError;
     var BytesIO = global.hprose.BytesIO;
     var Future = global.hprose.Future;
     var TimeoutError = global.TimeoutError;
+    var parseuri = global.hprose.parseuri;
 
     function noop(){}
 
@@ -5855,12 +5875,8 @@ TimeoutError.prototype.constructor = TimeoutError;
 
     Object.defineProperties(TcpTransporter.prototype, {
         create: { value: function() {
-            var parser = document.createElement('a');
-            parser.href = this.uri;
+            var parser = parseuri(this.uri);
             var protocol = parser.protocol;
-            // HTMLAnchorElement can't parse TCP protocol
-            // replace to HTTP can be correctly resolved.
-            parser.protocol = "http:";
             var address = parser.hostname;
             var port = parseInt(parser.port, 10);
             var tls;
@@ -6208,8 +6224,7 @@ TimeoutError.prototype.constructor = TimeoutError;
     }
 
     function checkuri(uri) {
-        var parser = document.createElement('a');
-        parser.href = uri;
+        var parser = parseuri(uri);
         var protocol = parser.protocol;
         if (protocol === 'tcp:' ||
             protocol === 'tcp4:'||
@@ -6352,7 +6367,7 @@ TimeoutError.prototype.constructor = TimeoutError;
  *                                                        *
  * hprose CommonJS/AMD/CMD loader for HTML5.              *
  *                                                        *
- * LastModified: Mar 2, 2016                              *
+ * LastModified: Sep 28, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -6396,7 +6411,7 @@ TimeoutError.prototype.constructor = TimeoutError;
             define('hprose', [], function() { return global.hprose; });
         }
     }
-    if (typeof module === 'object' && typeof module.exports === 'object') {
+    if (typeof module === 'object') {
         module.exports = global.hprose;
     }
 })(this);

@@ -12,7 +12,7 @@
  *                                                        *
  * hprose websocket client for HTML5.                     *
  *                                                        *
- * LastModified: Jul 14, 2016                             *
+ * LastModified: Sep 28, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -24,6 +24,7 @@
     var Client = global.hprose.Client;
     var Future = global.hprose.Future;
     var TimeoutError = global.TimeoutError;
+    var parseuri = global.hprose.parseuri;
 
     var WebSocket = global.WebSocket || global.MozWebSocket;
 
@@ -153,8 +154,7 @@
     }
 
     function checkuri(uri) {
-        var parser = document.createElement('a');
-        parser.href = uri;
+        var parser = parseuri(uri);
         if (parser.protocol === 'ws:' ||
             parser.protocol === 'wss:') {
             return;

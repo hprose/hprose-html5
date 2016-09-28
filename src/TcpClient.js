@@ -12,7 +12,7 @@
  *                                                        *
  * hprose tcp client for HTML5.                           *
  *                                                        *
- * LastModified: Sep 17, 2016                             *
+ * LastModified: Sep 28, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -26,6 +26,7 @@
     var BytesIO = global.hprose.BytesIO;
     var Future = global.hprose.Future;
     var TimeoutError = global.TimeoutError;
+    var parseuri = global.hprose.parseuri;
 
     function noop(){}
 
@@ -86,12 +87,8 @@
 
     Object.defineProperties(TcpTransporter.prototype, {
         create: { value: function() {
-            var parser = document.createElement('a');
-            parser.href = this.uri;
+            var parser = parseuri(this.uri);
             var protocol = parser.protocol;
-            // HTMLAnchorElement can't parse TCP protocol
-            // replace to HTTP can be correctly resolved.
-            parser.protocol = "http:";
             var address = parser.hostname;
             var port = parseInt(parser.port, 10);
             var tls;
@@ -439,8 +436,7 @@
     }
 
     function checkuri(uri) {
-        var parser = document.createElement('a');
-        parser.href = uri;
+        var parser = parseuri(uri);
         var protocol = parser.protocol;
         if (protocol === 'tcp:' ||
             protocol === 'tcp4:'||

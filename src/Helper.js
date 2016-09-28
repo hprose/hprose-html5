@@ -79,9 +79,25 @@
         return data;
     }
 
+    var parseuri = function(url) {
+        var pattern = new RegExp("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
+        var matches =  url.match(pattern);
+        var host = matches[4].split(':', 2);
+        return {
+            protocol: matches[1],
+            host: matches[4],
+            hostname: host[0],
+            port: parseInt(host[1], 10) || 0,
+            path: matches[5],
+            query: matches[7],
+            fragment: matches[9]
+        };
+    }
+
     global.hprose.generic = generic;
     global.hprose.toBinaryString = toBinaryString;
     global.hprose.toUint8Array = toUint8Array;
     global.hprose.toArray = toArray;
+    global.hprose.parseuri = parseuri;
 
 })(this);

@@ -13,7 +13,7 @@
  *                                                        *
  * hprose CommonJS/AMD/CMD loader for HTML5.              *
  *                                                        *
- * LastModified: Mar 2, 2016                              *
+ * LastModified: Sep 28, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -57,7 +57,7 @@
             define('hprose', [], function() { return global.hprose; });
         }
     }
-    if (typeof module === 'object' && typeof module.exports === 'object') {
+    if (typeof module === 'object') {
         module.exports = global.hprose;
     }
 })(this);

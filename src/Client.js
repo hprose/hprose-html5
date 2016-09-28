@@ -12,7 +12,7 @@
  *                                                        *
  * hprose client for HTML5.                               *
  *                                                        *
- * LastModified: Sep 4, 2016                              *
+ * LastModified: Sep 28, 2016                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -27,6 +27,7 @@
     var Writer = global.hprose.Writer;
     var Reader = global.hprose.Reader;
     var Future = global.hprose.Future;
+    var parseuri = global.hprose.parseuri;
 
     var GETFUNCTIONS = new Uint8Array(1);
     GETFUNCTIONS[0] = Tags.TagEnd;
@@ -1146,8 +1147,7 @@
     }
 
     function checkuri(uri) {
-        var parser = document.createElement('a');
-        parser.href = uri;
+        var parser = parseuri(uri);
         var protocol = parser.protocol;
         if (protocol === 'http:' ||
             protocol === 'https:' ||
