@@ -1,4 +1,4 @@
-// Hprose for HTML5 v2.0.16
+// Hprose for HTML5 v2.0.17
 // Copyright (c) 2008-2016 http://hprose.com
 // Hprose is freely distributable under the MIT license.
 // For all details and documentation:
@@ -46,7 +46,7 @@
  *                                                        *
  * hprose helper for HTML5.                               *
  *                                                        *
- * LastModified: Mar 2, 2016                              *
+ * LastModified: Sep 28, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -88,17 +88,17 @@
             bytes = new Uint8Array(bytes);
         }
         var n = bytes.length;
-        if (n < 100000) {
+        if (n < 0xFFFF) {
             return String.fromCharCode.apply(String, getCharCodes(bytes));
         }
-        var remain = n & 0xFFFF;
-        var count = n >> 16;
+        var remain = n & 0x7FFF;
+        var count = n >> 15;
         var a = new Array(remain ? count + 1 : count);
         for (var i = 0; i < count; ++i) {
-            a[i] = String.fromCharCode.apply(String, getCharCodes(bytes.subarray(i << 16, (i + 1) << 16)));
+            a[i] = String.fromCharCode.apply(String, getCharCodes(bytes.subarray(i << 15, (i + 1) << 15)));
         }
         if (remain) {
-            a[count] = String.fromCharCode.apply(String, getCharCodes(bytes.subarray(count << 16, n)));
+            a[count] = String.fromCharCode.apply(String, getCharCodes(bytes.subarray(count << 15, n)));
         }
         return a.join('');
     }
@@ -1766,7 +1766,7 @@ TimeoutError.prototype.constructor = TimeoutError;
  *                                                        *
  * hprose BytesIO for HTML5.                              *
  *                                                        *
- * LastModified: Mar 2, 2016                              *
+ * LastModified: Sep 28, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -1896,7 +1896,7 @@ TimeoutError.prototype.constructor = TimeoutError;
 
     function readLongString(bytes, n) {
         var buf = [];
-        var charCodes = new Array(0xFFFF);
+        var charCodes = new Array(0x8000);
         var i = 0, off = 0;
         for (var len = bytes.length; i < n && off < len; i++) {
             var unit = bytes[off++];
@@ -1952,7 +1952,7 @@ TimeoutError.prototype.constructor = TimeoutError;
             default:
                 throw new Error('Bad UTF-8 encoding 0x' + unit.toString(16));
             }
-            if (i >= 65534) {
+            if (i >= 0x7FFF - 1) {
                 var size = i + 1;
                 charCodes.length = size;
                 buf.push(String.fromCharCode.apply(String, charCodes));
@@ -1970,7 +1970,7 @@ TimeoutError.prototype.constructor = TimeoutError;
     function readString(bytes, n) {
         if (n === undefined || n === null || (n < 0)) { n = bytes.length; }
         if (n === 0) { return ['', 0]; }
-        return ((n < 100000) ?
+        return ((n < 0xFFFF) ?
                 readShortString(bytes, n) :
                 readLongString(bytes, n));
     }
