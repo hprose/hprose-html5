@@ -234,4 +234,4 @@
     testPromise();
     testPromise();
     testPromise();
-})(this);
+})(this || [eval][0]('this'));

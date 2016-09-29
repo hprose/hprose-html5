@@ -12,7 +12,7 @@
  *                                                        *
  * hprose tcp client for HTML5.                           *
  *                                                        *
- * LastModified: Sep 28, 2016                             *
+ * LastModified: Sep 29, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -467,4 +467,4 @@
 
     global.hprose.TcpClient = TcpClient;
 
-})(this);
+})(this || [eval][0]('this'));

@@ -13,7 +13,7 @@
  *                                                        *
  * Polyfill for JavaScript.                               *
  *                                                        *
- * LastModified: Mar 2, 2016                              *
+ * LastModified: Sep 29, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -413,4 +413,4 @@
         'slice'
     ]);
 
-})(this);
+})(this || [eval][0]('this'));

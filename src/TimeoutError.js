@@ -13,7 +13,7 @@
  *                                                        *
  * TimeoutError for HTML5.                                *
  *                                                        *
- * LastModified: Mar 29, 2016                             *
+ * LastModified: Sep 29, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -32,4 +32,4 @@
         TimeoutError.prototype.constructor = TimeoutError;
         global.TimeoutError = TimeoutError;
     }
-})(this);
+})(this || [eval][0]('this'));

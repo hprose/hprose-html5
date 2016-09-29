@@ -13,7 +13,7 @@
  *                                                        *
  * jsonrpc client filter for JavaScript.                  *
  *                                                        *
- * LastModified: Feb 23, 2016                             *
+ * LastModified: Sep 29, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -91,4 +91,4 @@
 
     global.hprose.JSONRPCClientFilter = JSONRPCClientFilter;
 
-})(this);
+})(this || [eval][0]('this'));
