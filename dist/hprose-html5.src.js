@@ -1,4 +1,4 @@
-// Hprose for HTML5 v2.0.18
+// Hprose for HTML5 v2.0.19
 // Copyright (c) 2008-2016 http://hprose.com
 // Hprose is freely distributable under the MIT license.
 // For all details and documentation:
@@ -127,11 +127,23 @@
         };
     }
 
+    var isObjectEmpty = function (obj) {
+        if (obj) {
+            for (var prop in obj) {
+                if (obj.hasOwnProperty(prop)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     global.hprose.generic = generic;
     global.hprose.toBinaryString = toBinaryString;
     global.hprose.toUint8Array = toUint8Array;
     global.hprose.toArray = toArray;
     global.hprose.parseuri = parseuri;
+    global.hprose.isObjectEmpty = isObjectEmpty;
 
 })(this || [eval][0]('this'));
 
@@ -3931,6 +3943,7 @@
     var Reader = global.hprose.Reader;
     var Future = global.hprose.Future;
     var parseuri = global.hprose.parseuri;
+    var isObjectEmpty = global.hprose.isObjectEmpty;
 
     var GETFUNCTIONS = new Uint8Array(1);
     GETFUNCTIONS[0] = Tags.TagEnd;
@@ -4807,10 +4820,7 @@
             if (typeof id === s_function) {
                 timeout = callback;
                 callback = id;
-                if (_id === null) {
-                    _id = autoId();
-                }
-                _id.then(function(id) {
+                autoId().then(function(id) {
                     subscribe(name, id, callback, timeout, failswitch);
                 });
                 return;
@@ -4924,12 +4934,30 @@
             else {
                 delTopic(_topics[name], id, callback);
             }
+            if (isObjectEmpty(_topics[name])) {
+                delete _topics[name];
+            }
+        }
+        function isSubscribed(name) {
+            return _topics.hasOwnProperty(name);
+        }
+        function subscribedList() {
+            var list = [];
+            for (var name in _topics) {
+                if (_topics.hasOwnProperty(name)) {
+                    list.push(name);
+                }
+            }
+            return list;
         }
         function getId() {
             return _id;
         }
         function autoId() {
-            return _invoke(self, '#', [], false);
+            if (_id === null) {
+                _id = _invoke(self, '#', [], false);
+            }
+            return _id;
         }
         autoId.sync = true;
         autoId.idempotent = true;
@@ -5027,6 +5055,8 @@
             ready: { value: ready },
             subscribe: { value: subscribe },
             unsubscribe: { value: unsubscribe },
+            isSubscribed: { value : isSubscribed },
+            subscribedList: { value : subscribedList },
             use: { value: use },
             batch: { value: batch },
             beforeFilter: { value: beforeFilter },

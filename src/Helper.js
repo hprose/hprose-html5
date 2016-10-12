@@ -94,10 +94,22 @@
         };
     }
 
+    var isObjectEmpty = function (obj) {
+        if (obj) {
+            for (var prop in obj) {
+                if (obj.hasOwnProperty(prop)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     global.hprose.generic = generic;
     global.hprose.toBinaryString = toBinaryString;
     global.hprose.toUint8Array = toUint8Array;
     global.hprose.toArray = toArray;
     global.hprose.parseuri = parseuri;
+    global.hprose.isObjectEmpty = isObjectEmpty;
 
 })(this || [eval][0]('this'));
