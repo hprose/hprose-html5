@@ -46,7 +46,7 @@
  *                                                        *
  * hprose helper for HTML5.                               *
  *                                                        *
- * LastModified: Sep 29, 2016                             *
+ * LastModified: Oct 12, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -3926,7 +3926,7 @@
  *                                                        *
  * hprose client for HTML5.                               *
  *                                                        *
- * LastModified: Sep 29, 2016                             *
+ * LastModified: Oct 12, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
