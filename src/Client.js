@@ -1024,14 +1024,12 @@
             }
         }
         function isSubscribed(name) {
-            return _topics.hasOwnProperty(name);
+            return !!_topics[name];
         }
         function subscribedList() {
             var list = [];
             for (var name in _topics) {
-                if (_topics.hasOwnProperty(name)) {
-                    list.push(name);
-                }
+                list.push(name);
             }
             return list;
         }
