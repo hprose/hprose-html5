@@ -1,4 +1,4 @@
-// Hprose for HTML5 v2.0.20
+// Hprose for HTML5 v2.0.21
 // Copyright (c) 2008-2016 http://hprose.com
 // Hprose is freely distributable under the MIT license.
 // For all details and documentation:
@@ -1796,7 +1796,7 @@
  *                                                        *
  * hprose BytesIO for HTML5.                              *
  *                                                        *
- * LastModified: Sep 29, 2016                             *
+ * LastModified: Oct 23, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -1881,21 +1881,17 @@
                 if (off < len) {
                     charCodes[i] = ((unit & 0x1F) << 6) |
                                     (bytes[off++] & 0x3F);
+                    break;
                 }
-                else {
-                    throw new Error('Unfinished UTF-8 octet sequence');
-                }
-                break;
+                throw new Error('Unfinished UTF-8 octet sequence');
             case 14:
                 if (off + 1 < len) {
                     charCodes[i] = ((unit & 0x0F) << 12) |
                                    ((bytes[off++] & 0x3F) << 6) |
                                    (bytes[off++] & 0x3F);
+                    break;
                 }
-                else {
-                    throw new Error('Unfinished UTF-8 octet sequence');
-                }
-                break;
+                throw new Error('Unfinished UTF-8 octet sequence');
             case 15:
                 if (off + 2 < len) {
                     var rune = (((unit & 0x07) << 18) |
@@ -1905,15 +1901,11 @@
                     if (0 <= rune && rune <= 0xFFFFF) {
                         charCodes[i++] = (((rune >> 10) & 0x03FF) | 0xD800);
                         charCodes[i] = ((rune & 0x03FF) | 0xDC00);
+                        break;
                     }
-                    else {
-                        throw new Error('Character outside valid Unicode range: 0x' + rune.toString(16));
-                    }
+                    throw new Error('Character outside valid Unicode range: 0x' + rune.toString(16));
                 }
-                else {
-                    throw new Error('Unfinished UTF-8 octet sequence');
-                }
-                break;
+                throw new Error('Unfinished UTF-8 octet sequence');
             default:
                 throw new Error('Bad UTF-8 encoding 0x' + unit.toString(16));
             }
@@ -1946,21 +1938,17 @@
                 if (off < len) {
                     charCodes[i] = ((unit & 0x1F) << 6) |
                                     (bytes[off++] & 0x3F);
+                    break;
                 }
-                else {
-                    throw new Error('Unfinished UTF-8 octet sequence');
-                }
-                break;
+                throw new Error('Unfinished UTF-8 octet sequence');
             case 14:
                 if (off + 1 < len) {
                     charCodes[i] = ((unit & 0x0F) << 12) |
                                    ((bytes[off++] & 0x3F) << 6) |
                                    (bytes[off++] & 0x3F);
+                    break;
                 }
-                else {
-                    throw new Error('Unfinished UTF-8 octet sequence');
-                }
-                break;
+                throw new Error('Unfinished UTF-8 octet sequence');
             case 15:
                 if (off + 2 < len) {
                     var rune = (((unit & 0x07) << 18) |
@@ -1970,15 +1958,11 @@
                     if (0 <= rune && rune <= 0xFFFFF) {
                         charCodes[i++] = (((rune >> 10) & 0x03FF) | 0xD800);
                         charCodes[i] = ((rune & 0x03FF) | 0xDC00);
+                        break;
                     }
-                    else {
-                        throw new Error('Character outside valid Unicode range: 0x' + rune.toString(16));
-                    }
+                    throw new Error('Character outside valid Unicode range: 0x' + rune.toString(16));
                 }
-                else {
-                    throw new Error('Unfinished UTF-8 octet sequence');
-                }
-                break;
+                throw new Error('Unfinished UTF-8 octet sequence');
             default:
                 throw new Error('Bad UTF-8 encoding 0x' + unit.toString(16));
             }
@@ -2025,19 +2009,15 @@
             case 13:
                 if (off < len) {
                     off++;
+                    break;
                 }
-                else {
-                    throw new Error('Unfinished UTF-8 octet sequence');
-                }
-                break;
+                throw new Error('Unfinished UTF-8 octet sequence');
             case 14:
                 if (off + 1 < len) {
                     off += 2;
+                    break;
                 }
-                else {
-                    throw new Error('Unfinished UTF-8 octet sequence');
-                }
-                break;
+                throw new Error('Unfinished UTF-8 octet sequence');
             case 15:
                 if (off + 2 < len) {
                     var rune = (((unit & 0x07) << 18) |
@@ -2046,15 +2026,11 @@
                                 (bytes[off++] & 0x3F)) - 0x10000;
                     if (0 <= rune && rune <= 0xFFFFF) {
                         i++;
+                        break;
                     }
-                    else {
-                        throw new Error('Character outside valid Unicode range: 0x' + rune.toString(16));
-                    }
+                    throw new Error('Character outside valid Unicode range: 0x' + rune.toString(16));
                 }
-                else {
-                    throw new Error('Unfinished UTF-8 octet sequence');
-                }
-                break;
+                throw new Error('Unfinished UTF-8 octet sequence');
             default:
                 throw new Error('Bad UTF-8 encoding 0x' + unit.toString(16));
             }
@@ -5137,7 +5113,7 @@
  *                                                        *
  * hprose http client for HTML5.                          *
  *                                                        *
- * LastModified: Sep 29, 2016                             *
+ * LastModified: Oct 23, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -5150,7 +5126,9 @@
     var BytesIO = global.hprose.BytesIO;
     var TimeoutError = global.TimeoutError;
     var localfile = (global.location !== undefined && global.location.protocol === 'file:');
-    var corsSupport = (!localfile && 'withCredentials' in new XMLHttpRequest());
+    var XMLHttpRequest = global.XMLHttpRequest;
+    var nativeXHR = (typeof(XMLHttpRequest) !== 'undefined');
+    var corsSupport = (!localfile && nativeXHR && 'withCredentials' in new XMLHttpRequest());
     var parseuri = global.hprose.parseuri;
 
     function noop(){}

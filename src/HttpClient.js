@@ -12,7 +12,7 @@
  *                                                        *
  * hprose http client for HTML5.                          *
  *                                                        *
- * LastModified: Sep 29, 2016                             *
+ * LastModified: Oct 23, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -25,7 +25,9 @@
     var BytesIO = global.hprose.BytesIO;
     var TimeoutError = global.TimeoutError;
     var localfile = (global.location !== undefined && global.location.protocol === 'file:');
-    var corsSupport = (!localfile && 'withCredentials' in new XMLHttpRequest());
+    var XMLHttpRequest = global.XMLHttpRequest;
+    var nativeXHR = (typeof(XMLHttpRequest) !== 'undefined');
+    var corsSupport = (!localfile && nativeXHR && 'withCredentials' in new XMLHttpRequest());
     var parseuri = global.hprose.parseuri;
 
     function noop(){}

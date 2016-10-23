@@ -1,7 +1,7 @@
 {
   "name": "hprose-html5",
   "filename": "hprose-html5.js",
-  "version": "2.0.20",
+  "version": "2.0.21",
   "description": "Hprose is a High Performance Remote Object Service Engine.",
   "homepage": "https://github.com/andot/hprose",
   "keywords": [
