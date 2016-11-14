@@ -12,7 +12,7 @@
  *                                                        *
  * hprose client for HTML5.                               *
  *                                                        *
- * LastModified: Oct 12, 2016                             *
+ * LastModified: Nov 14, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -101,15 +101,17 @@
         }
 
         function afterFilterHandler(request, context) {
-             return self.sendAndReceive(request, context);
+            return self.sendAndReceive(request, context).catchError(function(e) {
+                var response = retry(request, context);
+                if (response !== null) {
+                    return response;
+                }
+                throw e;
+            });
         }
 
         function sendAndReceive(request, context, onsuccess, onerror) {
-            _beforeFilterHandler(request, context)
-            .then(onsuccess, function(e) {
-                if (retry(request, context, onsuccess, onerror)) { return; }
-                onerror(e);
-            });
+            _beforeFilterHandler(request, context).then(onsuccess, onerror);
         }
 
         function failswitch() {
@@ -129,7 +131,7 @@
             _onfailswitch(self);
         }
 
-        function retry(data, context, onsuccess, onerror) {
+        function retry(data, context) {
             if (context.failswitch) {
                 failswitch();
             }
@@ -142,16 +144,15 @@
                     interval = 5000;
                 }
                 if (interval > 0) {
-                    global.setTimeout(function() {
-                        sendAndReceive(data, context, onsuccess, onerror);
-                    }, interval);
+                    return Future.delayed(interval, function() {
+                        return afterFilterHandler(data, context);
+                    });
                 }
                 else {
-                    sendAndReceive(data, context, onsuccess, onerror);
+                    return afterFilterHandler(data, context);
                 }
-                return true;
             }
-            return false;
+            return null;
         }
 
         function initService(stub) {
