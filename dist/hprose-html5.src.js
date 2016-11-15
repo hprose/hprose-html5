@@ -1,4 +1,4 @@
-// Hprose for HTML5 v2.0.22
+// Hprose for HTML5 v2.0.23
 // Copyright (c) 2008-2016 http://hprose.com
 // Hprose is freely distributable under the MIT license.
 // For all details and documentation:
@@ -1139,7 +1139,7 @@
     }
 
     function isPromise(obj) {
-        return isFuture(obj) || (hasPromise && (obj instanceof global.Promise) && (typeof (obj.then === 'function')));
+        return 'function' == typeof obj.then;
     }
 
     function toPromise(obj) {
