@@ -55,7 +55,7 @@
     }
 
     function isPromise(obj) {
-        return 'function' == typeof obj.then;
+        return 'function' === typeof obj.then;
     }
 
     function toPromise(obj) {
