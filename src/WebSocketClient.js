@@ -17,14 +17,14 @@
  *                                                        *
 \**********************************************************/
 
-(function (global, undefined) {
+(function (hprose, global, undefined) {
     'use strict';
 
-    var BytesIO = global.hprose.BytesIO;
-    var Client = global.hprose.Client;
-    var Future = global.hprose.Future;
+    var BytesIO = hprose.BytesIO;
+    var Client = hprose.Client;
+    var Future = hprose.Future;
     var TimeoutError = global.TimeoutError;
-    var parseuri = global.hprose.parseuri;
+    var parseuri = hprose.parseuri;
 
     var WebSocket = global.WebSocket || global.MozWebSocket;
 
@@ -177,6 +177,6 @@
 
     Object.defineProperty(WebSocketClient, 'create', { value: create });
 
-    global.hprose.WebSocketClient = WebSocketClient;
+    hprose.WebSocketClient = WebSocketClient;
 
-})(this || [eval][0]('this'));
+})(hprose, hprose.global);

@@ -12,19 +12,19 @@
  *                                                        *
  * APICloud tcp socket for HTML5.                         *
  *                                                        *
- * LastModified: Sep 29, 2016                             *
+ * LastModified: Nov 18, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
 
-(function (global, undefined) {
+(function (hprose, global, undefined) {
     'use strict';
 
-    var Future = global.hprose.Future;
+    var Future = hprose.Future;
     var atob = global.atob;
     var btoa = global.btoa;
-    var toUint8Array = global.hprose.toUint8Array;
-    var toBinaryString = global.hprose.toBinaryString;
+    var toUint8Array = hprose.toUint8Array;
+    var toBinaryString = hprose.toBinaryString;
 
     function noop(){}
 
@@ -127,6 +127,6 @@
         } }
     });
 
-    global.hprose.APICloudTcpSocket = APICloudTcpSocket;
+    hprose.APICloudTcpSocket = APICloudTcpSocket;
 
-})(this || [eval][0]('this'));
+})(hprose, hprose.global);

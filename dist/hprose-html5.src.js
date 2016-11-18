@@ -19,17 +19,22 @@
  *                                                        *
  * hprose init for HTML5.                                 *
  *                                                        *
- * LastModified: Sep 29, 2016                             *
+ * LastModified: Nov 18, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
 
-(function (global) {
-    'use strict';
+var hprose = Object.create(null);
 
-    global.hprose = Object.create(null);
-
-})(this || [eval][0]('this'));
+/* global global, window, self */
+hprose.global = (
+    // Among the various tricks for obtaining a reference to the global
+    // object, this seems to be the most reliable technique that does not
+    // use indirect eval (which violates Content Security Policy).
+    typeof global === "object" ? global :
+    typeof window === "object" ? window :
+    typeof self === "object" ? self : this
+);
 
 /**********************************************************\
 |                                                          |
@@ -46,12 +51,12 @@
  *                                                        *
  * hprose helper for HTML5.                               *
  *                                                        *
- * LastModified: Oct 12, 2016                             *
+ * LastModified: Nov 18, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
 
-(function (global, undefined) {
+(function (hprose, undefined) {
     'use strict';
 
     function generic(method) {
@@ -137,14 +142,14 @@
         return true;
     }
 
-    global.hprose.generic = generic;
-    global.hprose.toBinaryString = toBinaryString;
-    global.hprose.toUint8Array = toUint8Array;
-    global.hprose.toArray = toArray;
-    global.hprose.parseuri = parseuri;
-    global.hprose.isObjectEmpty = isObjectEmpty;
+    hprose.generic = generic;
+    hprose.toBinaryString = toBinaryString;
+    hprose.toUint8Array = toUint8Array;
+    hprose.toArray = toArray;
+    hprose.parseuri = parseuri;
+    hprose.isObjectEmpty = isObjectEmpty;
 
-})(this || [eval][0]('this'));
+})(hprose);
 
 /**********************************************************\
 |                                                          |
@@ -161,12 +166,12 @@
  *                                                        *
  * Polyfill for JavaScript.                               *
  *                                                        *
- * LastModified: Sep 29, 2016                             *
+ * LastModified: Nov 18, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
 
-(function (global, undefined) {
+(function (generic, undefined) {
     'use strict';
     /* Function */
     if (!Function.prototype.bind) {
@@ -497,8 +502,6 @@
             };
         })() });
     }
-    /* Generic methods */
-    var generic = global.hprose.generic;
 
     function genericMethods(obj, properties) {
         var proto = obj.prototype;
@@ -561,7 +564,7 @@
         'slice'
     ]);
 
-})(this || [eval][0]('this'));
+})(hprose.generic);
 
 /**********************************************************\
 |                                                          |
@@ -578,7 +581,7 @@
  *                                                        *
  * Harmony Maps for HTML5.                                *
  *                                                        *
- * LastModified: Sep 29, 2016                             *
+ * LastModified: Nov 18, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -862,7 +865,7 @@
             return m;
         };
     }
-})(this || [eval][0]('this'));
+})(hprose.global);
 
 /**********************************************************\
 |                                                          |
@@ -879,26 +882,24 @@
  *                                                        *
  * TimeoutError for HTML5.                                *
  *                                                        *
- * LastModified: Sep 29, 2016                             *
+ * LastModified: Nov 18, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
 
 (function(global) {
-    if (typeof global.TimeoutError !== 'function') {
-        var TimeoutError = function(message) {
-            Error.call(this);
-            this.message = message;
-            this.name = TimeoutError.name;
-            if (typeof Error.captureStackTrace === 'function') {
-                Error.captureStackTrace(this, TimeoutError);
-            }
+    function TimeoutError(message) {
+        Error.call(this);
+        this.message = message;
+        this.name = TimeoutError.name;
+        if (typeof Error.captureStackTrace === 'function') {
+            Error.captureStackTrace(this, TimeoutError);
         }
-        TimeoutError.prototype = Object.create(Error.prototype);
-        TimeoutError.prototype.constructor = TimeoutError;
-        global.TimeoutError = TimeoutError;
     }
-})(this || [eval][0]('this'));
+    TimeoutError.prototype = Object.create(Error.prototype);
+    TimeoutError.prototype.constructor = TimeoutError;
+    global.TimeoutError = TimeoutError;
+})(hprose.global);
 /**********************************************************\
 |                                                          |
 |                          hprose                          |
@@ -914,7 +915,7 @@
  *                                                        *
  * setImmediate for HTML5.                                *
  *                                                        *
- * LastModified: Sep 29, 2016                             *
+ * LastModified: Nov 18, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -1080,7 +1081,7 @@
     }
 
     attachTo.clearImmediate = clear;
-})(this || [eval][0]('this'));
+})(hprose.global);
 
 /**********************************************************\
 |                                                          |
@@ -1102,7 +1103,7 @@
  *                                                        *
 \**********************************************************/
 
-(function (global, undefined) {
+(function (hprose, global, undefined) {
     'use strict';
 
     var PENDING = 0;
@@ -1901,12 +1902,12 @@
         } }
     });
 
-    global.hprose.Future = Future;
+    hprose.Future = Future;
 
-    global.hprose.thunkify = thunkify;
-    global.hprose.promisify = promisify;
-    global.hprose.co = co;
-    global.hprose.co.wrap = global.hprose.wrap = wrap;
+    hprose.thunkify = thunkify;
+    hprose.promisify = promisify;
+    hprose.co = co;
+    hprose.co.wrap = hprose.wrap = wrap;
 
     function Completer() {
         var future = new Future();
@@ -1920,13 +1921,13 @@
         });
     }
 
-    global.hprose.Completer = Completer;
+    hprose.Completer = Completer;
 
-    global.hprose.resolved = value;
+    hprose.resolved = value;
 
-    global.hprose.rejected = error;
+    hprose.rejected = error;
 
-    global.hprose.deferred = function() {
+    hprose.deferred = function() {
         var self = new Future();
         return Object.create(null, {
             promise: { value: self },
@@ -1937,22 +1938,24 @@
 
     if (hasPromise) { return; }
 
-    global.Promise = function(executor) {
+    function MyPromise(executor) {
         Future.call(this);
         executor(this.resolve, this.reject);
-    };
+    }
 
-    global.Promise.prototype = Object.create(Future.prototype);
-    global.Promise.prototype.constructor = Future;
+    MyPromise.prototype = Object.create(Future.prototype);
+    MyPromise.prototype.constructor = Future;
 
-    Object.defineProperties(global.Promise, {
+    Object.defineProperties(MyPromise, {
         all: { value: all },
         race: { value: race },
         resolve: { value: value },
         reject: { value: error }
     });
 
-})(this || [eval][0]('this'));
+    global.Promise = MyPromise;
+
+})(hprose, hprose.global);
 
 /**********************************************************\
 |                                                          |
@@ -1969,15 +1972,15 @@
  *                                                        *
  * hprose BytesIO for HTML5.                              *
  *                                                        *
- * LastModified: Oct 23, 2016                             *
+ * LastModified: Nov 18, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
 
-(function (global, undefined) {
+(function (hprose, undefined) {
     'use strict';
 
-    var toBinaryString = global.hprose.toBinaryString;
+    var toBinaryString = hprose.toBinaryString;
 
     var _EMPTY_BYTES = new Uint8Array(0);
     var _INIT_SIZE = 1024;
@@ -2550,9 +2553,9 @@
 
     Object.defineProperty(BytesIO, 'toString', { value: toString });
 
-    global.hprose.BytesIO = BytesIO;
+    hprose.BytesIO = BytesIO;
 
-})(this || [eval][0]('this'));
+})(hprose);
 
 /**********************************************************\
 |                                                          |
@@ -2568,15 +2571,15 @@
  *                                                        *
  * hprose tags enum for HTML5.                            *
  *                                                        *
- * LastModified: Sep 29, 2016                             *
+ * LastModified: Nov 18, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
 
-(function (global) {
+(function (hprose) {
     'use strict';
 
-    global.hprose.Tags = {
+    hprose.Tags = {
         /* Serialize Tags */
         TagInteger     : 0x69, //  'i'
         TagLong        : 0x6C, //  'l'
@@ -2615,7 +2618,7 @@
         TagError       : 0x45, //  'E'
         TagEnd         : 0x7A  //  'z'
     };
-})(this || [eval][0]('this'));
+})(hprose);
 
 /**********************************************************\
 |                                                          |
@@ -2632,12 +2635,12 @@
  *                                                        *
  * hprose ClassManager for HTML5.                         *
  *                                                        *
- * LastModified: Sep 29, 2016                             *
+ * LastModified: Nov 18, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
 
-(function (global) {
+(function (hprose, global) {
     'use strict';
 
     var WeakMap = global.WeakMap;
@@ -2658,17 +2661,17 @@
         return classCache[alias];
     }
 
-    global.hprose.ClassManager = Object.create(null, {
+    hprose.ClassManager = Object.create(null, {
         register: { value: register },
         getClassAlias: { value: getClassAlias },
         getClass: { value: getClass }
     });
 
-    global.hprose.register = register;
+    hprose.register = register;
 
     register(Object, 'Object');
 
-})(this || [eval][0]('this'));
+})(hprose, hprose.global);
 
 /**********************************************************\
 |                                                          |
@@ -2685,18 +2688,18 @@
  *                                                        *
  * hprose Writer for HTML5.                               *
  *                                                        *
- * LastModified: Sep 29, 2016                             *
+ * LastModified: Nov 18, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
 
-(function (global, undefined) {
+(function (hprose, global, undefined) {
     'use strict';
 
     var Map = global.Map;
-    var BytesIO = global.hprose.BytesIO;
-    var Tags = global.hprose.Tags;
-    var ClassManager = global.hprose.ClassManager;
+    var BytesIO = hprose.BytesIO;
+    var Tags = hprose.Tags;
+    var ClassManager = hprose.ClassManager;
 
     function getClassName(obj) {
         var cls = obj.constructor;
@@ -3224,9 +3227,9 @@
         } }
     });
 
-    global.hprose.Writer = Writer;
+    hprose.Writer = Writer;
 
-})(this || [eval][0]('this'));
+})(hprose, hprose.global);
 
 /**********************************************************\
 |                                                          |
@@ -3243,18 +3246,18 @@
  *                                                        *
  * hprose Reader for HTML5.                               *
  *                                                        *
- * LastModified: Sep 29, 2016                             *
+ * LastModified: Nov 18, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
 
-(function (global, undefined) {
+(function (hprose, global, undefined) {
     'use strict';
 
     var Map = global.Map;
-    var BytesIO = global.hprose.BytesIO;
-    var Tags = global.hprose.Tags;
-    var ClassManager = global.hprose.ClassManager;
+    var BytesIO = hprose.BytesIO;
+    var Tags = hprose.Tags;
+    var ClassManager = hprose.ClassManager;
 
     function unexpectedTag(tag, expectTags) {
         if (tag && expectTags) {
@@ -3406,7 +3409,7 @@
         });
     }
 
-    global.hprose.RawReader = RawReader;
+    hprose.RawReader = RawReader;
 
     var fakeReaderRefer = Object.create(null, {
         set: { value: function() {} },
@@ -3968,8 +3971,8 @@
         } }
     });
 
-    global.hprose.Reader = Reader;
-})(this || [eval][0]('this'));
+    hprose.Reader = Reader;
+})(hprose, hprose.global);
 
 /**********************************************************\
 |                                                          |
@@ -3986,17 +3989,17 @@
  *                                                        *
  * hprose Formatter for HTML5.                            *
  *                                                        *
- * LastModified: Sep 29, 2016                             *
+ * LastModified: Nov 18, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
 
-(function (global) {
+(function (hprose) {
     'use strict';
 
-    var BytesIO = global.hprose.BytesIO;
-    var Writer = global.hprose.Writer;
-    var Reader = global.hprose.Reader;
+    var BytesIO = hprose.BytesIO;
+    var Writer = hprose.Writer;
+    var Reader = hprose.Reader;
 
     function serialize(value, simple) {
         var stream = new BytesIO();
@@ -4012,18 +4015,18 @@
         return new Reader(stream, simple, useHarmonyMap).unserialize();
     }
 
-    global.hprose.Formatter = {
+    hprose.Formatter = {
         serialize: function (value, simple) {
             return serialize(value, simple).bytes;
         },
         unserialize: unserialize
     };
 
-    global.hprose.serialize = serialize;
+    hprose.serialize = serialize;
 
-    global.hprose.unserialize = unserialize;
+    hprose.unserialize = unserialize;
 
-})(this || [eval][0]('this'));
+})(hprose);
 
 /**********************************************************\
 |                                                          |
@@ -4040,26 +4043,26 @@
  *                                                        *
  * hprose ResultMode for HTML5.                           *
  *                                                        *
- * LastModified: Sep 29, 2016                             *
+ * LastModified: Nov 18, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
 
-(function (global) {
+(function (hprose) {
     'use strict';
 
-    global.hprose.ResultMode = {
+    hprose.ResultMode = {
         Normal: 0,
         Serialized: 1,
         Raw: 2,
         RawWithEndTag: 3
     };
-    global.hprose.Normal        = global.hprose.ResultMode.Normal;
-    global.hprose.Serialized    = global.hprose.ResultMode.Serialized;
-    global.hprose.Raw           = global.hprose.ResultMode.Raw;
-    global.hprose.RawWithEndTag = global.hprose.ResultMode.RawWithEndTag;
+    hprose.Normal        = hprose.ResultMode.Normal;
+    hprose.Serialized    = hprose.ResultMode.Serialized;
+    hprose.Raw           = hprose.ResultMode.Raw;
+    hprose.RawWithEndTag = hprose.ResultMode.RawWithEndTag;
 
-})(this || [eval][0]('this'));
+})(hprose);
 
 /**********************************************************\
 |                                                          |
@@ -4075,23 +4078,23 @@
  *                                                        *
  * hprose client for HTML5.                               *
  *                                                        *
- * LastModified: Nov 14, 2016                             *
+ * LastModified: Nov 18, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
 
-(function (global, undefined) {
+(function (hprose, global, undefined) {
     'use strict';
 
     var setImmediate = global.setImmediate;
-    var Tags = global.hprose.Tags;
-    var ResultMode = global.hprose.ResultMode;
-    var BytesIO = global.hprose.BytesIO;
-    var Writer = global.hprose.Writer;
-    var Reader = global.hprose.Reader;
-    var Future = global.hprose.Future;
-    var parseuri = global.hprose.parseuri;
-    var isObjectEmpty = global.hprose.isObjectEmpty;
+    var Tags = hprose.Tags;
+    var ResultMode = hprose.ResultMode;
+    var BytesIO = hprose.BytesIO;
+    var Writer = hprose.Writer;
+    var Reader = hprose.Reader;
+    var Future = hprose.Future;
+    var parseuri = hprose.parseuri;
+    var isObjectEmpty = hprose.isObjectEmpty;
 
     var GETFUNCTIONS = new Uint8Array(1);
     GETFUNCTIONS[0] = Tags.TagEnd;
@@ -5246,15 +5249,15 @@
 
     function create(uri, functions, settings) {
         try {
-            return global.hprose.HttpClient.create(uri, functions, settings);
+            return hprose.HttpClient.create(uri, functions, settings);
         }
         catch(e) {}
         try {
-            return global.hprose.TcpClient.create(uri, functions, settings);
+            return hprose.TcpClient.create(uri, functions, settings);
         }
         catch(e) {}
         try {
-            return global.hprose.WebSocketClient.create(uri, functions, settings);
+            return hprose.WebSocketClient.create(uri, functions, settings);
         }
         catch(e) {}
         if (typeof uri === 'string') {
@@ -5269,9 +5272,9 @@
 
     Object.defineProperty(Client, 'create', { value: create });
 
-    global.hprose.Client = Client;
+    hprose.Client = Client;
 
-})(this || [eval][0]('this'));
+})(hprose, hprose.global);
 
 /**********************************************************\
 |                                                          |
@@ -5287,23 +5290,23 @@
  *                                                        *
  * hprose http client for HTML5.                          *
  *                                                        *
- * LastModified: Oct 23, 2016                             *
+ * LastModified: Nov 18, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
 
-(function (global, undefined) {
+(function (hprose, global, undefined) {
     'use strict';
 
-    var Client = global.hprose.Client;
-    var Future = global.hprose.Future;
-    var BytesIO = global.hprose.BytesIO;
+    var Client = hprose.Client;
+    var Future = hprose.Future;
+    var BytesIO = hprose.BytesIO;
     var TimeoutError = global.TimeoutError;
     var localfile = (global.location !== undefined && global.location.protocol === 'file:');
     var XMLHttpRequest = global.XMLHttpRequest;
     var nativeXHR = (typeof(XMLHttpRequest) !== 'undefined');
     var corsSupport = (!localfile && nativeXHR && 'withCredentials' in new XMLHttpRequest());
-    var parseuri = global.hprose.parseuri;
+    var parseuri = hprose.parseuri;
 
     function noop(){}
 
@@ -5462,9 +5465,9 @@
 
     Object.defineProperty(HttpClient, 'create', { value: create });
 
-    global.hprose.HttpClient = HttpClient;
+    hprose.HttpClient = HttpClient;
 
-})(this || [eval][0]('this'));
+})(hprose, hprose.global);
 
 /**********************************************************\
 |                                                          |
@@ -5485,14 +5488,14 @@
  *                                                        *
 \**********************************************************/
 
-(function (global, undefined) {
+(function (hprose, global, undefined) {
     'use strict';
 
-    var BytesIO = global.hprose.BytesIO;
-    var Client = global.hprose.Client;
-    var Future = global.hprose.Future;
+    var BytesIO = hprose.BytesIO;
+    var Client = hprose.Client;
+    var Future = hprose.Future;
     var TimeoutError = global.TimeoutError;
-    var parseuri = global.hprose.parseuri;
+    var parseuri = hprose.parseuri;
 
     var WebSocket = global.WebSocket || global.MozWebSocket;
 
@@ -5645,9 +5648,9 @@
 
     Object.defineProperty(WebSocketClient, 'create', { value: create });
 
-    global.hprose.WebSocketClient = WebSocketClient;
+    hprose.WebSocketClient = WebSocketClient;
 
-})(this || [eval][0]('this'));
+})(hprose, hprose.global);
 
 /**********************************************************\
 |                                                          |
@@ -5663,15 +5666,15 @@
  *                                                        *
  * chrome tcp socket for JavaScript.                      *
  *                                                        *
- * LastModified: Sep 29, 2016                             *
+ * LastModified: Nov 18, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
 
-(function (global, undefined) {
+(function (hprose, global, undefined) {
     'use strict';
 
-    var Future = global.hprose.Future;
+    var Future = hprose.Future;
 
     function noop(){}
 
@@ -5827,9 +5830,9 @@
         } }
     });
 
-    global.hprose.ChromeTcpSocket = ChromeTcpSocket;
+    hprose.ChromeTcpSocket = ChromeTcpSocket;
 
-})(this || [eval][0]('this'));
+})(hprose, hprose.global);
 
 /**********************************************************\
 |                                                          |
@@ -5845,19 +5848,19 @@
  *                                                        *
  * APICloud tcp socket for HTML5.                         *
  *                                                        *
- * LastModified: Sep 29, 2016                             *
+ * LastModified: Nov 18, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
 
-(function (global, undefined) {
+(function (hprose, global, undefined) {
     'use strict';
 
-    var Future = global.hprose.Future;
+    var Future = hprose.Future;
     var atob = global.atob;
     var btoa = global.btoa;
-    var toUint8Array = global.hprose.toUint8Array;
-    var toBinaryString = global.hprose.toBinaryString;
+    var toUint8Array = hprose.toUint8Array;
+    var toBinaryString = hprose.toBinaryString;
 
     function noop(){}
 
@@ -5960,9 +5963,9 @@
         } }
     });
 
-    global.hprose.APICloudTcpSocket = APICloudTcpSocket;
+    hprose.APICloudTcpSocket = APICloudTcpSocket;
 
-})(this || [eval][0]('this'));
+})(hprose, hprose.global);
 
 /**********************************************************\
 |                                                          |
@@ -5978,21 +5981,21 @@
  *                                                        *
  * hprose tcp client for HTML5.                           *
  *                                                        *
- * LastModified: Sep 29, 2016                             *
+ * LastModified: Nov 18, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
 
-(function (global, undefined) {
+(function (hprose, global, undefined) {
     'use strict';
 
-    var ChromeTcpSocket = global.hprose.ChromeTcpSocket;
-    var APICloudTcpSocket = global.hprose.APICloudTcpSocket;
-    var Client = global.hprose.Client;
-    var BytesIO = global.hprose.BytesIO;
-    var Future = global.hprose.Future;
+    var ChromeTcpSocket = hprose.ChromeTcpSocket;
+    var APICloudTcpSocket = hprose.APICloudTcpSocket;
+    var Client = hprose.Client;
+    var BytesIO = hprose.BytesIO;
+    var Future = hprose.Future;
     var TimeoutError = global.TimeoutError;
-    var parseuri = global.hprose.parseuri;
+    var parseuri = hprose.parseuri;
 
     function noop(){}
 
@@ -6431,9 +6434,9 @@
 
     Object.defineProperty(TcpClient, 'create', { value: create });
 
-    global.hprose.TcpClient = TcpClient;
+    hprose.TcpClient = TcpClient;
 
-})(this || [eval][0]('this'));
+})(hprose, hprose.global);
 
 /**********************************************************\
 |                                                          |
@@ -6450,19 +6453,19 @@
  *                                                        *
  * jsonrpc client filter for JavaScript.                  *
  *                                                        *
- * LastModified: Sep 29, 2016                             *
+ * LastModified: Nov 18, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
 
-(function (global) {
+/* global JSON */
+(function (hprose) {
     'use strict';
 
-    var Tags = global.hprose.Tags;
-    var BytesIO = global.hprose.BytesIO;
-    var Writer = global.hprose.Writer;
-    var Reader = global.hprose.Reader;
-    var JSON = global.JSON;
+    var Tags = hprose.Tags;
+    var BytesIO = hprose.BytesIO;
+    var Writer = hprose.Writer;
+    var Reader = hprose.Reader;
 
     var s_id = 1;
 
@@ -6526,9 +6529,9 @@
         return JSON.stringify(requests[0]);
     };
 
-    global.hprose.JSONRPCClientFilter = JSONRPCClientFilter;
+    hprose.JSONRPCClientFilter = JSONRPCClientFilter;
 
-})(this || [eval][0]('this'));
+})(hprose);
 
 /**********************************************************\
 |                                                          |
@@ -6545,51 +6548,51 @@
  *                                                        *
  * hprose CommonJS/AMD/CMD loader for HTML5.              *
  *                                                        *
- * LastModified: Sep 29, 2016                             *
+ * LastModified: Nov 18, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
 
 /* global define, module */
-(function (global) {
+(function (hprose) {
     'use strict';
 
-    global.hprose.common = {
-        Completer: global.hprose.Completer,
-        Future: global.hprose.Future,
-        ResultMode: global.hprose.ResultMode
+    hprose.common = {
+        Completer: hprose.Completer,
+        Future: hprose.Future,
+        ResultMode: hprose.ResultMode
     };
 
-    global.hprose.io = {
-        BytesIO: global.hprose.BytesIO,
-        ClassManager: global.hprose.ClassManager,
-        Tags: global.hprose.Tags,
-        RawReader: global.hprose.RawReader,
-        Reader: global.hprose.Reader,
-        Writer: global.hprose.Writer,
-        Formatter: global.hprose.Formatter
+    hprose.io = {
+        BytesIO: hprose.BytesIO,
+        ClassManager: hprose.ClassManager,
+        Tags: hprose.Tags,
+        RawReader: hprose.RawReader,
+        Reader: hprose.Reader,
+        Writer: hprose.Writer,
+        Formatter: hprose.Formatter
     };
 
-    global.hprose.client = {
-        Client: global.hprose.Client,
-        HttpClient: global.hprose.HttpClient,
-        TcpClient: global.hprose.TcpClient,
-        WebSocketClient: global.hprose.WebSocketClient
+    hprose.client = {
+        Client: hprose.Client,
+        HttpClient: hprose.HttpClient,
+        TcpClient: hprose.TcpClient,
+        WebSocketClient: hprose.WebSocketClient
     };
 
-    global.hprose.filter = {
-        JSONRPCClientFilter: global.hprose.JSONRPCClientFilter
+    hprose.filter = {
+        JSONRPCClientFilter: hprose.JSONRPCClientFilter
     };
 
     if (typeof define === 'function') {
         if (define.cmd) {
-            define('hprose', [], global.hprose);
+            define('hprose', [], hprose);
         }
         else if (define.amd) {
-            define('hprose', [], function() { return global.hprose; });
+            define('hprose', [], function() { return hprose; });
         }
     }
     if (typeof module === 'object') {
-        module.exports = global.hprose;
+        module.exports = hprose;
     }
-})(this || [eval][0]('this'));
+})(hprose);

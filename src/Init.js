@@ -13,14 +13,19 @@
  *                                                        *
  * hprose init for HTML5.                                 *
  *                                                        *
- * LastModified: Sep 29, 2016                             *
+ * LastModified: Nov 18, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
 
-(function (global) {
-    'use strict';
+var hprose = Object.create(null);
 
-    global.hprose = Object.create(null);
-
-})(this || [eval][0]('this'));
+/* global global, window, self */
+hprose.global = (
+    // Among the various tricks for obtaining a reference to the global
+    // object, this seems to be the most reliable technique that does not
+    // use indirect eval (which violates Content Security Policy).
+    typeof global === "object" ? global :
+    typeof window === "object" ? window :
+    typeof self === "object" ? self : this
+);

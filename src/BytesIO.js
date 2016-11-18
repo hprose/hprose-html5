@@ -13,15 +13,15 @@
  *                                                        *
  * hprose BytesIO for HTML5.                              *
  *                                                        *
- * LastModified: Oct 23, 2016                             *
+ * LastModified: Nov 18, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
 
-(function (global, undefined) {
+(function (hprose, undefined) {
     'use strict';
 
-    var toBinaryString = global.hprose.toBinaryString;
+    var toBinaryString = hprose.toBinaryString;
 
     var _EMPTY_BYTES = new Uint8Array(0);
     var _INIT_SIZE = 1024;
@@ -594,6 +594,6 @@
 
     Object.defineProperty(BytesIO, 'toString', { value: toString });
 
-    global.hprose.BytesIO = BytesIO;
+    hprose.BytesIO = BytesIO;
 
-})(this || [eval][0]('this'));
+})(hprose);

@@ -13,51 +13,51 @@
  *                                                        *
  * hprose CommonJS/AMD/CMD loader for HTML5.              *
  *                                                        *
- * LastModified: Sep 29, 2016                             *
+ * LastModified: Nov 18, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
 
 /* global define, module */
-(function (global) {
+(function (hprose) {
     'use strict';
 
-    global.hprose.common = {
-        Completer: global.hprose.Completer,
-        Future: global.hprose.Future,
-        ResultMode: global.hprose.ResultMode
+    hprose.common = {
+        Completer: hprose.Completer,
+        Future: hprose.Future,
+        ResultMode: hprose.ResultMode
     };
 
-    global.hprose.io = {
-        BytesIO: global.hprose.BytesIO,
-        ClassManager: global.hprose.ClassManager,
-        Tags: global.hprose.Tags,
-        RawReader: global.hprose.RawReader,
-        Reader: global.hprose.Reader,
-        Writer: global.hprose.Writer,
-        Formatter: global.hprose.Formatter
+    hprose.io = {
+        BytesIO: hprose.BytesIO,
+        ClassManager: hprose.ClassManager,
+        Tags: hprose.Tags,
+        RawReader: hprose.RawReader,
+        Reader: hprose.Reader,
+        Writer: hprose.Writer,
+        Formatter: hprose.Formatter
     };
 
-    global.hprose.client = {
-        Client: global.hprose.Client,
-        HttpClient: global.hprose.HttpClient,
-        TcpClient: global.hprose.TcpClient,
-        WebSocketClient: global.hprose.WebSocketClient
+    hprose.client = {
+        Client: hprose.Client,
+        HttpClient: hprose.HttpClient,
+        TcpClient: hprose.TcpClient,
+        WebSocketClient: hprose.WebSocketClient
     };
 
-    global.hprose.filter = {
-        JSONRPCClientFilter: global.hprose.JSONRPCClientFilter
+    hprose.filter = {
+        JSONRPCClientFilter: hprose.JSONRPCClientFilter
     };
 
     if (typeof define === 'function') {
         if (define.cmd) {
-            define('hprose', [], global.hprose);
+            define('hprose', [], hprose);
         }
         else if (define.amd) {
-            define('hprose', [], function() { return global.hprose; });
+            define('hprose', [], function() { return hprose; });
         }
     }
     if (typeof module === 'object') {
-        module.exports = global.hprose;
+        module.exports = hprose;
     }
-})(this || [eval][0]('this'));
+})(hprose);

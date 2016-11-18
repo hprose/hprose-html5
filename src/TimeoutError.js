@@ -13,23 +13,21 @@
  *                                                        *
  * TimeoutError for HTML5.                                *
  *                                                        *
- * LastModified: Sep 29, 2016                             *
+ * LastModified: Nov 18, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
 
 (function(global) {
-    if (typeof global.TimeoutError !== 'function') {
-        var TimeoutError = function(message) {
-            Error.call(this);
-            this.message = message;
-            this.name = TimeoutError.name;
-            if (typeof Error.captureStackTrace === 'function') {
-                Error.captureStackTrace(this, TimeoutError);
-            }
+    function TimeoutError(message) {
+        Error.call(this);
+        this.message = message;
+        this.name = TimeoutError.name;
+        if (typeof Error.captureStackTrace === 'function') {
+            Error.captureStackTrace(this, TimeoutError);
         }
-        TimeoutError.prototype = Object.create(Error.prototype);
-        TimeoutError.prototype.constructor = TimeoutError;
-        global.TimeoutError = TimeoutError;
     }
-})(this || [eval][0]('this'));
+    TimeoutError.prototype = Object.create(Error.prototype);
+    TimeoutError.prototype.constructor = TimeoutError;
+    global.TimeoutError = TimeoutError;
+})(hprose.global);

@@ -13,23 +13,23 @@
  *                                                        *
  * hprose ResultMode for HTML5.                           *
  *                                                        *
- * LastModified: Sep 29, 2016                             *
+ * LastModified: Nov 18, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
 
-(function (global) {
+(function (hprose) {
     'use strict';
 
-    global.hprose.ResultMode = {
+    hprose.ResultMode = {
         Normal: 0,
         Serialized: 1,
         Raw: 2,
         RawWithEndTag: 3
     };
-    global.hprose.Normal        = global.hprose.ResultMode.Normal;
-    global.hprose.Serialized    = global.hprose.ResultMode.Serialized;
-    global.hprose.Raw           = global.hprose.ResultMode.Raw;
-    global.hprose.RawWithEndTag = global.hprose.ResultMode.RawWithEndTag;
+    hprose.Normal        = hprose.ResultMode.Normal;
+    hprose.Serialized    = hprose.ResultMode.Serialized;
+    hprose.Raw           = hprose.ResultMode.Raw;
+    hprose.RawWithEndTag = hprose.ResultMode.RawWithEndTag;
 
-})(this || [eval][0]('this'));
+})(hprose);

@@ -12,7 +12,7 @@
  *                                                        *
  * Base64 for HTML5.                                      *
  *                                                        *
- * LastModified: Sep 29, 2016                             *
+ * LastModified: Nov 18, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -131,4 +131,4 @@
         })();
     }
 
-})(this || [eval][0]('this'));
+})(hprose.global);

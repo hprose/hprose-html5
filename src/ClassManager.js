@@ -13,12 +13,12 @@
  *                                                        *
  * hprose ClassManager for HTML5.                         *
  *                                                        *
- * LastModified: Sep 29, 2016                             *
+ * LastModified: Nov 18, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
 
-(function (global) {
+(function (hprose, global) {
     'use strict';
 
     var WeakMap = global.WeakMap;
@@ -39,14 +39,14 @@
         return classCache[alias];
     }
 
-    global.hprose.ClassManager = Object.create(null, {
+    hprose.ClassManager = Object.create(null, {
         register: { value: register },
         getClassAlias: { value: getClassAlias },
         getClass: { value: getClass }
     });
 
-    global.hprose.register = register;
+    hprose.register = register;
 
     register(Object, 'Object');
 
-})(this || [eval][0]('this'));
+})(hprose, hprose.global);

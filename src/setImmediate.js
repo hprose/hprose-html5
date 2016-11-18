@@ -13,7 +13,7 @@
  *                                                        *
  * setImmediate for HTML5.                                *
  *                                                        *
- * LastModified: Sep 29, 2016                             *
+ * LastModified: Nov 18, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -179,4 +179,4 @@
     }
 
     attachTo.clearImmediate = clear;
-})(this || [eval][0]('this'));
+})(hprose.global);

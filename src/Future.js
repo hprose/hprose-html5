@@ -18,7 +18,7 @@
  *                                                        *
 \**********************************************************/
 
-(function (global, undefined) {
+(function (hprose, global, undefined) {
     'use strict';
 
     var PENDING = 0;
@@ -817,12 +817,12 @@
         } }
     });
 
-    global.hprose.Future = Future;
+    hprose.Future = Future;
 
-    global.hprose.thunkify = thunkify;
-    global.hprose.promisify = promisify;
-    global.hprose.co = co;
-    global.hprose.co.wrap = global.hprose.wrap = wrap;
+    hprose.thunkify = thunkify;
+    hprose.promisify = promisify;
+    hprose.co = co;
+    hprose.co.wrap = hprose.wrap = wrap;
 
     function Completer() {
         var future = new Future();
@@ -836,13 +836,13 @@
         });
     }
 
-    global.hprose.Completer = Completer;
+    hprose.Completer = Completer;
 
-    global.hprose.resolved = value;
+    hprose.resolved = value;
 
-    global.hprose.rejected = error;
+    hprose.rejected = error;
 
-    global.hprose.deferred = function() {
+    hprose.deferred = function() {
         var self = new Future();
         return Object.create(null, {
             promise: { value: self },
@@ -853,19 +853,21 @@
 
     if (hasPromise) { return; }
 
-    global.Promise = function(executor) {
+    function MyPromise(executor) {
         Future.call(this);
         executor(this.resolve, this.reject);
-    };
+    }
 
-    global.Promise.prototype = Object.create(Future.prototype);
-    global.Promise.prototype.constructor = Future;
+    MyPromise.prototype = Object.create(Future.prototype);
+    MyPromise.prototype.constructor = Future;
 
-    Object.defineProperties(global.Promise, {
+    Object.defineProperties(MyPromise, {
         all: { value: all },
         race: { value: race },
         resolve: { value: value },
         reject: { value: error }
     });
 
-})(this || [eval][0]('this'));
+    global.Promise = MyPromise;
+
+})(hprose, hprose.global);

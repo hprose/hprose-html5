@@ -13,18 +13,18 @@
  *                                                        *
  * hprose Reader for HTML5.                               *
  *                                                        *
- * LastModified: Sep 29, 2016                             *
+ * LastModified: Nov 18, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
 
-(function (global, undefined) {
+(function (hprose, global, undefined) {
     'use strict';
 
     var Map = global.Map;
-    var BytesIO = global.hprose.BytesIO;
-    var Tags = global.hprose.Tags;
-    var ClassManager = global.hprose.ClassManager;
+    var BytesIO = hprose.BytesIO;
+    var Tags = hprose.Tags;
+    var ClassManager = hprose.ClassManager;
 
     function unexpectedTag(tag, expectTags) {
         if (tag && expectTags) {
@@ -176,7 +176,7 @@
         });
     }
 
-    global.hprose.RawReader = RawReader;
+    hprose.RawReader = RawReader;
 
     var fakeReaderRefer = Object.create(null, {
         set: { value: function() {} },
@@ -738,5 +738,5 @@
         } }
     });
 
-    global.hprose.Reader = Reader;
-})(this || [eval][0]('this'));
+    hprose.Reader = Reader;
+})(hprose, hprose.global);

@@ -12,21 +12,21 @@
  *                                                        *
  * hprose tcp client for HTML5.                           *
  *                                                        *
- * LastModified: Sep 29, 2016                             *
+ * LastModified: Nov 18, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
 
-(function (global, undefined) {
+(function (hprose, global, undefined) {
     'use strict';
 
-    var ChromeTcpSocket = global.hprose.ChromeTcpSocket;
-    var APICloudTcpSocket = global.hprose.APICloudTcpSocket;
-    var Client = global.hprose.Client;
-    var BytesIO = global.hprose.BytesIO;
-    var Future = global.hprose.Future;
+    var ChromeTcpSocket = hprose.ChromeTcpSocket;
+    var APICloudTcpSocket = hprose.APICloudTcpSocket;
+    var Client = hprose.Client;
+    var BytesIO = hprose.BytesIO;
+    var Future = hprose.Future;
     var TimeoutError = global.TimeoutError;
-    var parseuri = global.hprose.parseuri;
+    var parseuri = hprose.parseuri;
 
     function noop(){}
 
@@ -465,6 +465,6 @@
 
     Object.defineProperty(TcpClient, 'create', { value: create });
 
-    global.hprose.TcpClient = TcpClient;
+    hprose.TcpClient = TcpClient;
 
-})(this || [eval][0]('this'));
+})(hprose, hprose.global);

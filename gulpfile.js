@@ -34,9 +34,9 @@ gulp.task('concat', ['clear'], function() {
                      'src/TcpClient.js',
                      'src/JSONRPCClientFilter.js',
                      'src/Loader.js'])
+        .pipe(concat('hprose-html5.src.js'))
         .pipe(jshint())
         .pipe(jshint.reporter())
-        .pipe(concat('hprose-html5.src.js'))
         .pipe(gulp.dest('dist'));
 });
 

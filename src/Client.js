@@ -12,23 +12,23 @@
  *                                                        *
  * hprose client for HTML5.                               *
  *                                                        *
- * LastModified: Nov 14, 2016                             *
+ * LastModified: Nov 18, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
 
-(function (global, undefined) {
+(function (hprose, global, undefined) {
     'use strict';
 
     var setImmediate = global.setImmediate;
-    var Tags = global.hprose.Tags;
-    var ResultMode = global.hprose.ResultMode;
-    var BytesIO = global.hprose.BytesIO;
-    var Writer = global.hprose.Writer;
-    var Reader = global.hprose.Reader;
-    var Future = global.hprose.Future;
-    var parseuri = global.hprose.parseuri;
-    var isObjectEmpty = global.hprose.isObjectEmpty;
+    var Tags = hprose.Tags;
+    var ResultMode = hprose.ResultMode;
+    var BytesIO = hprose.BytesIO;
+    var Writer = hprose.Writer;
+    var Reader = hprose.Reader;
+    var Future = hprose.Future;
+    var parseuri = hprose.parseuri;
+    var isObjectEmpty = hprose.isObjectEmpty;
 
     var GETFUNCTIONS = new Uint8Array(1);
     GETFUNCTIONS[0] = Tags.TagEnd;
@@ -1183,15 +1183,15 @@
 
     function create(uri, functions, settings) {
         try {
-            return global.hprose.HttpClient.create(uri, functions, settings);
+            return hprose.HttpClient.create(uri, functions, settings);
         }
         catch(e) {}
         try {
-            return global.hprose.TcpClient.create(uri, functions, settings);
+            return hprose.TcpClient.create(uri, functions, settings);
         }
         catch(e) {}
         try {
-            return global.hprose.WebSocketClient.create(uri, functions, settings);
+            return hprose.WebSocketClient.create(uri, functions, settings);
         }
         catch(e) {}
         if (typeof uri === 'string') {
@@ -1206,6 +1206,6 @@
 
     Object.defineProperty(Client, 'create', { value: create });
 
-    global.hprose.Client = Client;
+    hprose.Client = Client;
 
-})(this || [eval][0]('this'));
+})(hprose, hprose.global);

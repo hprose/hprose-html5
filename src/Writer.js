@@ -13,18 +13,18 @@
  *                                                        *
  * hprose Writer for HTML5.                               *
  *                                                        *
- * LastModified: Sep 29, 2016                             *
+ * LastModified: Nov 18, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
 
-(function (global, undefined) {
+(function (hprose, global, undefined) {
     'use strict';
 
     var Map = global.Map;
-    var BytesIO = global.hprose.BytesIO;
-    var Tags = global.hprose.Tags;
-    var ClassManager = global.hprose.ClassManager;
+    var BytesIO = hprose.BytesIO;
+    var Tags = hprose.Tags;
+    var ClassManager = hprose.ClassManager;
 
     function getClassName(obj) {
         var cls = obj.constructor;
@@ -552,6 +552,6 @@
         } }
     });
 
-    global.hprose.Writer = Writer;
+    hprose.Writer = Writer;
 
-})(this || [eval][0]('this'));
+})(hprose, hprose.global);
