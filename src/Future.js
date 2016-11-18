@@ -13,7 +13,7 @@
  *                                                        *
  * hprose Future for HTML5.                               *
  *                                                        *
- * LastModified: Nov 17, 2016                             *
+ * LastModified: Nov 18, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -203,6 +203,9 @@
     }
 
     function isGenerator(obj) {
+        if (!obj) {
+            return false;
+        }
         return 'function' == typeof obj.next && 'function' == typeof obj['throw'];
     }
 
@@ -222,6 +225,9 @@
     }
 
     function thunkToPromise(fn) {
+        if (isGeneratorFunction(fn) || isGenerator(fn)) {
+            return co(fn);
+        }
         var thisArg = (function() { return this; })();
         var future = new Future();
         fn.call(thisArg, function(err, res) {
@@ -304,9 +310,6 @@
         if (isGeneratorFunction(obj) || isGenerator(obj)) {
             return co(obj);
         }
-        if ('function' == typeof obj) {
-            return thunkToPromise(obj);
-        }
         return value(obj);
     }
 
@@ -341,7 +344,9 @@
                 future.resolve(ret.value);
             }
             else {
-                toPromise(ret.value).then(onFulfilled, onRejected);
+                (('function' == typeof ret.value) ?
+                thunkToPromise(ret.value) :
+                toPromise(ret.value)).then(onFulfilled, onRejected);
             }
         }
 
@@ -358,7 +363,7 @@
             thisArg = thisArg || this;
             return all(arguments).then(function(args) {
                 var result = handler.apply(thisArg, args);
-                if (isGeneratorFunction(result)) {
+                if (isGeneratorFunction(result) || isGenerator(result)) {
                     return co.call(thisArg, result);
                 }
                 return result;
