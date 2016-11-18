@@ -1,4 +1,4 @@
-// Hprose for HTML5 v2.0.26
+// Hprose for HTML5 v2.0.27
 // Copyright (c) 2008-2016 http://hprose.com
 // Hprose is freely distributable under the MIT license.
 // For all details and documentation:
@@ -1772,7 +1772,8 @@ hprose.global = (
             );
         } },
         complete: { value: function(oncomplete) {
-           return this.then(oncomplete, oncomplete);
+            oncomplete = oncomplete || function(v) { return v; };
+            return this.then(oncomplete, oncomplete);
         } },
         always: { value: function(oncomplete) {
            this.done(oncomplete, oncomplete);
