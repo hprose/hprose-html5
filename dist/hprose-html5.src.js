@@ -1098,7 +1098,7 @@ hprose.global = (
  *                                                        *
  * hprose Future for HTML5.                               *
  *                                                        *
- * LastModified: Nov 18, 2016                             *
+ * LastModified: Nov 23, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -1399,6 +1399,11 @@ hprose.global = (
             var args = Array.slice(arguments, 1);
             gen = gen.apply(thisArg, args);
         }
+
+        if (!gen || typeof gen.next !== 'function') {
+            return toPromise(gen);
+        }
+
         var future = new Future();
 
         function onFulfilled(res) {
@@ -1415,7 +1420,7 @@ hprose.global = (
                 next(gen['throw'](err));
             }
             catch (e) {
-                return future.reject(e);
+                future.reject(e);
             }
         }
 
@@ -1430,9 +1435,6 @@ hprose.global = (
             }
         }
 
-        if (!gen || typeof gen.next !== 'function') {
-            return future.resolve(gen);
-        }
         onFulfilled();
 
         return future;

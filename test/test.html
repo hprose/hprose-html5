@@ -1,0 +1,19 @@
+<!doctype html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>hprose test</title>
+    <script type="text/javascript" src="../dist/hprose-html5.js"></script>
+</head>
+<script type="text/javascript">
+    var client = new hprose.HttpClient("http://www.hprose.com/example/", ["hello"]);
+    client.hello("World!", function(result) {
+        alert(result);
+    }, function(name, err) {
+        alert(err);
+    });
+</script>
+<body>
+
+</body>
+</html>
