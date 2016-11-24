@@ -1098,7 +1098,7 @@ hprose.global = (
  *                                                        *
  * hprose Future for HTML5.                               *
  *                                                        *
- * LastModified: Nov 23, 2016                             *
+ * LastModified: Nov 24, 2016                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -1116,13 +1116,16 @@ hprose.global = (
     var clearTimeout = global.clearTimeout;
     var TimeoutError = global.TimeoutError;
 
+    var foreach = Array.prototype.forEach;
+    var slice = Array.prototype.slice;
+
     function Future(computation) {
+        var self = this;
         Object.defineProperties(this, {
             _subscribers: { value: [] },
             resolve: { value: this.resolve.bind(this) },
             reject: { value: this.reject.bind(this) }
         });
-        var self = this;
         if (typeof computation === 'function') {
             setImmediate(function() {
                 try {
@@ -1137,6 +1140,10 @@ hprose.global = (
 
     function isFuture(obj) {
         return obj instanceof Future;
+    }
+
+    function toFuture(obj) {
+        return isFuture(obj) ? obj : value(obj);
     }
 
     function isPromise(obj) {
@@ -1189,20 +1196,19 @@ hprose.global = (
 
     function arraysize(array) {
         var size = 0;
-        Array.forEach(array, function() { ++size; });
+        foreach.call(array, function() { ++size; });
         return size;
     }
 
     function all(array) {
-        array = isPromise(array) ? array : value(array);
-        return array.then(function(array) {
+        return toFuture(array).then(function(array) {
             var n = array.length;
             var count = arraysize(array);
             var result = new Array(n);
-            if (count === 0) { return value(result); }
+            if (count === 0) { return result; }
             var future = new Future();
-            Array.forEach(array, function(element, index) {
-                toPromise(element).then(function(value) {
+            foreach.call(array, function(element, index) {
+                toFuture(element).then(function(value) {
                     result[index] = value;
                     if (--count === 0) {
                         future.resolve(result);
@@ -1219,19 +1225,17 @@ hprose.global = (
     }
 
     function race(array) {
-        array = isPromise(array) ? array : value(array);
-        return array.then(function(array) {
+        return toFuture(array).then(function(array) {
             var future = new Future();
-            Array.forEach(array, function(element) {
-                toPromise(element).fill(future);
+            foreach.call(array, function(element) {
+                toFuture(element).fill(future);
             });
             return future;
         });
     }
 
     function any(array) {
-        array = isPromise(array) ? array : value(array);
-        return array.then(function(array) {
+        return toFuture(array).then(function(array) {
             var n = array.length;
             var count = arraysize(array);
             if (count === 0) {
@@ -1239,8 +1243,8 @@ hprose.global = (
             }
             var reasons = new Array(n);
             var future = new Future();
-            Array.forEach(array, function(element, index) {
-                toPromise(element).then(future.resolve, function(e) {
+            foreach.call(array, function(element, index) {
+                toFuture(element).then(future.resolve, function(e) {
                     reasons[index] = e;
                     if (--count === 0) {
                         future.reject(reasons);
@@ -1252,16 +1256,15 @@ hprose.global = (
     }
 
     function settle(array) {
-        array = isPromise(array) ? array : value(array);
-        return array.then(function(array) {
+        return toFuture(array).then(function(array) {
             var n = array.length;
             var count = arraysize(array);
             var result = new Array(n);
-            if (count === 0) { return value(result); }
+            if (count === 0) { return result; }
             var future = new Future();
-            Array.forEach(array, function(element, index) {
-                var f = toPromise(element);
-                f.whenComplete(function() {
+            foreach.call(array, function(element, index) {
+                var f = toFuture(element);
+                f.complete(function() {
                     result[index] = f.inspect();
                     if (--count === 0) {
                         future.resolve(result);
@@ -1274,14 +1277,14 @@ hprose.global = (
 
     function attempt(handler/*, arg1, arg2, ... */) {
         var thisArg = (function() { return this; })();
-        var args = Array.slice(arguments, 1);
+        var args = slice.call(arguments, 1);
         return all(args).then(function(args) {
             return handler.apply(thisArg, args);
         });
     }
 
     function run(handler, thisArg/*, arg1, arg2, ... */) {
-        var args = Array.slice(arguments, 2);
+        var args = slice.call(arguments, 2);
         return all(args).then(function(args) {
             return handler.apply(thisArg, args);
         });
@@ -1318,10 +1321,10 @@ hprose.global = (
                 return future.resolve(err);
             }
             if (err === null || err === undefined) {
-                res = Array.slice(arguments, 1);
+                res = slice.call(arguments, 1);
             }
             else {
-                res = Array.slice(arguments, 0);
+                res = slice.call(arguments, 0);
             }
             if (res.length == 1) {
                 future.resolve(res[0]);
@@ -1344,7 +1347,7 @@ hprose.global = (
 
     function thunkify(fn) {
         return function() {
-            var args = Array.slice(arguments, 0);
+            var args = slice.call(arguments, 0);
             var thisArg = this;
             var results = new Future();
             args.push(function() {
@@ -1367,7 +1370,7 @@ hprose.global = (
 
     function promisify(fn) {
         return function() {
-            var args = Array.slice(arguments, 0);
+            var args = slice.call(arguments, 0);
             var future = new Future();
             args.push(getThunkCallback(future));
             try {
@@ -1381,22 +1384,16 @@ hprose.global = (
     }
 
     function toPromise(obj) {
-        if (!obj) {
-            return value(obj);
-        }
-        if (isPromise(obj)) {
-            return obj;
-        }
         if (isGeneratorFunction(obj) || isGenerator(obj)) {
             return co(obj);
         }
-        return value(obj);
+        return toFuture(obj);
     }
 
     function co(gen) {
         var thisArg = (function() { return this; })();
         if (typeof gen === 'function') {
-            var args = Array.slice(arguments, 1);
+            var args = slice.call(arguments, 1);
             gen = gen.apply(thisArg, args);
         }
 
@@ -1453,6 +1450,8 @@ hprose.global = (
         };
     }
 
+    co.wrap = wrap;
+
     function forEach(array, callback, thisArg) {
         thisArg = thisArg || (function() { return this; })();
         return all(array).then(function(array) {
@@ -1491,10 +1490,7 @@ hprose.global = (
     function reduce(array, callback, initialValue) {
         if (arguments.length > 2) {
             return all(array).then(function(array) {
-                if (!isPromise(initialValue)) {
-                    initialValue = value(initialValue);
-                }
-                return initialValue.then(function(value) {
+                return toFuture(initialValue).then(function(value) {
                     return array.reduce(callback, value);
                 });
             });
@@ -1507,10 +1503,7 @@ hprose.global = (
     function reduceRight(array, callback, initialValue) {
         if (arguments.length > 2) {
             return all(array).then(function(array) {
-                if (!isPromise(initialValue)) {
-                    initialValue = value(initialValue);
-                }
-                return initialValue.then(function(value) {
+                return toFuture(initialValue).then(function(value) {
                     return array.reduceRight(callback, value);
                 });
             });
@@ -1522,10 +1515,7 @@ hprose.global = (
 
     function indexOf(array, searchElement, fromIndex) {
         return all(array).then(function(array) {
-            if (!isPromise(searchElement)) {
-                searchElement = value(searchElement);
-            }
-            return searchElement.then(function(searchElement) {
+            return toFuture(searchElement).then(function(searchElement) {
                 return array.indexOf(searchElement, fromIndex);
             });
         });
@@ -1533,10 +1523,7 @@ hprose.global = (
 
     function lastIndexOf(array, searchElement, fromIndex) {
         return all(array).then(function(array) {
-            if (!isPromise(searchElement)) {
-                searchElement = value(searchElement);
-            }
-            return searchElement.then(function(searchElement) {
+            return toFuture(searchElement).then(function(searchElement) {
                 if (fromIndex === undefined) {
                     fromIndex = array.length - 1;
                 }
@@ -1547,10 +1534,7 @@ hprose.global = (
 
     function includes(array, searchElement, fromIndex) {
         return all(array).then(function(array) {
-            if (!isPromise(searchElement)) {
-                searchElement = value(searchElement);
-            }
-            return searchElement.then(function(searchElement) {
+            return toFuture(searchElement).then(function(searchElement) {
                 return array.includes(searchElement, fromIndex);
             });
         });
@@ -1584,6 +1568,7 @@ hprose.global = (
         // extended methods
         promise: { value: promise },
         isFuture: { value: isFuture },
+        toFuture: { value: toFuture },
         isPromise: { value: isPromise },
         toPromise: { value: toPromise },
         join: { value: join },
@@ -1828,7 +1813,7 @@ hprose.global = (
             });
         } },
         call: { value: function(method) {
-            var args = Array.slice(arguments, 1);
+            var args = slice.call(arguments, 1);
             return this.then(function(result) {
                 return all(args).then(function(args) {
                     return result[method].apply(result, args);
@@ -1836,7 +1821,7 @@ hprose.global = (
             });
         } },
         bind: { value: function(method) {
-            var bindargs = Array.slice(arguments);
+            var bindargs = slice.call(arguments);
             if (Array.isArray(method)) {
                 for (var i = 0, n = method.length; i < n; ++i) {
                     bindargs[0] = method[i];
@@ -1847,7 +1832,7 @@ hprose.global = (
             bindargs.shift();
             var self = this;
             Object.defineProperty(this, method, { value: function() {
-                var args = Array.slice(arguments);
+                var args = slice.call(arguments);
                 return self.then(function(result) {
                     return all(bindargs.concat(args)).then(function(args) {
                         return result[method].apply(result, args);
