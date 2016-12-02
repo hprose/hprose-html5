@@ -1,7 +1,7 @@
 {
     "author": "Ma Bingyao <andot@hprose.com>",
     "name": "hprose-html5",
-    "version": "2.0.29",
+    "version": "2.0.30",
     "description": "Hprose is a High Performance Remote Object Service Engine.",
     "keywords": [
         "hprose",

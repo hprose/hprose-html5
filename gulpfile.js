@@ -27,6 +27,7 @@ gulp.task('concat', ['clear'], function() {
                      'src/Formatter.js',
                      'src/ResultMode.js',
                      'src/Client.js',
+                     'src/CookieManager.js',
                      'src/HttpClient.js',
                      'src/WebSocketClient.js',
                      'src/ChromeTcpSocket.js',

@@ -1,4 +1,4 @@
-// Hprose for HTML5 v2.0.29
+// Hprose for HTML5 v2.0.30
 // Copyright (c) 2008-2016 http://hprose.com
 // Hprose is freely distributable under the MIT license.
 // For all details and documentation:
@@ -5267,13 +5267,134 @@ hprose.global = (
 |                   http://www.hprose.org/                 |
 |                                                          |
 \**********************************************************/
+
+/**********************************************************\
+ *                                                        *
+ * CookieManager.js                                       *
+ *                                                        *
+ * hprose CookieManager for HTML5.                        *
+ *                                                        *
+ * LastModified: Dec 2, 2016                              *
+ * Author: Ma Bingyao <andot@hprose.com>                  *
+ *                                                        *
+\**********************************************************/
+
+(function (hprose) {
+    'use strict';
+
+    var parseuri = hprose.parseuri;
+
+    var s_cookieManager = {};
+
+    function setCookie(headers, uri) {
+        var parser = parseuri(uri);
+        var host = parser.host;
+        var name, values;
+        function _setCookie(value) {
+            var cookies, cookie, i;
+            cookies = value.replace(/(^\s*)|(\s*$)/g, '').split(';');
+            cookie = {};
+            value = cookies[0].replace(/(^\s*)|(\s*$)/g, '').split('=', 2);
+            if (value[1] === undefined) { value[1] = null; }
+            cookie.name = value[0];
+            cookie.value = value[1];
+            for (i = 1; i < cookies.length; i++) {
+                value = cookies[i].replace(/(^\s*)|(\s*$)/g, '').split('=', 2);
+                if (value[1] === undefined) { value[1] = null; }
+                cookie[value[0].toUpperCase()] = value[1];
+            }
+            // Tomcat can return SetCookie2 with path wrapped in "
+            if (cookie.PATH) {
+                if (cookie.PATH.charAt(0) === '"') {
+                    cookie.PATH = cookie.PATH.substr(1);
+                }
+                if (cookie.PATH.charAt(cookie.PATH.length - 1) === '"') {
+                    cookie.PATH = cookie.PATH.substr(0, cookie.PATH.length - 1);
+                }
+            }
+            else {
+                cookie.PATH = '/';
+            }
+            if (cookie.EXPIRES) {
+                cookie.EXPIRES = Date.parse(cookie.EXPIRES);
+            }
+            if (cookie.DOMAIN) {
+                cookie.DOMAIN = cookie.DOMAIN.toLowerCase();
+            }
+            else {
+                cookie.DOMAIN = host;
+            }
+            cookie.SECURE = (cookie.SECURE !== undefined);
+            if (s_cookieManager[cookie.DOMAIN] === undefined) {
+                s_cookieManager[cookie.DOMAIN] = {};
+            }
+            s_cookieManager[cookie.DOMAIN][cookie.name] = cookie;
+        }
+        for (name in headers) {
+            values = headers[name];
+            name = name.toLowerCase();
+            if ((name === 'set-cookie') || (name === 'set-cookie2')) {
+                if (typeof(values) === 'string') {
+                    values = [values];
+                }
+                values.forEach(_setCookie);
+            }
+        }
+    }
+
+    function getCookie(uri) {
+        var parser = parseuri(uri);
+        var host = parser.host;
+        var path = parser.path;
+        var secure = (parser.protocol === 'https:');
+        var cookies = [];
+        for (var domain in s_cookieManager) {
+            if (host.indexOf(domain) > -1) {
+                var names = [];
+                for (var name in s_cookieManager[domain]) {
+                    var cookie = s_cookieManager[domain][name];
+                    if (cookie.EXPIRES && ((new Date()).getTime() > cookie.EXPIRES)) {
+                        names.push(name);
+                    }
+                    else if (path.indexOf(cookie.PATH) === 0) {
+                        if (((secure && cookie.SECURE) ||
+                            !cookie.SECURE) && (cookie.value !== null)) {
+                            cookies.push(cookie.name + '=' + cookie.value);
+                        }
+                    }
+                }
+                for (var i in names) {
+                    delete s_cookieManager[domain][names[i]];
+                }
+            }
+        }
+        if (cookies.length > 0) {
+            return cookies.join('; ');
+        }
+        return '';
+    }
+
+    hprose.cookieManager = {
+        setCookie: setCookie,
+        getCookie: getCookie
+    };
+})(hprose);
+
+/**********************************************************\
+|                                                          |
+|                          hprose                          |
+|                                                          |
+| Official WebSite: http://www.hprose.com/                 |
+|                   http://www.hprose.org/                 |
+|                                                          |
+\**********************************************************/
 /**********************************************************\
  *                                                        *
  * HttpClient.js                                          *
  *                                                        *
  * hprose http client for HTML5.                          *
  *                                                        *
- * LastModified: Nov 18, 2016                             *
+ * LastModified: Dec 2, 2016                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -5290,8 +5411,35 @@ hprose.global = (
     var nativeXHR = (typeof(XMLHttpRequest) !== 'undefined');
     var corsSupport = (!localfile && nativeXHR && 'withCredentials' in new XMLHttpRequest());
     var parseuri = hprose.parseuri;
+    var cookieManager = hprose.cookieManager;
 
     function noop(){}
+
+    function getResponseHeader(headers) {
+        var header = Object.create(null);
+        if (headers) {
+            headers = headers.split("\r\n");
+            for (var i = 0, n = headers.length; i < n; i++) {
+                if (headers[i] !== "") {
+                    var kv = headers[i].split(": ", 2);
+                    var k = kv[0].trim();
+                    var v = kv[1].trim();
+                    if (k in header) {
+                        if (Array.isArray(header[k])) {
+                            header[k].push(v);
+                        }
+                        else {
+                            header[k] = [header[k], v];
+                        }
+                    }
+                    else {
+                        header[k] = v;
+                    }
+                }
+            }
+        }
+        return header;
+    }
 
     function HttpClient(uri, functions, settings) {
         if (this.constructor !== HttpClient) {
@@ -5304,7 +5452,27 @@ hprose.global = (
 
         var self = this;
 
-        function xhrPost(request, env) {
+        function getRequestHeader(headers) {
+            var header = Object.create(null);
+            var name, value;
+            for (name in _header) {
+                header[name] = _header[name];
+            }
+            if (headers) {
+                for (name in headers) {
+                    value = headers[name];
+                    if (Array.isArray(value)) {
+                        header[name] = value.join(', ');
+                    }
+                    else {
+                        header[name] = value;
+                    }
+                }
+            }
+            return header;
+        }
+
+        function xhrPost(request, context) {
             var future = new Future();
             var xhr = new XMLHttpRequest();
             xhr.open('POST', self.uri, true);
@@ -5312,12 +5480,15 @@ hprose.global = (
                 xhr.withCredentials = 'true';
             }
             xhr.responseType = 'arraybuffer';
-            for (var name in _header) {
-                xhr.setRequestHeader(name, _header[name]);
+            var header = getRequestHeader(context.httpHeader);
+            for (var name in header) {
+                xhr.setRequestHeader(name, header[name]);
             }
             xhr.onload = function() {
                 xhr.onload = noop;
                 if (xhr.status) {
+                    var headers = xhr.getAllResponseHeaders();
+                    context.httpHeader = getResponseHeader(headers);
                     if (xhr.status === 200) {
                         future.resolve(new Uint8Array(xhr.response));
                     }
@@ -5333,8 +5504,8 @@ hprose.global = (
                 xhr.upload.onprogress = _onreqprogress;
             }
             xhr.onprogress = _onresprogress;
-            if (env.timeout > 0) {
-                future = future.timeout(env.timeout).catchError(function(e) {
+            if (context.timeout > 0) {
+                future = future.timeout(context.timeout).catchError(function(e) {
                     xhr.onload = noop;
                     xhr.onerror = noop;
                     xhr.abort();
@@ -5358,33 +5529,46 @@ hprose.global = (
             return future;
         }
 
-        function apiPost(request, env) {
+        function apiPost(request, context) {
             var future = new Future();
+            var header = getRequestHeader(context.httpHeader);
+            var cookie = cookieManager.getCookie(self.uri());
+            if (cookie !== '') {
+                header['Cookie'] = cookie;
+            }
             global.api.ajax({
-                url: self.uri(),
+                url: self.uri,
                 method: 'post',
                 data: { body: BytesIO.toString(request) },
-                timeout: env.timeout,
+                timeout: context.timeout,
                 dataType: 'text',
-                headers: _header,
+                headers: header,
+                returnAll: true,
                 certificate: self.certificate
             }, function(ret, err) {
                 if (ret) {
-                    future.resolve((new BytesIO(ret)).takeBytes());
+                    context.httpHeader = ret.headers;
+                    if (ret.statusCode === 200) {
+                        cookieManager.setCookie(ret.headers, self.uri);
+                        future.resolve((new BytesIO(ret.body)).takeBytes());
+                    }
+                    else {
+                        future.reject(new Error(ret.statusCode+':'+ret.body));
+                    }
                 }
                 else {
                     future.reject(new Error(err.msg));
-                }
+                }                
             });
             return future;
         }
 
-        function sendAndReceive(request, env) {
+        function sendAndReceive(request, context) {
             var apicloud = (typeof(global.api) !== "undefined" &&
                            typeof(global.api.ajax) !== "undefined");
-            var future = apicloud ? apiPost(request, env) :
-                                    xhrPost(request, env);
-            if (env.oneway) { future.resolve(); }
+            var future = apicloud ? apiPost(request, context) :
+                                    xhrPost(request, context);
+            if (context.oneway) { future.resolve(); }
             return future;
         }
 
@@ -5466,7 +5650,7 @@ hprose.global = (
  *                                                        *
  * hprose websocket client for HTML5.                     *
  *                                                        *
- * LastModified: Nov 18, 2016                             *
+ * LastModified: Dec 2, 2016                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -5563,12 +5747,12 @@ hprose.global = (
             ws.onerror = noop;
             ws.onclose = onclose;
         }
-        function sendAndReceive(request, env) {
+        function sendAndReceive(request, context) {
             var id = getNextId();
             var future = new Future();
             _futures[id] = future;
-            if (env.timeout > 0) {
-                future = future.timeout(env.timeout).catchError(function(e) {
+            if (context.timeout > 0) {
+                future = future.timeout(context.timeout).catchError(function(e) {
                     delete _futures[id];
                     --_count;
                     throw e;
@@ -5589,7 +5773,7 @@ hprose.global = (
             else {
                 _requests.push([id, request]);
             }
-            if (env.oneway) { future.resolve(); }
+            if (context.oneway) { future.resolve(); }
             return future;
         }
         function close() {
@@ -5964,7 +6148,7 @@ hprose.global = (
  *                                                        *
  * hprose tcp client for HTML5.                           *
  *                                                        *
- * LastModified: Nov 18, 2016                             *
+ * LastModified: Dec 2, 2016                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -6155,9 +6339,9 @@ hprose.global = (
                 }
             }
         } },
-        send: { value: function(request, future, id, env, conn) {
+        send: { value: function(request, future, id, context, conn) {
             var self = this;
-            var timeout = env.timeout;
+            var timeout = context.timeout;
             if (timeout > 0) {
                 conn.timeoutIds[id] = global.setTimeout(function() {
                     self.clean(conn, id);
@@ -6182,11 +6366,11 @@ hprose.global = (
         getNextId: { value: function() {
             return (this.nextid < 0x7fffffff) ? ++this.nextid : this.nextid = 0;
         } },
-        sendAndReceive: { value: function(request, future, env) {
+        sendAndReceive: { value: function(request, future, context) {
             var conn = this.fetch();
             var id = this.getNextId();
             if (conn) {
-                this.send(request, future, id, env, conn);
+                this.send(request, future, id, context, conn);
             }
             else if (this.size < this.client.maxPoolSize) {
                 conn = this.create();
@@ -6196,11 +6380,11 @@ hprose.global = (
                 var self = this;
                 conn.onconnect = function() {
                     self.init(conn);
-                    self.send(request, future, id, env, conn);
+                    self.send(request, future, id, context, conn);
                 };
             }
             else {
-                this.requests.push([request, future, id, env]);
+                this.requests.push([request, future, id, context]);
             }
         } }
     });
@@ -6252,9 +6436,9 @@ hprose.global = (
                 this.recycle(conn);
             }
         } },
-        send: { value: function(request, future, env, conn) {
+        send: { value: function(request, future, context, conn) {
             var self = this;
-            var timeout = env.timeout;
+            var timeout = context.timeout;
             if (timeout > 0) {
                 conn.timeoutId = global.setTimeout(function() {
                     self.clean(conn);
@@ -6278,10 +6462,10 @@ hprose.global = (
             buf.write(request);
             conn.send(buf.buffer);
         } },
-        sendAndReceive: { value: function(request, future, env) {
+        sendAndReceive: { value: function(request, future, context) {
             var conn = this.fetch();
             if (conn) {
-                this.send(request, future, env, conn);
+                this.send(request, future, context, conn);
             }
             else if (this.size < this.client.maxPoolSize) {
                 conn = this.create();
@@ -6290,11 +6474,11 @@ hprose.global = (
                     future.reject(e);
                 };
                 conn.onconnect = function() {
-                    self.send(request, future, env, conn);
+                    self.send(request, future, context, conn);
                 };
             }
             else {
-                this.requests.push([request, future, env]);
+                this.requests.push([request, future, context]);
             }
         } }
     });
@@ -6360,21 +6544,21 @@ hprose.global = (
             }
         }
 
-        function sendAndReceive(request, env) {
+        function sendAndReceive(request, context) {
             var future = new Future();
             if (_fullDuplex) {
                 if ((fdtrans === null) || (fdtrans.uri !== self.uri)) {
                     fdtrans = new FullDuplexTcpTransporter(self);
                 }
-                fdtrans.sendAndReceive(request, future, env);
+                fdtrans.sendAndReceive(request, future, context);
             }
             else {
                 if ((hdtrans === null) || (hdtrans.uri !== self.uri)) {
                     hdtrans = new HalfDuplexTcpTransporter(self);
                 }
-                hdtrans.sendAndReceive(request, future, env);
+                hdtrans.sendAndReceive(request, future, context);
             }
-            if (env.oneway) { future.resolve(); }
+            if (context.oneway) { future.resolve(); }
             return future;
         }
 

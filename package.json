@@ -1,9 +1,8 @@
 {
   "name": "hprose-html5",
-  "filename": "hprose-html5.js",
-  "version": "2.0.29",
+  "version": "2.0.30",
   "description": "Hprose is a High Performance Remote Object Service Engine.",
-  "homepage": "https://github.com/andot/hprose",
+  "homepage": "https://github.com/hprose/hprose-html5",
   "keywords": [
     "hprose",
     "rpc",
@@ -42,25 +41,37 @@
     "oneway",
     "promises-aplus"
   ],
-  "maintainers": [
-    {
-      "name" : "Ma Bingyao",
-      "email" : "andot@hprose.com",
-      "web": "http://hprose.com/"
-    }
-  ],
-  "repositories": [
-    {
-      "type": "git",
-      "url": "https://github.com/hprose/hprose-html5.git"
-    }
-  ],
+  "author": {
+    "name": "Ma Bingyao",
+    "email": "andot@hprose.com",
+    "url": "http://hprose.com/"
+  },
+  "directories": {
+    "lib": "dist/"
+  },
+  "main": "dist/hprose-html5.js",
+  "devDependencies": {
+    "promises-aplus-tests": "*"
+  },
+  "scripts": {
+    "aplus-tests": "promises-aplus-tests dist/hprose-html5.js"
+  },
+  "engines": {
+    "node": "*"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hprose/hprose-html5.git"
+  },
   "autoupdate": {
     "source": "git",
     "target": "git://github.com/hprose/hprose-html5.git",
     "basePath": "dist/",
-    "files": [
-      "hprose-html5.js"
-    ]
-  }
+    "files": [ "hprose-html5.js" ]
+  },
+  "bugs": {
+    "url": "https://github.com/hprose/hprose-html5/issues",
+    "email": "andot@hprose.com"
+  },
+  "license" : "MIT"
 }

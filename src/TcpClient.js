@@ -12,7 +12,7 @@
  *                                                        *
  * hprose tcp client for HTML5.                           *
  *                                                        *
- * LastModified: Nov 18, 2016                             *
+ * LastModified: Dec 2, 2016                              *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -203,9 +203,9 @@
                 }
             }
         } },
-        send: { value: function(request, future, id, env, conn) {
+        send: { value: function(request, future, id, context, conn) {
             var self = this;
-            var timeout = env.timeout;
+            var timeout = context.timeout;
             if (timeout > 0) {
                 conn.timeoutIds[id] = global.setTimeout(function() {
                     self.clean(conn, id);
@@ -230,11 +230,11 @@
         getNextId: { value: function() {
             return (this.nextid < 0x7fffffff) ? ++this.nextid : this.nextid = 0;
         } },
-        sendAndReceive: { value: function(request, future, env) {
+        sendAndReceive: { value: function(request, future, context) {
             var conn = this.fetch();
             var id = this.getNextId();
             if (conn) {
-                this.send(request, future, id, env, conn);
+                this.send(request, future, id, context, conn);
             }
             else if (this.size < this.client.maxPoolSize) {
                 conn = this.create();
@@ -244,11 +244,11 @@
                 var self = this;
                 conn.onconnect = function() {
                     self.init(conn);
-                    self.send(request, future, id, env, conn);
+                    self.send(request, future, id, context, conn);
                 };
             }
             else {
-                this.requests.push([request, future, id, env]);
+                this.requests.push([request, future, id, context]);
             }
         } }
     });
@@ -300,9 +300,9 @@
                 this.recycle(conn);
             }
         } },
-        send: { value: function(request, future, env, conn) {
+        send: { value: function(request, future, context, conn) {
             var self = this;
-            var timeout = env.timeout;
+            var timeout = context.timeout;
             if (timeout > 0) {
                 conn.timeoutId = global.setTimeout(function() {
                     self.clean(conn);
@@ -326,10 +326,10 @@
             buf.write(request);
             conn.send(buf.buffer);
         } },
-        sendAndReceive: { value: function(request, future, env) {
+        sendAndReceive: { value: function(request, future, context) {
             var conn = this.fetch();
             if (conn) {
-                this.send(request, future, env, conn);
+                this.send(request, future, context, conn);
             }
             else if (this.size < this.client.maxPoolSize) {
                 conn = this.create();
@@ -338,11 +338,11 @@
                     future.reject(e);
                 };
                 conn.onconnect = function() {
-                    self.send(request, future, env, conn);
+                    self.send(request, future, context, conn);
                 };
             }
             else {
-                this.requests.push([request, future, env]);
+                this.requests.push([request, future, context]);
             }
         } }
     });
@@ -408,21 +408,21 @@
             }
         }
 
-        function sendAndReceive(request, env) {
+        function sendAndReceive(request, context) {
             var future = new Future();
             if (_fullDuplex) {
                 if ((fdtrans === null) || (fdtrans.uri !== self.uri)) {
                     fdtrans = new FullDuplexTcpTransporter(self);
                 }
-                fdtrans.sendAndReceive(request, future, env);
+                fdtrans.sendAndReceive(request, future, context);
             }
             else {
                 if ((hdtrans === null) || (hdtrans.uri !== self.uri)) {
                     hdtrans = new HalfDuplexTcpTransporter(self);
                 }
-                hdtrans.sendAndReceive(request, future, env);
+                hdtrans.sendAndReceive(request, future, context);
             }
-            if (env.oneway) { future.resolve(); }
+            if (context.oneway) { future.resolve(); }
             return future;
         }
 
