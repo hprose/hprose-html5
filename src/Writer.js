@@ -13,7 +13,7 @@
  *                                                        *
  * hprose Writer for HTML5.                               *
  *                                                        *
- * LastModified: Nov 18, 2016                             *
+ * LastModified: Feb 13, 2017                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -28,6 +28,9 @@
 
     function getClassName(obj) {
         var cls = obj.constructor;
+        if (!cls) {
+            return 'Object';
+        }
         var classname = ClassManager.getClassAlias(cls);
         if (classname) { return classname; }
         if (cls.name) {

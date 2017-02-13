@@ -1,4 +1,4 @@
-// Hprose for HTML5 v2.0.31
+// Hprose for HTML5 v2.0.32
 // Copyright (c) 2008-2016 http://hprose.com
 // Hprose is freely distributable under the MIT license.
 // For all details and documentation:
@@ -2671,7 +2671,7 @@ hprose.global = (
  *                                                        *
  * hprose Writer for HTML5.                               *
  *                                                        *
- * LastModified: Nov 18, 2016                             *
+ * LastModified: Feb 13, 2017                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -2686,6 +2686,9 @@ hprose.global = (
 
     function getClassName(obj) {
         var cls = obj.constructor;
+        if (!cls) {
+            return 'Object';
+        }
         var classname = ClassManager.getClassAlias(cls);
         if (classname) { return classname; }
         if (cls.name) {

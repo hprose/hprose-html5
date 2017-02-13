@@ -1,6 +1,6 @@
 {
   "name": "hprose-html5",
-  "version": "2.0.31",
+  "version": "2.0.32",
   "description": "Hprose is a High Performance Remote Object Service Engine.",
   "homepage": "https://github.com/hprose/hprose-html5",
   "keywords": [
@@ -49,7 +49,7 @@
   "directories": {
     "lib": "dist/"
   },
-  "main": "dist/hprose-html5.js",
+  "main": "dist/hprose-html5.src.js",
   "devDependencies": {
     "promises-aplus-tests": "*"
   },
@@ -67,7 +67,7 @@
     "source": "git",
     "target": "git://github.com/hprose/hprose-html5.git",
     "basePath": "dist/",
-    "files": [ "hprose-html5.js" ]
+    "files": [ "hprose-html5.src.js" ]
   },
   "bugs": {
     "url": "https://github.com/hprose/hprose-html5/issues",
