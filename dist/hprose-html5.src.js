@@ -1,4 +1,4 @@
-// Hprose for HTML5 v2.0.32
+// Hprose for HTML5 v2.0.33
 // Copyright (c) 2008-2016 http://hprose.com
 // Hprose is freely distributable under the MIT license.
 // For all details and documentation:
@@ -4064,7 +4064,7 @@ hprose.global = (
  *                                                        *
  * hprose client for HTML5.                               *
  *                                                        *
- * LastModified: Dec 5, 2016                              *
+ * LastModified: Feb 14, 2017                             *
  * Author: Ma Bingyao <andot@hprose.com>                  *
  *                                                        *
 \**********************************************************/
@@ -4277,7 +4277,7 @@ hprose.global = (
                     }
                     else {
                         for (var n in m) {
-                            setMethods(stub, obj[name], name + '_', n, m[n]);
+                            setMethods(stub, obj[name], namespace + name + '_', n, m[n]);
                         }
                     }
                 }
