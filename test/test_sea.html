@@ -11,7 +11,7 @@
             }
         });
         seajs.use('hprose', function(hprose) {
-            var client = new hprose.HttpClient("http://www.hprose.com/example/", ["hello"]);
+            var client = new hprose.HttpClient("http://www.hprose.com/example/index.php", ["hello"]);
             client.hello("World!", function(result) {
                 alert(result);
             }, function(name, err) {
