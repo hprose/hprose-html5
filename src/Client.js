@@ -17,11 +17,11 @@
  *                                                        *
 \**********************************************************/
 
+/* global Proxy */
 (function (hprose, global, undefined) {
     'use strict';
 
     var setImmediate = global.setImmediate;
-    var Proxy = global.Proxy;
     var Tags = hprose.Tags;
     var ResultMode = hprose.ResultMode;
     var BytesIO = hprose.BytesIO;
