@@ -4936,12 +4936,12 @@ hprose.global = (
                 (functions && functions.constructor === Object)) {
                 functions = [functions];
             }
-            if (!Array.isArray(functions)) {
-                setImmediate(initService, stub);
-                return _ready;
+            if (Array.isArray(functions)) {
+                setFunctions(stub, functions);
             }
             else if (typeof(Proxy) === 'undefined') {
-                setFunctions(stub, functions);
+                setImmediate(initService, stub);
+                return _ready;
             }
             else {
                 stub = new Proxy({}, new HproseProxy(setFunction));
